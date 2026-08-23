@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <title>TORUK — Ship your product story in an afternoon</title>
+    <meta
+      name="description"
+      content="A fast, accessible landing page starter with design tokens, section components and content separated from presentation."
+    />
+    <link rel="canonical" href="https://example.com/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://example.com/" />
+    <meta property="og:title" content="TORUK — Ship your product story in an afternoon" />
+    <meta
+      property="og:description"
+      content="A fast, accessible landing page starter with design tokens, section components and content separated from presentation."
+    />
+    <meta property="og:image" content="https://example.com/og-image.png" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="TORUK — Ship your product story in an afternoon" />
+    <meta
+      name="twitter:description"
+      content="A fast, accessible landing page starter with design tokens, section components and content separated from presentation."
+    />
+    <meta name="twitter:image" content="https://example.com/og-image.png" />
+
+    <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)" />
+
+    <!-- Apply the stored theme before paint to avoid a flash. -->
+    <script>
+      (() => {
+        const stored = localStorage.getItem('theme')
+        const theme =
+          stored ??
+          (window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light')
+        document.documentElement.dataset.theme = theme
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
