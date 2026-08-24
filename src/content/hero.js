@@ -1,13 +1,23 @@
+/**
+ * Hero copy, lifted from the TORUK Studio Figma frame (node 10017-152334).
+ * Components stay presentational — edit wording here.
+ */
 export const hero = {
-  eyebrow: 'Now in public beta',
-  title: 'Everything you need to launch, nothing you don’t',
-  subtitle:
-    'A production-ready landing page structure: design tokens, reusable UI primitives, and content you can edit without touching a component.',
-  primaryCta: { label: 'Get started free', href: '#pricing' },
-  secondaryCta: { label: 'See how it works', href: '#features' },
-  stats: [
-    { value: '2 min', label: 'to first deploy' },
-    { value: '100', label: 'Lighthouse target' },
-    { value: '0 kb', label: 'runtime CSS deps' },
+  eyebrow: 'The adaptive AI ecosystem',
+  // The frame sets a hyphen here, not an em dash — kept as designed.
+  headline:
+    'Build, orchestrate, deploy, and govern enterprise AI agents from one platform - from isolated experiments to secure, production-ready systems.',
+  primaryCta: { label: 'Book a Demo', href: '#demo' },
+  secondaryCta: { label: 'Explore the Platform', href: '#platform' },
+  capabilities: [
+    'Build · Orchestrate',
+    'Visual low-code canvas',
+    'Deploy · Govern',
+    'Cloud · On-prem · Hybrid',
   ],
+  /** Chain render exported from node 10017:152382 and committed as WebP. */
+  artwork: {
+    src: '/hero-chain.webp',
+    alt: '',
+  },
 }

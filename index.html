@@ -5,47 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <title>TORUK — Ship your product story in an afternoon</title>
+    <title>TORUK — The adaptive AI ecosystem</title>
     <meta
       name="description"
-      content="A fast, accessible landing page starter with design tokens, section components and content separated from presentation."
+      content="Build, orchestrate, deploy, and govern enterprise AI agents from one platform — from isolated experiments to secure, production-ready systems."
     />
-    <link rel="canonical" href="https://example.com/" />
+    <link rel="canonical" href="https://toruk.studio/" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://example.com/" />
-    <meta property="og:title" content="TORUK — Ship your product story in an afternoon" />
+    <meta property="og:url" content="https://toruk.studio/" />
+    <meta property="og:title" content="TORUK — The adaptive AI ecosystem" />
     <meta
       property="og:description"
-      content="A fast, accessible landing page starter with design tokens, section components and content separated from presentation."
+      content="Build, orchestrate, deploy, and govern enterprise AI agents from one platform."
     />
-    <meta property="og:image" content="https://example.com/og-image.png" />
+    <meta property="og:image" content="https://toruk.studio/og-image.png" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="TORUK — Ship your product story in an afternoon" />
+    <meta name="twitter:title" content="TORUK — The adaptive AI ecosystem" />
     <meta
       name="twitter:description"
-      content="A fast, accessible landing page starter with design tokens, section components and content separated from presentation."
+      content="Build, orchestrate, deploy, and govern enterprise AI agents from one platform."
     />
-    <meta name="twitter:image" content="https://example.com/og-image.png" />
+    <meta name="twitter:image" content="https://toruk.studio/og-image.png" />
 
-    <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#030303" />
 
-    <!-- Apply the stored theme before paint to avoid a flash. -->
-    <script>
-      (() => {
-        const stored = localStorage.getItem('theme')
-        const theme =
-          stored ??
-          (window.matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'dark'
-            : 'light')
-        document.documentElement.dataset.theme = theme
-      })()
-    </script>
+    <!-- Satoshi (Fontshare) — Light 300 / Regular 400 / Medium 500 per the Figma frame -->
+    <link rel="preconnect" href="https://api.fontshare.com" />
+    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
+    <link
+      href="https://api.fontshare.com/v2/css?f%5B%5D=satoshi@300,400,500&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="root"></div>

@@ -1,1 +1,92 @@
 @import 'tailwindcss';
+
+/*
+ * TORUK design tokens.
+ * The hero is a near-black canvas, so the ramp is defined dark-first:
+ * `ink` steps down from white, `canvas` steps up from black.
+ */
+@theme {
+  --font-display: 'Satoshi', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-sans: 'Satoshi', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  --color-canvas: #030303;
+  --color-canvas-raised: #0a0a0a;
+
+  --color-ink: #ffffff;
+  /* Colors/Primary-Black/300 — inactive nav links. */
+  --color-ink-muted: #b3b3b3;
+  /* Tail of the eyebrow gradient. */
+  --color-ink-faint: #868686;
+
+  --color-hairline: rgba(255, 255, 255, 0.14);
+  --color-hairline-strong: rgba(255, 255, 255, 0.28);
+
+  --ease-out-quint: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    background-color: var(--color-canvas);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  /* One visible focus treatment for every interactive element. */
+  :focus-visible {
+    outline: 1px solid var(--color-ink);
+    outline-offset: 0.1875rem;
+  }
+}
+
+@layer components {
+  /*
+   * Eyebrow fill from the Figma frame: white into #868686. Figma lands the stop
+   * at 34.096% of an 865px box = 294.9px, and the 24px text measures 323.6px —
+   * so the ramp completes at 91.1% of the glyphs. Expressing it that way and
+   * letting the element hug its text keeps the design's look at every size;
+   * anchoring to the box instead made the ramp finish at 46% of the text on
+   * mobile, leaving most of it flat grey.
+   */
+  .text-gradient-eyebrow {
+    background-image: linear-gradient(
+      91.75deg,
+      var(--color-ink) 0%,
+      var(--color-ink-faint) 91.1%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /*
+   * Scroll-entry primitive. `useReveal` flips data-revealed once the element
+   * intersects; motion is transform/opacity only so it never triggers layout.
+   */
+  .reveal {
+    opacity: 0;
+    transform: translateY(0.75rem);
+    transition:
+      opacity 600ms var(--ease-out-quint),
+      transform 600ms var(--ease-out-quint);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  .reveal[data-revealed='true'] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

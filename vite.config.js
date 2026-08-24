@@ -11,4 +11,8 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  // Honour an assigned PORT so the dev server can share a machine.
+  server: {
+    port: process.env.PORT ? Number(process.env.PORT) : undefined,
+  },
 })
