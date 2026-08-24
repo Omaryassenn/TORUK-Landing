@@ -28,7 +28,7 @@ export function Button({ as = 'a', variant = 'solid', className, ...props }) {
     <Tag
       className={cn(
         'inline-flex items-center justify-center rounded-[62.5rem] px-[1.4375rem] py-[0.5625rem]',
-        'font-display text-[1.0625rem] leading-[1.25rem] font-medium uppercase whitespace-nowrap lg:text-[1.2rem]',
+        'font-display text-cta leading-[1.25rem] font-medium uppercase whitespace-nowrap',
         'transition-colors duration-200 active:scale-[0.98] motion-reduce:active:scale-100',
         variants[variant],
         className,

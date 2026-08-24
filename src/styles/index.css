@@ -22,10 +22,55 @@
   --color-hairline-strong: rgba(255, 255, 255, 0.28);
 
   --ease-out-quint: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /*
+   * Fluid scale. The Figma frame is 1440 wide, so every ramp below is solved to
+   * land on the frame's exact value at 1440 and interpolate down to a hand-set
+   * small-screen value at 375. Above 1440 the ramps are already at their max and
+   * the root font-size takes over (see `html` in the base layer), so one rem
+   * value per token covers both directions.
+   *
+   * Each ramp is `clamp(min, intercept + slope*vw, design value at 1440)`.
+   */
+  --text-eyebrow: clamp(0.875rem, 0.7254rem + 0.6385vw, 1.3rem);
+  --text-headline: clamp(1.125rem, 0.9226rem + 0.8638vw, 1.7rem);
+  --text-cta: clamp(0.875rem, 0.803rem + 0.4413vw, 1.2rem);
+  --text-capability: clamp(0.75rem, 0.6162rem + 0.7042vw, 1.25rem);
+  /* Nav only renders from `lg`, so this ramp is anchored at 1024 rather than 375. */
+  --text-nav: clamp(0.9375rem, 0.475rem + 0.7212vw, 1.125rem);
+
+  /*
+   * The hero's top padding is the difference between the copy clearing the
+   * header and floating halfway down the viewport, so it rides the same ramp —
+   * but bounded by viewport height as well. On a short, wide window the width
+   * ramp alone pushes the copy a third of the way down the screen and the
+   * composition overflows; 22svh caps that. At the design's own 1440x1024 the
+   * ramp (193px) is the smaller of the two, so the frame is reproduced exactly.
+   */
+  --spacing-hero-top: min(clamp(6rem, 3.865rem + 9.108vw, 12.0625rem), 22svh);
+  --spacing-wordmark: clamp(1.125rem, 0.949rem + 0.7512vw, 1.625rem);
 }
 
 @layer base {
   html {
+    /*
+     * Above the 1440 design width the whole layout scales instead of stranding
+     * a fixed-size composition in the middle of a large display. 1.1111vw is
+     * 16px at exactly 1440, so this is inert at and below the design width and
+     * grows proportionally above it, holding at 28px from ~2520 up.
+     *
+     * Width alone is not enough: a short, wide window (2560x800) would scale
+     * type off the width and overflow vertically. The `min` lets whichever axis
+     * is actually limiting drive the scale. 2.2svh is deliberately looser than
+     * the design's own 16px-per-1024 so that height only intervenes once the
+     * window is genuinely short — at 1440x1024 the width term is smaller and
+     * the frame is reproduced exactly.
+     *
+     * Everything downstream is authored in rem, so type, gutters, button
+     * geometry and the max-widths all scale together and the design keeps its
+     * proportions rather than just getting wider.
+     */
+    font-size: clamp(1rem, min(1.1111vw, 2.2svh), 1.75rem);
     background-color: var(--color-canvas);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

@@ -19,7 +19,16 @@ const DESIGN = { w: 1440, h: 1024 }
 
 export function ChainBackdrop() {
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden bg-canvas">
+    <div
+      className="pointer-events-none absolute inset-0 overflow-hidden bg-canvas"
+      /*
+       * A size container, so the cover maths below can measure its own box.
+       * Below `md` this backdrop is a band at the top of the hero rather than
+       * the whole section, and keying off `svh` there would oversize the
+       * artwork by the height of the copy block beneath it.
+       */
+      style={{ containerType: 'size' }}
+    >
       {/*
        * Flow-canvas dot grid, cursor-reactive. Sits under the artwork so the
        * cable occludes it, the way a node editor's canvas reads. The same
@@ -38,7 +47,7 @@ export function ChainBackdrop() {
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
         style={{
           aspectRatio: `${DESIGN.w} / ${DESIGN.h}`,
-          width: `max(100%, calc(100svh * ${DESIGN.w} / ${DESIGN.h}))`,
+          width: `max(100%, calc(100cqh * ${DESIGN.w} / ${DESIGN.h}))`,
         }}
       >
         <img
@@ -65,8 +74,13 @@ export function ChainBackdrop() {
        * headline. The ramp therefore has to reach past the headline's 720px,
        * not stop at the ~46% that sufficed at the design width.
        */}
-      <div className="absolute inset-0 bg-[linear-gradient(96deg,#030303_10%,rgba(3,3,3,0.82)_45%,rgba(3,3,3,0.45)_75%,rgba(3,3,3,0.2)_100%)] lg:bg-[linear-gradient(96deg,#030303_2%,rgba(3,3,3,0.5)_28%,rgba(3,3,3,0.22)_50%,transparent_68%)]" />
-      <div className="absolute inset-x-0 bottom-0 h-32 bg-[linear-gradient(to_top,#030303,transparent)]" />
+      <div className="absolute inset-0 hidden bg-[linear-gradient(96deg,#030303_10%,rgba(3,3,3,0.82)_45%,rgba(3,3,3,0.45)_75%,rgba(3,3,3,0.2)_100%)] md:block lg:bg-[linear-gradient(96deg,#030303_2%,rgba(3,3,3,0.5)_28%,rgba(3,3,3,0.22)_50%,transparent_68%)]" />
+      {/*
+       * Melts the artwork into the canvas at its bottom edge. Below `md` that
+       * edge is the seam with the copy block, so the fade runs deeper to hide
+       * it; from `md` up it is the usual grounding gradient.
+       */}
+      <div className="absolute inset-x-0 bottom-0 h-2/5 bg-[linear-gradient(to_top,#030303_8%,transparent)] md:h-32 md:bg-[linear-gradient(to_top,#030303,transparent)]" />
 
       {/*
        * Clears the bottom-right corner for the capability list. The artwork

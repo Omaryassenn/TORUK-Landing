@@ -22,7 +22,7 @@ export function Wordmark({ className }) {
   return (
     <span
       className={cn(
-        'relative block aspect-[192/29.945] h-[1.3125rem] shrink-0 lg:h-[1.625rem]',
+        'relative block aspect-[192/29.945] h-wordmark shrink-0',
         className,
       )}
     >

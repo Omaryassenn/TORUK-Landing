@@ -20,7 +20,7 @@ export function Header({ activeHref = '/' }) {
 
   return (
     <header className="absolute inset-x-0 top-0 z-20">
-      <div className="mx-auto flex max-w-[100rem] items-center px-6 pt-[1.5rem] lg:pt-[1.8125rem]">
+      <div className="flex items-center px-6 pt-[1.5rem] lg:pt-[1.8125rem]">
         <a href="/" aria-label={`${site.name} home`} className="shrink-0">
           <Wordmark />
         </a>
@@ -37,7 +37,7 @@ export function Header({ activeHref = '/' }) {
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'font-display text-[0.9375rem] leading-[1.25rem] whitespace-nowrap transition-colors duration-200 xl:text-[1rem] min-[90rem]:text-[1.125rem]',
+                  'font-display text-nav leading-[1.25rem] whitespace-nowrap transition-colors duration-200',
                   active
                     ? 'font-medium text-ink'
                     : 'font-normal text-ink-muted hover:text-ink',

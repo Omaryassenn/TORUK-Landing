@@ -31,11 +31,11 @@ export function Hero() {
 
       <div
         ref={ref}
-        className="relative z-10 mx-auto flex w-full max-w-[100rem] flex-1 flex-col px-6 pt-[8.25rem] pb-[2.0625rem] lg:pt-[12.0625rem]"
+        className="relative z-10 flex w-full flex-1 flex-col px-6 pt-hero-top pb-[2.0625rem]"
       >
         <div className="flex max-w-[54.0625rem] flex-col gap-[0.7rem]">
           <p
-            className="reveal text-gradient-eyebrow font-display w-fit text-[1.125rem] leading-[1.333] font-light uppercase lg:text-[1.3rem]"
+            className="reveal text-gradient-eyebrow font-display w-fit text-eyebrow leading-[1.333] font-light uppercase"
             {...step(0)}
           >
             {hero.eyebrow}
@@ -43,7 +43,7 @@ export function Hero() {
 
           <div className="flex flex-col gap-[1.5rem]">
             <h1
-              className="reveal font-display max-w-[45rem] text-[1.5rem] leading-[1.3125] font-normal text-ink uppercase lg:text-[1.7rem]"
+              className="reveal font-display max-w-[45rem] text-headline leading-[1.3125] font-normal text-ink uppercase"
               {...step(1)}
             >
               {hero.headline}
@@ -59,7 +59,7 @@ export function Hero() {
         </div>
 
         <ul
-          className="reveal font-display mt-16 list-disc ps-[1.875rem] text-[0.9375rem] leading-[1.4] font-light text-ink uppercase lg:mt-auto lg:self-end lg:text-[1.25rem]"
+          className="reveal font-display mt-auto list-disc ps-[1.875rem] pt-12 text-capability leading-[1.4] font-light text-ink uppercase lg:self-end lg:pt-0"
           {...step(3)}
         >
           {hero.capabilities.map((capability) => (

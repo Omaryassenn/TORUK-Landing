@@ -29,6 +29,13 @@ import { useEffect, useRef } from 'react'
  * hero costs nothing. Reduced-motion and touch both fall back to the static grid.
  */
 
+/*
+ * Geometry is authored against a 16px root, then multiplied by the document's
+ * own scale (see the fluid root font-size in index.css). Without that the grid
+ * would keep a 30px pitch while every other element grew, and the texture would
+ * read progressively finer on larger displays instead of holding the design's
+ * proportions.
+ */
 const PITCH = 30 // px between dots
 const DOT_R = 1 // px radius at rest
 const DOT_R_PEAK = 1.65 // px radius directly under the cursor
@@ -39,6 +46,13 @@ const GLOW_RADIUS = 200 // px reach of the reveal
 const PULL_RADIUS = 100 // px reach of the magnetism — tighter than the glow
 const PULL_MAX = 10 // px, the furthest a dot ever strays from home
 const PULL_CLAMP = 0.5 // never travel more than half the way to the cursor
+const RING_WIDTH = 46 // px thickness of the click pulse's sweeping ring
+
+/** Document scale: 1 at the 16px root, rising with the viewport past 1440. */
+const docScale = () => {
+  const root = parseFloat(getComputedStyle(document.documentElement).fontSize)
+  return Number.isFinite(root) && root > 0 ? root / 16 : 1
+}
 
 const POINTER_EASE = 0.13 // per-frame approach of the eased cursor to the real one
 const RISE = 0.17 // per-frame approach when a dot is lighting up
@@ -72,6 +86,14 @@ export function HeroDotField({ className = '', style }) {
     let width = 0
     let height = 0
     let dpr = 1
+    // Recomputed on every resize — the root font-size moves with the viewport.
+    let pitch = PITCH
+    let dotR = DOT_R
+    let dotRPeak = DOT_R_PEAK
+    let glowRadius = GLOW_RADIUS
+    let pullRadius = PULL_RADIUS
+    let pullMax = PULL_MAX
+    let ringWidth = RING_WIDTH
 
     // `raw` is where the cursor actually is; `eased` is what the field follows.
     const raw = { x: 0, y: 0, inside: false, seen: false }
@@ -93,10 +115,10 @@ export function HeroDotField({ className = '', style }) {
       for (let r = 0; r < rows; r += 1) {
         for (let c = 0; c < cols; c += 1) {
           if (energy[r * cols + c] > SETTLED_E) continue
-          const x = c * PITCH + ox[r * cols + c]
-          const y = r * PITCH + oy[r * cols + c]
-          ctx.moveTo(x + DOT_R, y)
-          ctx.arc(x, y, DOT_R, 0, Math.PI * 2)
+          const x = c * pitch + ox[r * cols + c]
+          const y = r * pitch + oy[r * cols + c]
+          ctx.moveTo(x + dotR, y)
+          ctx.arc(x, y, dotR, 0, Math.PI * 2)
         }
       }
       ctx.fill()
@@ -108,9 +130,9 @@ export function HeroDotField({ className = '', style }) {
           if (e <= SETTLED_E) continue
           // Radius follows the square of energy so only the dots right under
           // the cursor thicken at all; everywhere else opacity does the work.
-          const rad = DOT_R + (DOT_R_PEAK - DOT_R) * e * e
+          const rad = dotR + (dotRPeak - dotR) * e * e
           ctx.beginPath()
-          ctx.arc(c * PITCH + ox[i], r * PITCH + oy[i], rad, 0, Math.PI * 2)
+          ctx.arc(c * pitch + ox[i], r * pitch + oy[i], rad, 0, Math.PI * 2)
           ctx.fillStyle = `rgba(255,255,255,${BASE_ALPHA + (PEAK_ALPHA - BASE_ALPHA) * e})`
           ctx.fill()
         }
@@ -126,8 +148,17 @@ export function HeroDotField({ className = '', style }) {
       canvas.height = Math.round(height * dpr)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
-      cols = Math.ceil(width / PITCH) + 1
-      rows = Math.ceil(height / PITCH) + 1
+      const scale = docScale()
+      pitch = PITCH * scale
+      dotR = DOT_R * scale
+      dotRPeak = DOT_R_PEAK * scale
+      glowRadius = GLOW_RADIUS * scale
+      pullRadius = PULL_RADIUS * scale
+      pullMax = PULL_MAX * scale
+      ringWidth = RING_WIDTH * scale
+
+      cols = Math.ceil(width / pitch) + 1
+      rows = Math.ceil(height / pitch) + 1
       const n = cols * rows
       energy = new Float32Array(n)
       ox = new Float32Array(n)
@@ -184,21 +215,21 @@ export function HeroDotField({ className = '', style }) {
       let active = false
 
       for (let r = 0; r < rows; r += 1) {
-        const homeY = r * PITCH
+        const homeY = r * pitch
         const dy = homeY - eased.y
         for (let c = 0; c < cols; c += 1) {
           const i = r * cols + c
-          const homeX = c * PITCH
+          const homeX = c * pitch
           const dx = homeX - eased.x
           const d = Math.hypot(dx, dy)
 
           // Brightness --------------------------------------------------
-          let target = raw.inside ? falloff(d, GLOW_RADIUS) : 0
+          let target = raw.inside ? falloff(d, glowRadius) : 0
           for (let p = 0; p < pulses.length; p += 1) {
             const pu = pulses[p]
             const pd = Math.hypot(homeX - pu.x, homeY - pu.y)
             // A thin ring sweeping outward, fading as it goes.
-            const ring = 1 - Math.min(1, Math.abs(pd - pu.t * GLOW_RADIUS * 1.35) / 46)
+            const ring = 1 - Math.min(1, Math.abs(pd - pu.t * glowRadius * 1.35) / ringWidth)
             if (ring > 0) target = Math.max(target, ring * (1 - pu.t) * 0.85)
           }
 
@@ -215,8 +246,8 @@ export function HeroDotField({ className = '', style }) {
           // the nearest dots from piling onto a single point.
           let tx = 0
           let ty = 0
-          if (raw.inside && d < PULL_RADIUS && d > 0.001) {
-            const amount = Math.min(PULL_MAX * falloff(d, PULL_RADIUS), d * PULL_CLAMP)
+          if (raw.inside && d < pullRadius && d > 0.001) {
+            const amount = Math.min(pullMax * falloff(d, pullRadius), d * PULL_CLAMP)
             tx = (-dx / d) * amount
             ty = (-dy / d) * amount
           }
