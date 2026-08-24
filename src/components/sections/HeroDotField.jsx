@@ -1,31 +1,54 @@
 import { useEffect, useRef } from 'react'
 
 /**
- * The hero's dot canvas, reacting to the cursor.
+ * The hero's dot canvas, reacting to the cursor as a soft magnetic field.
  *
- * Canvas rather than a CSS mask because the brief asks for a per-dot trail:
- * a masked layer fades as one piece, whereas each dot here carries its own
- * energy and decays on its own clock, so the field keeps the shape of where the
- * cursor has been for a moment after it moves on.
+ * Canvas rather than a CSS mask because the effect is per-dot: a masked layer
+ * fades and moves as one piece, whereas each dot here carries its own energy
+ * and its own spring, so the field keeps the shape of where the cursor has been
+ * for a moment after it moves on.
  *
- * Each dot rises instantly, holds at full for ~200ms, then falls exponentially.
- * The hold is a real per-dot counter rather than a slow decay curve: without it
- * a dot starts dimming the moment the cursor passes, which reads as a smear
- * instead of a trail. Only opacity responds; dot radius is fixed, so nothing
- * pops or scales.
+ * Three smoothing stages stack to make the response feel unhurried:
  *
- * The loop parks itself when the field is fully settled, so an idle hero costs
- * nothing. Reduced-motion and touch both fall back to the static grid.
+ *   1. The cursor itself is eased, not tracked raw. The field reacts to a point
+ *      that trails the real pointer by a few frames, which is what reads as
+ *      "magnetic" — the surface leans after the cursor rather than snapping to
+ *      it.
+ *   2. Brightness rises quickly and falls slowly. The asymmetry is the trail:
+ *      dots the cursor has passed hold light for ~600ms and ebb away, so recent
+ *      travel stays legible without a hard-edged smear.
+ *   3. Position is a critically-ish damped spring per dot, pulled toward the
+ *      cursor by an amount that falls off with distance and is capped short of
+ *      the cursor itself so nothing collapses into a clump. Releasing the
+ *      cursor doesn't reset anything; the same spring carries each dot home.
+ *
+ * All three rates are normalised against frame time, so the motion is identical
+ * on 60Hz and 120Hz displays.
+ *
+ * The loop parks itself when every dot is back at rest and dark, so an idle
+ * hero costs nothing. Reduced-motion and touch both fall back to the static grid.
  */
 
 const PITCH = 30 // px between dots
-const DOT_R = 1 // px radius — constant, opacity carries the whole effect
+const DOT_R = 1 // px radius at rest
+const DOT_R_PEAK = 1.65 // px radius directly under the cursor
 const BASE_ALPHA = 0.1 // resting dot, matches the static grid
-const PEAK_ALPHA = 0.78 // directly under the cursor
-const RADIUS = 250 // px reach of the reveal
-const FALL = 0.055 // per-frame approach to target when fading
-const HOLD = 12 // frames a dot stays at full before it starts to fade (~200ms)
-const SETTLED = 0.002 // below this, treat a dot as resting
+const PEAK_ALPHA = 0.5 // directly under the cursor
+
+const GLOW_RADIUS = 200 // px reach of the reveal
+const PULL_RADIUS = 100 // px reach of the magnetism — tighter than the glow
+const PULL_MAX = 10 // px, the furthest a dot ever strays from home
+const PULL_CLAMP = 0.5 // never travel more than half the way to the cursor
+
+const POINTER_EASE = 0.13 // per-frame approach of the eased cursor to the real one
+const RISE = 0.17 // per-frame approach when a dot is lighting up
+const FALL = 0.028 // per-frame approach when it is fading — the trailing memory
+const STIFFNESS = 0.055 // spring constant pulling a dot toward its target offset
+const DAMPING = 0.86 // per-frame velocity retention
+
+const SETTLED_E = 0.0015 // below this a dot is treated as dark
+const SETTLED_D = 0.02 // px / px-per-frame below which a dot is treated as home
+const FRAME = 1000 / 60 // rates above are authored against this frame time
 
 export function HeroDotField({ className = '', style }) {
   const canvasRef = useRef(null)
@@ -42,25 +65,53 @@ export function HeroDotField({ className = '', style }) {
     let cols = 0
     let rows = 0
     let energy = new Float32Array(0)
-    let hold = new Float32Array(0)
+    let ox = new Float32Array(0) // current offset from home
+    let oy = new Float32Array(0)
+    let vx = new Float32Array(0) // spring velocity
+    let vy = new Float32Array(0)
     let width = 0
     let height = 0
     let dpr = 1
 
-    const pointer = { x: -1e4, y: -1e4, inside: false }
+    // `raw` is where the cursor actually is; `eased` is what the field follows.
+    const raw = { x: 0, y: 0, inside: false, seen: false }
+    const eased = { x: 0, y: 0 }
     const pulses = []
     let frame = 0
+    let last = 0
 
-    /** Paints every dot at its current energy. */
+    /**
+     * Paints the field. Resting dots are batched into a single path and filled
+     * once — they are the overwhelming majority, and a fillStyle change per dot
+     * is what would otherwise make this expensive.
+     */
     const paint = () => {
       ctx.clearRect(0, 0, width, height)
+
+      ctx.fillStyle = `rgba(255,255,255,${BASE_ALPHA})`
+      ctx.beginPath()
       for (let r = 0; r < rows; r += 1) {
         for (let c = 0; c < cols; c += 1) {
-          const e = energy[r * cols + c]
-          const alpha = BASE_ALPHA + (PEAK_ALPHA - BASE_ALPHA) * e
+          if (energy[r * cols + c] > SETTLED_E) continue
+          const x = c * PITCH + ox[r * cols + c]
+          const y = r * PITCH + oy[r * cols + c]
+          ctx.moveTo(x + DOT_R, y)
+          ctx.arc(x, y, DOT_R, 0, Math.PI * 2)
+        }
+      }
+      ctx.fill()
+
+      for (let r = 0; r < rows; r += 1) {
+        for (let c = 0; c < cols; c += 1) {
+          const i = r * cols + c
+          const e = energy[i]
+          if (e <= SETTLED_E) continue
+          // Radius follows the square of energy so only the dots right under
+          // the cursor thicken at all; everywhere else opacity does the work.
+          const rad = DOT_R + (DOT_R_PEAK - DOT_R) * e * e
           ctx.beginPath()
-          ctx.arc(c * PITCH, r * PITCH, DOT_R, 0, Math.PI * 2)
-          ctx.fillStyle = `rgba(255,255,255,${alpha})`
+          ctx.arc(c * PITCH + ox[i], r * PITCH + oy[i], rad, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(255,255,255,${BASE_ALPHA + (PEAK_ALPHA - BASE_ALPHA) * e})`
           ctx.fill()
         }
       }
@@ -77,8 +128,12 @@ export function HeroDotField({ className = '', style }) {
 
       cols = Math.ceil(width / PITCH) + 1
       rows = Math.ceil(height / PITCH) + 1
-      energy = new Float32Array(cols * rows)
-      hold = new Float32Array(cols * rows)
+      const n = cols * rows
+      energy = new Float32Array(n)
+      ox = new Float32Array(n)
+      oy = new Float32Array(n)
+      vx = new Float32Array(n)
+      vy = new Float32Array(n)
       paint()
     }
 
@@ -90,62 +145,127 @@ export function HeroDotField({ className = '', style }) {
       return () => ro.disconnect()
     }
 
-    /** Smoothstep falloff — no hard edge at the reveal boundary. */
-    const falloff = (d) => {
-      if (d >= RADIUS) return 0
-      const t = 1 - d / RADIUS
+    /** Smoothstep falloff — no hard edge at either boundary. */
+    const falloff = (d, radius) => {
+      if (d >= radius) return 0
+      const t = 1 - d / radius
       return t * t * (3 - 2 * t)
     }
 
-    const step = () => {
-      let active = false
+    /**
+     * Converts a per-frame approach rate into one for the frame actually
+     * rendered, so a 120Hz display eases over the same wall-clock time a 60Hz
+     * one does rather than twice as fast.
+     */
+    const approach = (rate, scale) => 1 - Math.pow(1 - rate, scale)
 
-      // Click pulses expand outward and decay; they add energy, never subtract.
+    const step = (now) => {
+      const dt = last ? Math.min(now - last, 64) : FRAME
+      last = now
+      const scale = dt / FRAME
+
+      // The eased cursor is the whole magnetic feel: everything below reads
+      // from it, never from the raw pointer.
+      if (raw.inside) {
+        const k = approach(POINTER_EASE, scale)
+        eased.x += (raw.x - eased.x) * k
+        eased.y += (raw.y - eased.y) * k
+      }
+
+      // Click pulses expand outward and decay; they add light, never take it.
       for (let i = pulses.length - 1; i >= 0; i -= 1) {
-        pulses[i].t += 0.028
+        pulses[i].t += 0.024 * scale
         if (pulses[i].t >= 1) pulses.splice(i, 1)
       }
 
+      const rise = approach(RISE, scale)
+      const fall = approach(FALL, scale)
+      const damp = Math.pow(DAMPING, scale)
+      let active = false
+
       for (let r = 0; r < rows; r += 1) {
-        const dy = r * PITCH - pointer.y
+        const homeY = r * PITCH
+        const dy = homeY - eased.y
         for (let c = 0; c < cols; c += 1) {
           const i = r * cols + c
-          const dx = c * PITCH - pointer.x
-          let target = pointer.inside ? falloff(Math.hypot(dx, dy)) : 0
+          const homeX = c * PITCH
+          const dx = homeX - eased.x
+          const d = Math.hypot(dx, dy)
 
+          // Brightness --------------------------------------------------
+          let target = raw.inside ? falloff(d, GLOW_RADIUS) : 0
           for (let p = 0; p < pulses.length; p += 1) {
             const pu = pulses[p]
-            const d = Math.hypot(c * PITCH - pu.x, r * PITCH - pu.y)
+            const pd = Math.hypot(homeX - pu.x, homeY - pu.y)
             // A thin ring sweeping outward, fading as it goes.
-            const ring = 1 - Math.min(1, Math.abs(d - pu.t * RADIUS * 1.35) / 46)
+            const ring = 1 - Math.min(1, Math.abs(pd - pu.t * GLOW_RADIUS * 1.35) / 46)
             if (ring > 0) target = Math.max(target, ring * (1 - pu.t) * 0.85)
           }
 
           const e = energy[i]
-          let next
-          if (target > e) {
-            // Re-lit: snap up and restart this dot's hold.
-            next = target
-            hold[i] = HOLD
-          } else if (hold[i] > 0) {
-            // Still holding — stay put.
-            hold[i] -= 1
-            next = e
-          } else {
-            next = e + (target - e) * FALL
+          // Fast attack, slow release: the release is what leaves the trail.
+          let next = e + (target - e) * (target > e ? rise : fall)
+          if (target === 0 && next < SETTLED_E) next = 0
+          energy[i] = next
+
+          // Position ----------------------------------------------------
+          // The pull is measured from home, never from where the dot has
+          // drifted to, so the target is stationary and the spring can't feed
+          // back on itself. Capping at half the distance to the cursor keeps
+          // the nearest dots from piling onto a single point.
+          let tx = 0
+          let ty = 0
+          if (raw.inside && d < PULL_RADIUS && d > 0.001) {
+            const amount = Math.min(PULL_MAX * falloff(d, PULL_RADIUS), d * PULL_CLAMP)
+            tx = (-dx / d) * amount
+            ty = (-dy / d) * amount
           }
-          energy[i] = next < SETTLED && target === 0 ? 0 : next
-          if (energy[i] > 0) active = true
+
+          // Same spring in both directions — nothing special happens when the
+          // cursor leaves, the target simply becomes home again.
+          let nvx = (vx[i] + (tx - ox[i]) * STIFFNESS * scale) * damp
+          let nvy = (vy[i] + (ty - oy[i]) * STIFFNESS * scale) * damp
+          let nox = ox[i] + nvx * scale
+          let noy = oy[i] + nvy * scale
+
+          if (
+            tx === 0 &&
+            ty === 0 &&
+            Math.abs(nox) < SETTLED_D &&
+            Math.abs(noy) < SETTLED_D &&
+            Math.abs(nvx) < SETTLED_D &&
+            Math.abs(nvy) < SETTLED_D
+          ) {
+            nox = 0
+            noy = 0
+            nvx = 0
+            nvy = 0
+          }
+
+          vx[i] = nvx
+          vy[i] = nvy
+          ox[i] = nox
+          oy[i] = noy
+
+          if (next > 0 || nox !== 0 || noy !== 0) active = true
         }
       }
 
       paint()
-      // Park the loop once everything has settled; restart on the next move.
-      frame = active || pointer.inside ? requestAnimationFrame(step) : 0
+      // Park the loop once every dot is dark and home; the next move wakes it.
+      if (active || raw.inside) {
+        frame = requestAnimationFrame(step)
+      } else {
+        frame = 0
+        last = 0
+      }
     }
 
     const wake = () => {
-      if (!frame) frame = requestAnimationFrame(step)
+      if (!frame) {
+        last = 0
+        frame = requestAnimationFrame(step)
+      }
     }
 
     const onMove = (event) => {
@@ -155,10 +275,17 @@ export function HeroDotField({ className = '', style }) {
         event.clientX <= rect.right &&
         event.clientY >= rect.top &&
         event.clientY <= rect.bottom
-      pointer.inside = inside
+      raw.inside = inside
       if (inside) {
-        pointer.x = event.clientX - rect.left
-        pointer.y = event.clientY - rect.top
+        raw.x = event.clientX - rect.left
+        raw.y = event.clientY - rect.top
+        // First sighting: start the eased cursor where the real one is, so the
+        // field doesn't sweep in from wherever it was last parked.
+        if (!raw.seen) {
+          raw.seen = true
+          eased.x = raw.x
+          eased.y = raw.y
+        }
       }
       wake()
     }
@@ -180,10 +307,12 @@ export function HeroDotField({ className = '', style }) {
      * The hero spans the top of the viewport, so a cursor leaving the window
      * through that edge can have its final pointermove still land inside the
      * canvas — leaving the field lit with nothing to fade it. Losing the
-     * pointer or the window has to release it explicitly.
+     * pointer or the window has to release it explicitly. `seen` resets too, so
+     * the next entry re-anchors instead of easing across from the old position.
      */
     const release = () => {
-      pointer.inside = false
+      raw.inside = false
+      raw.seen = false
       wake()
     }
 
