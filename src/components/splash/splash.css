@@ -1,0 +1,234 @@
+/*
+ * Splash / loading screen — the 2D overlay.
+ *
+ * Plain CSS rather than utilities: every value here is a fixed number from
+ * the design handoff and the layer has to be pixel-accurate, so the spec
+ * reads better as one block than as forty arbitrary utility values.
+ * Unlayered rules win over Tailwind's layered utilities, so nothing here
+ * needs a specificity escape hatch.
+ */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #000;
+  overflow: hidden;
+  font-family: 'Instrument Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  /* The handoff's card metrics were measured without a CSS reset, so anything
+   * it does not give an explicit line-height for wants `normal` rather than
+   * the 1.5 Tailwind's preflight inherits down. Without this the model chips
+   * gain a few pixels and the cards measure taller than the spec. */
+  line-height: normal;
+  transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Handing off to the app. */
+.splash[data-exiting='true'] {
+  opacity: 0;
+}
+
+/* --- z 0: the field of node cards and their wires --- */
+
+.splash-field {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 0;
+  width: 1600px;
+  height: 900px;
+  margin: -450px 0 0 -800px;
+  transform-origin: 50% 50%;
+  pointer-events: none;
+}
+
+.splash-links {
+  position: absolute;
+  inset: 0;
+  width: 1600px;
+  height: 900px;
+  overflow: visible;
+}
+
+.splash-links path {
+  fill: none;
+  stroke: #8b929b;
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0;
+}
+
+.splash-card {
+  position: absolute;
+  border-radius: 17px;
+  opacity: 0;
+  background: #0c0c0e;
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  box-shadow:
+    0 26px 60px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  will-change: opacity, transform;
+}
+
+.splash-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px 16px 16px;
+}
+
+.splash-tile {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+
+.splash-tile svg,
+.splash-acts svg {
+  display: block;
+}
+
+.splash-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-top: 1px;
+}
+
+.splash-ttl {
+  color: #f3f5f8;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  line-height: 1.3;
+}
+
+.splash-sub {
+  color: #7f868f;
+  font-size: 12.5px;
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+.splash-chip {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #b7bec7;
+  background: #1a1b1f;
+}
+
+.splash-acts {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  padding-top: 3px;
+}
+
+.splash-acts svg {
+  opacity: 0.85;
+}
+
+.splash-desc {
+  padding: 13px 16px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #797f88;
+  text-wrap: pretty;
+}
+
+.splash-port {
+  position: absolute;
+  top: 31px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #050506;
+}
+
+.splash-port-in {
+  left: -6.5px;
+  background: #22c55e;
+}
+
+.splash-port-out {
+  right: -6.5px;
+  background: #3b82f6;
+}
+
+/* --- z 1: the mark --- */
+
+.splash-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.splash-scene canvas {
+  display: block;
+}
+
+/* --- z 2: vignette --- */
+
+.splash-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(120% 88% at 50% 50%, transparent 38%, rgba(0, 0, 0, 0.62) 100%);
+}
+
+/* --- z 3: loader --- */
+
+.splash-loader {
+  position: absolute;
+  left: 50%;
+  bottom: 8vh;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: none;
+  display: grid;
+  justify-items: center;
+  gap: 13px;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+.splash-track {
+  position: relative;
+  width: min(240px, 42vw);
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.splash-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.splash-pct {
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: #9ba2ab;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Reduced motion: the mark holds still, the field sits at a low constant
+ * level instead of being swept, and the loader still runs. Set from JS so
+ * the single frame loop stays the only writer of these values.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .splash {
+    transition: none;
+  }
+}

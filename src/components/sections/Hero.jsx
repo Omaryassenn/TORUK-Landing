@@ -31,7 +31,7 @@ export function Hero() {
 
       <div
         ref={ref}
-        className="relative z-10 mx-auto flex w-full max-w-[100rem] flex-1 flex-col px-6 pt-[8.25rem] pb-[2.0625rem] lg:pt-[12.0625rem]"
+        className="relative z-10 mx-auto flex w-full max-w-[100rem] flex-1 flex-col px-6 pt-[8.25rem] pb-[2.0625rem] lg:pt-[10rem]"
       >
         <div className="flex max-w-[54.0625rem] flex-col gap-[0.7rem]">
           <p
