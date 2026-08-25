@@ -10,8 +10,6 @@ const INERT = {
   contentReady: true,
   registerLogo: () => {},
   registerSlot: () => {},
-  registerBar: () => {},
-  registerPercent: () => {},
 }
 
 export const SplashContext = createContext(null)
