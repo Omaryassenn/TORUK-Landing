@@ -24,53 +24,63 @@
   --ease-out-quint: cubic-bezier(0.16, 1, 0.3, 1);
 
   /*
-   * Fluid scale. The Figma frame is 1440 wide, so every ramp below is solved to
-   * land on the frame's exact value at 1440 and interpolate down to a hand-set
-   * small-screen value at 375. Above 1440 the ramps are already at their max and
-   * the root font-size takes over (see `html` in the base layer), so one rem
-   * value per token covers both directions.
+   * Type scale. Every value is a flat rem — one number per token, no `vw` in
+   * sight — so a token renders at the same size on every desktop screen and
+   * only ever changes at the two breakpoints below.
    *
-   * Each ramp is `clamp(min, intercept + slope*vw, design value at 1440)`.
+   * This replaces a `clamp(min, intercept + slope*vw, max)` ramp per token.
+   * Those ramps compounded with the `vw`-driven root font-size, and the product
+   * landed on a 28.56px headline and a 41.9px pill at 1512 wide — a different
+   * pair of arbitrary decimals on every display.
+   *
+   * Authored in rem rather than px so the scale still answers to the reader's
+   * own browser font-size preference; at the default 16px root the px values in
+   * the comments are what actually renders.
    */
-  --text-eyebrow: clamp(0.875rem, 0.7254rem + 0.6385vw, 1.3rem);
-  --text-headline: clamp(1.125rem, 0.9226rem + 0.8638vw, 1.7rem);
-  --text-cta: clamp(0.875rem, 0.803rem + 0.4413vw, 1.2rem);
-  --text-capability: clamp(0.75rem, 0.6162rem + 0.7042vw, 1.25rem);
-  /* Nav only renders from `lg`, so this ramp is anchored at 1024 rather than 375. */
-  --text-nav: clamp(0.9375rem, 0.475rem + 0.7212vw, 1.125rem);
+  --text-eyebrow: 1.25rem; /* 20px */
+  --text-headline: 1.875rem; /* 30px */
+  --text-cta: 1.25rem; /* 20px */
+  --text-capability: 1.25rem; /* 20px */
+  /* Nav only renders from `lg`, so it needs no small-screen step. */
+  --text-nav: 1.125rem; /* 18px */
+
+  /*
+   * Pill height and headline measure are tokens rather than literals in the
+   * components, because both have to step with the type: a taller label in a
+   * fixed 40px pill crowds it, and a larger headline behind a fixed 46rem
+   * measure just wraps to more lines instead of reading bigger.
+   */
+  --spacing-button: 2.5rem; /* 40px */
+  --container-headline: 46rem; /* 736px */
 
   /*
    * The hero's top padding is the difference between the copy clearing the
-   * header and floating halfway down the viewport, so it rides the same ramp —
-   * but bounded by viewport height as well. On a short, wide window the width
-   * ramp alone pushes the copy a third of the way down the screen and the
-   * composition overflows; 22svh caps that. At the design's own 1440x1024 the
-   * ramp (193px) is the smaller of the two, so the frame is reproduced exactly.
+   * header and floating halfway down the viewport, so this one stays fluid —
+   * it is position, not type, and nobody measures it. `22svh` caps it so a
+   * short, wide window can't push the copy a third of the way down the screen
+   * and overflow the composition. At the design's own 1440x1024 the width term
+   * (193px) is the smaller of the two, so the frame is reproduced exactly.
    */
   --spacing-hero-top: min(clamp(6rem, 3.865rem + 9.108vw, 12.0625rem), 22svh);
-  --spacing-wordmark: clamp(1.125rem, 0.949rem + 0.7512vw, 1.625rem);
+  /* Lockup height: the frame's 30px trimmed to 26px, 21px below `lg`. */
+  --spacing-wordmark: 1.625rem; /* 26px */
 }
 
 @layer base {
   html {
     /*
-     * Above the 1440 design width the whole layout scales instead of stranding
-     * a fixed-size composition in the middle of a large display. 1.1111vw is
-     * 16px at exactly 1440, so this is inert at and below the design width and
-     * grows proportionally above it, holding at 28px from ~2520 up.
+     * 1rem = the browser's own font-size, and nothing here moves it. This used
+     * to be `clamp(1rem, min(1.1111vw, 2.2svh), 1.75rem)`, which scaled the
+     * whole layout above the 1440 design width — but it also multiplied every
+     * rem-authored value by an arbitrary factor, so a 1512-wide laptop and a
+     * 1920-wide monitor rendered two different sets of fractional sizes.
      *
-     * Width alone is not enough: a short, wide window (2560x800) would scale
-     * type off the width and overflow vertically. The `min` lets whichever axis
-     * is actually limiting drive the scale. 2.2svh is deliberately looser than
-     * the design's own 16px-per-1024 so that height only intervenes once the
-     * window is genuinely short — at 1440x1024 the width term is smaller and
-     * the frame is reproduced exactly.
-     *
-     * Everything downstream is authored in rem, so type, gutters, button
-     * geometry and the max-widths all scale together and the design keeps its
-     * proportions rather than just getting wider.
+     * Type, button geometry and the max-widths are all rem, so they now hold
+     * their design values on every desktop and still respond to a reader who
+     * has raised their default font-size. Wide displays get more canvas around
+     * the composition rather than a proportionally larger copy of it.
      */
-    font-size: clamp(1rem, min(1.1111vw, 2.2svh), 1.75rem);
+    font-size: 100%;
     background-color: var(--color-canvas);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -91,6 +101,46 @@
   html[data-splash='active'] {
     overflow: hidden;
     scrollbar-gutter: stable;
+  }
+
+  /*
+   * The one small-screen step. The old `vw` ramps interpolated continuously
+   * between a 375-wide and a 1440-wide value; a single breakpoint gets the same
+   * result at both ends without inventing a size for every width in between.
+   */
+  @media (width < 48rem) {
+    :root {
+      --text-eyebrow: 0.875rem; /* 14px */
+      --text-headline: 1.375rem; /* 22px */
+      --text-cta: 1rem; /* 16px */
+      --text-capability: 1rem; /* 16px */
+      --spacing-wordmark: 1.3125rem; /* 21px */
+    }
+  }
+
+  /*
+   * Large-desktop step. Above 120rem the composition held its 1440 values and
+   * turned all the extra width into empty canvas — the copy read as a small
+   * block in the corner of a 2560 display. This scales the whole lockup-to-CTA
+   * stack by a notch rather than the type alone, and restores two values the
+   * Figma frame specifies and the 1440 tier deliberately trims: the 44px pill
+   * and the 30px lockup.
+   *
+   * A step, not a ramp — sizes stay whole numbers at every width inside the
+   * tier, which is the point of having dropped the `vw` ramps.
+   */
+  @media (width >= 120rem) {
+    :root {
+      --text-eyebrow: 1.5rem; /* 24px */
+      --text-headline: 2.25rem; /* 36px */
+      --text-cta: 1.375rem; /* 22px */
+      --text-capability: 1.5rem; /* 24px */
+      --text-nav: 1.25rem; /* 20px */
+      --spacing-button: 2.75rem; /* 44px — the frame's own height */
+      --spacing-wordmark: 1.875rem; /* 30px — likewise */
+      /* Grown in step with the headline so its line breaks hold. */
+      --container-headline: 55rem; /* 880px */
+    }
   }
 
   /* One visible focus treatment for every interactive element. */

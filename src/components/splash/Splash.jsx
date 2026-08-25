@@ -3,25 +3,6 @@ import { site } from '@/content/site'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { useSplash } from '@/components/splash/context'
 
-/**
- * The black layer, and the frame the header's wordmark flies to.
- *
- * The slot is an empty box with the lockup's own aspect ratio: the grid centres
- * it, the provider measures it, and the real wordmark is transformed onto it.
- * Layout stays in CSS, so the composition recentres itself at any viewport
- * without a single measured constant in JS — and because the slot is empty,
- * what the visitor watches assemble here is the header's own lockup.
- *
- * There is no progress readout, and nothing behind the lockup: no halo, no
- * gradient, no vignette. The reveal is the loading state — it runs on its own
- * clock, and the provider holds on the finished lockup if the page is still
- * fetching — so the layer is flat canvas black and the only thing in it is the
- * logo.
- *
- * Under reduced motion the slot carries its own copy of the lockup instead —
- * nothing travels, nothing scales, nothing wipes, and the layer cross-fades to
- * the header's copy sitting in position underneath.
- */
 export function Splash() {
   const { phase, reduced, registerSlot } = useSplash()
 

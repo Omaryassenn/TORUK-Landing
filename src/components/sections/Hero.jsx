@@ -4,27 +4,11 @@ import { useSplash } from '@/components/splash/context'
 import { Button } from '@/components/ui/Button'
 import { ChainBackdrop } from '@/components/sections/ChainBackdrop'
 
-/**
- * Hero from Figma node 10017:152334 (frame 1440x1024). Design values:
- *
- *   text block   x 24,   y 193,  w 865  · gap 20 then 24
- *   eyebrow      24/32   Light,  hugs its text (see the gradient note in CSS)
- *   headline     32/42   Regular, w 720
- *   capabilities x 1130, y 879,  20/1.4 Light, 33px off the bottom
- *
- * The reveal cascade is the project's own scroll-entry pattern, not something
- * the frame specifies.
- */
+
 export function Hero() {
   const { ref, revealed } = useReveal()
   const { active: splashActive, contentReady } = useSplash()
 
-  /*
-   * On a first load the hero is already in view, so the observer fires straight
-   * away — the splash holds the cascade back until the lockup is on its way to
-   * the navbar, and the copy then rises through the clearing black layer rather
-   * than waiting for it to finish.
-   */
   const shown = revealed && contentReady
 
   /** Cascades the eyebrow → headline → CTAs → capability list. */
@@ -54,7 +38,7 @@ export function Hero() {
 
           <div className="flex flex-col gap-[1.5rem]">
             <h1
-              className="reveal font-display max-w-[45rem] text-headline leading-[1.3125] font-normal text-ink uppercase"
+              className="reveal font-display max-w-headline text-headline leading-[1.3125] font-normal text-ink uppercase"
               {...step(1)}
             >
               {hero.headline}

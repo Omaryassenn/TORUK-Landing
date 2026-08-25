@@ -1,18 +1,4 @@
-/**
- * Builds the hidden workflow graph that lives inside the hero's chain.
- *
- * Deterministic by design — a fixed-seed PRNG rather than Math.random, so the
- * graph is identical on every render and between server and client. The layout
- * is structured rather than scattered: each flow reads left to right through
- * build → orchestrate → deploy → govern, with branches, parallel fan-outs and
- * loop-backs, so whatever the cursor uncovers looks like a system under load
- * rather than decoration.
- *
- * Units are CSS px against the design's 1440x1024 frame — the same space the
- * loop-hole mask is authored in — so a node renders at roughly the size it
- * would in a real flow editor. Lanes deliberately overrun the frame on both
- * sides: the reveal should never expose a flow's beginning or end.
- */
+
 export const CANVAS = { w: 1440, h: 1024 }
 
 const NODE = { w: 150, h: 42, r: 9 }

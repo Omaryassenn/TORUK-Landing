@@ -6,10 +6,14 @@ import { cn } from '@/lib/cn'
  * strokes inside the box and CSS strokes outside it, so the frame's 24px
  * inline padding becomes 23px + a 1px border.
  *
- * Height is capped at 40px (2.5rem) rather than the frame's 44px, so the block
- * padding is (40 - 20 label - 2 border) / 2 = 9px. Lengths are rem so the pill
- * grows with the reader's font-size preference; 40px is the cap at a 16px root,
- * not a hard ceiling.
+ * Height comes from `--spacing-button` (40px, 44px from 120rem up) rather than
+ * from label + padding + border — the derived version drifted into fractional
+ * heights (41.9px on a 1512-wide screen) once the type scale moved under it.
+ * `leading-none` plus `items-center` centres the label in that fixed box, so
+ * every variant and tier lands on the token's height exactly.
+ *
+ * Lengths are rem so the pill grows with the reader's font-size preference;
+ * the px figures above are the heights at a 16px root, not hard ceilings.
  *
  * `solid` is the inverted fill, `outline` the full-white hairline — the design
  * uses a solid white border here, not the dimmed rule used elsewhere.
@@ -27,8 +31,8 @@ export function Button({ as = 'a', variant = 'solid', className, ...props }) {
   return (
     <Tag
       className={cn(
-        'inline-flex items-center justify-center rounded-[62.5rem] px-[1.4375rem] py-[0.5625rem]',
-        'font-display text-cta leading-[1.25rem] font-medium uppercase whitespace-nowrap',
+        'inline-flex h-button items-center justify-center rounded-[62.5rem] px-[1.4375rem]',
+        'font-display text-cta leading-none font-medium uppercase whitespace-nowrap',
         'transition-colors duration-200 active:scale-[0.98] motion-reduce:active:scale-100',
         variants[variant],
         className,

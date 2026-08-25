@@ -10,11 +10,9 @@ export function Header({ activeHref = '/' }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const { active: splashActive, staged, chromeVisible, registerLogo } = useSplash()
 
-  /* Raised over the black layer only once the lockup is parked in the centre;
-   * before that the header belongs under it like the rest of the page. */
+
   const lifted = staged
 
-  /* Everything except the lockup arrives after the flight, on a short fade. */
   const chrome = cn(
     'transition-opacity duration-[520ms] ease-out-quint motion-reduce:transition-none',
     chromeVisible ? 'opacity-100' : 'opacity-0',
@@ -22,25 +20,26 @@ export function Header({ activeHref = '/' }) {
 
   return (
     <header
-      /* Nothing here is reachable while the black layer is up, by pointer or
-       * by keyboard — the lockup is scenery for the duration, not a link. */
+     
       inert={splashActive}
       className={cn('absolute inset-x-0 top-0', lifted ? 'z-[60]' : 'z-20')}
     >
       <div className="flex items-center px-6 pt-[1.5rem] lg:pt-[1.8125rem]">
-        <a
-          ref={registerLogo}
-          href="/"
-          aria-label={`${site.name} home`}
-          className="shrink-0"
-        >
-          <Wordmark />
-        </a>
+        <div className="flex flex-1 items-center">
+          <a
+            ref={registerLogo}
+            href="/"
+            aria-label={`${site.name} home`}
+            className="shrink-0"
+          >
+            <Wordmark />
+          </a>
+        </div>
 
         <nav
           aria-label="Primary"
           className={cn(
-            'ms-8 hidden flex-1 items-center justify-center gap-8 lg:flex xl:gap-12 min-[90rem]:ms-[10.125rem] min-[90rem]:w-[43.5rem] min-[90rem]:flex-none min-[90rem]:gap-20',
+            'hidden shrink-0 items-center justify-center gap-8 lg:flex xl:gap-12 min-[90rem]:gap-20',
             chrome,
           )}
         >
@@ -64,42 +63,40 @@ export function Header({ activeHref = '/' }) {
           })}
         </nav>
 
-        {/*
-          * Wrapper, not `hidden lg:inline-flex` on the Button: its base classes
-          * already set `inline-flex`, and at equal specificity the winner is
-          * whichever lands later in the stylesheet — which let the pill render
-          * on mobile, on top of the wordmark.
-          */}
-        <div className={cn('ms-auto hidden lg:block', chrome)}>
-          <Button href={headerCta.href}>{headerCta.label}</Button>
-        </div>
+        {/* Mirror of the lockup's column, so the nav's centre is the header's. */}
+        <div className="flex flex-1 items-center justify-end">
+        
+          <div className={cn('hidden lg:block', chrome)}>
+            <Button href={headerCta.href}>{headerCta.label}</Button>
+          </div>
 
-        <button
-          type="button"
-          onClick={() => setMenuOpen((open) => !open)}
-          aria-expanded={menuOpen}
-          aria-controls="mobile-nav"
-          className={cn(
-            'ms-auto grid size-9 place-items-center rounded-[0.625rem] border border-hairline lg:hidden',
-            chrome,
-          )}
-        >
-          <span className="sr-only">
-            {menuOpen ? 'Close menu' : 'Open menu'}
-          </span>
-          <svg
-            viewBox="0 0 16 16"
-            aria-hidden="true"
-            className="w-4 stroke-ink"
-            strokeWidth="1.25"
-          >
-            {menuOpen ? (
-              <path d="M3 3l10 10M13 3L3 13" />
-            ) : (
-              <path d="M2 5h12M2 11h12" />
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav"
+            className={cn(
+              'grid size-9 place-items-center rounded-[0.625rem] border border-hairline lg:hidden',
+              chrome,
             )}
-          </svg>
-        </button>
+          >
+            <span className="sr-only">
+              {menuOpen ? 'Close menu' : 'Open menu'}
+            </span>
+            <svg
+              viewBox="0 0 16 16"
+              aria-hidden="true"
+              className="w-4 stroke-ink"
+              strokeWidth="1.25"
+            >
+              {menuOpen ? (
+                <path d="M3 3l10 10M13 3L3 13" />
+              ) : (
+                <path d="M2 5h12M2 11h12" />
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
 
       {menuOpen && (

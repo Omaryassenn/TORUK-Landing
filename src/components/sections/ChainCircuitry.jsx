@@ -1,25 +1,7 @@
 import { useMemo } from 'react'
 import { CANVAS, KINDS, buildCircuitry } from '@/lib/circuitry'
 
-/**
- * The hidden workflow layer inside the hero's chain.
- *
- * Two masks, nested rather than composited, because each element masks its own
- * subtree and that avoids `mask-composite` support questions:
- *
- *   outer — the cursor spotlight. A fixed-size radial gradient moved with
- *           `mask-position`, so a pointermove repaints the gradient's position
- *           instead of re-rasterising the gradient itself.
- *   inner — the cable silhouette (`hero-chain-mask.webp`, the artwork's own
- *           alpha channel, pre-rotated and eroded). This is what confines the
- *           graph to the *inside* of the ribbon: no hand-placement, no drift,
- *           it is literally the cable's shape.
- *
- * Intersecting the two means a node is visible only where cable and cursor
- * overlap — everything else stays in the dark.
- */
 
-/** 16x16 abstract marks. Geometric on purpose — nothing figurative. */
 function Glyph({ kind }) {
   switch (kind) {
     case 'circle-dot':
@@ -99,15 +81,7 @@ export function ChainCircuitry() {
           width: 'max(100%, calc(100svh * 1440 / 1024))',
         }}
       >
-        {/*
-         * The loop interiors. `hero-loop-holes.webp` is derived from the
-         * artwork's own alpha: for every gap in the cable, check whether cable
-         * lies on both sides along BOTH axes — true only inside a ring, since
-         * open background is bounded on one side at most. Run over the whole
-         * rotated artwork (rings that leave the frame still get bounded), then
-         * cropped to the frame, eroded so nodes sit clear of the braid, and
-         * feathered. Authored at 1440x1024, so it aligns to this box directly.
-         */}
+       
         <div
           className="absolute inset-0"
           style={{

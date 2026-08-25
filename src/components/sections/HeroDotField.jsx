@@ -1,41 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-/**
- * The hero's dot canvas, reacting to the cursor as a soft magnetic field.
- *
- * Canvas rather than a CSS mask because the effect is per-dot: a masked layer
- * fades and moves as one piece, whereas each dot here carries its own energy
- * and its own spring, so the field keeps the shape of where the cursor has been
- * for a moment after it moves on.
- *
- * Three smoothing stages stack to make the response feel unhurried:
- *
- *   1. The cursor itself is eased, not tracked raw. The field reacts to a point
- *      that trails the real pointer by a few frames, which is what reads as
- *      "magnetic" — the surface leans after the cursor rather than snapping to
- *      it.
- *   2. Brightness rises quickly and falls slowly. The asymmetry is the trail:
- *      dots the cursor has passed hold light for ~600ms and ebb away, so recent
- *      travel stays legible without a hard-edged smear.
- *   3. Position is a critically-ish damped spring per dot, pulled toward the
- *      cursor by an amount that falls off with distance and is capped short of
- *      the cursor itself so nothing collapses into a clump. Releasing the
- *      cursor doesn't reset anything; the same spring carries each dot home.
- *
- * All three rates are normalised against frame time, so the motion is identical
- * on 60Hz and 120Hz displays.
- *
- * The loop parks itself when every dot is back at rest and dark, so an idle
- * hero costs nothing. Reduced-motion and touch both fall back to the static grid.
- */
 
-/*
- * Geometry is authored against a 16px root, then multiplied by the document's
- * own scale (see the fluid root font-size in index.css). Without that the grid
- * would keep a 30px pitch while every other element grew, and the texture would
- * read progressively finer on larger displays instead of holding the design's
- * proportions.
- */
 const PITCH = 30 // px between dots
 const DOT_R = 1 // px radius at rest
 const DOT_R_PEAK = 1.65 // px radius directly under the cursor
