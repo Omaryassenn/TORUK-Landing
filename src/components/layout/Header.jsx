@@ -3,6 +3,7 @@ import { cn } from '@/lib/cn'
 import { site, nav, headerCta } from '@/content/site'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { Button } from '@/components/ui/Button'
+import { useSplash } from '@/components/splash/context'
 
 /**
  * Sits over the hero art rather than on its own bar — the Figma frame has no
@@ -14,20 +15,48 @@ import { Button } from '@/components/ui/Button'
  * only clears the gutters at the design's own 1440 — at Tailwind's `xl` (1280)
  * it overruns and the pill lands on top of "Blogs". Hence the exact metrics are
  * gated on `min-[90rem]`, with a centred, evenly-gapped nav below that.
+ *
+ * The wordmark link doubles as the splash's shared element. It keeps its normal
+ * layout slot throughout — the splash only ever writes a transform to it — so
+ * the header never moves and the lockup lands exactly where it already was.
  */
 export function Header({ activeHref = '/' }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { active: splashActive, staged, chromeVisible, registerLogo } = useSplash()
+
+  /* Raised over the black layer only once the lockup is parked in the centre;
+   * before that the header belongs under it like the rest of the page. */
+  const lifted = staged
+
+  /* Everything except the lockup arrives after the flight, on a short fade. */
+  const chrome = cn(
+    'transition-opacity duration-[520ms] ease-out-quint motion-reduce:transition-none',
+    chromeVisible ? 'opacity-100' : 'opacity-0',
+  )
 
   return (
-    <header className="absolute inset-x-0 top-0 z-20">
+    <header
+      /* Nothing here is reachable while the black layer is up, by pointer or
+       * by keyboard — the lockup is scenery for the duration, not a link. */
+      inert={splashActive}
+      className={cn('absolute inset-x-0 top-0', lifted ? 'z-[60]' : 'z-20')}
+    >
       <div className="flex items-center px-6 pt-[1.5rem] lg:pt-[1.8125rem]">
-        <a href="/" aria-label={`${site.name} home`} className="shrink-0">
+        <a
+          ref={registerLogo}
+          href="/"
+          aria-label={`${site.name} home`}
+          className="shrink-0"
+        >
           <Wordmark />
         </a>
 
         <nav
           aria-label="Primary"
-          className="ms-8 hidden flex-1 items-center justify-center gap-8 lg:flex xl:gap-12 min-[90rem]:ms-[10.125rem] min-[90rem]:w-[43.5rem] min-[90rem]:flex-none min-[90rem]:justify-between min-[90rem]:gap-0"
+          className={cn(
+            'ms-8 hidden flex-1 items-center justify-center gap-8 lg:flex xl:gap-12 min-[90rem]:ms-[10.125rem] min-[90rem]:w-[43.5rem] min-[90rem]:flex-none min-[90rem]:justify-between min-[90rem]:gap-0',
+            chrome,
+          )}
         >
           {nav.map((item) => {
             const active = item.href === activeHref
@@ -55,7 +84,7 @@ export function Header({ activeHref = '/' }) {
           * whichever lands later in the stylesheet — which let the pill render
           * on mobile, on top of the wordmark.
           */}
-        <div className="ms-auto hidden lg:block">
+        <div className={cn('ms-auto hidden lg:block', chrome)}>
           <Button href={headerCta.href}>{headerCta.label}</Button>
         </div>
 
@@ -64,7 +93,10 @@ export function Header({ activeHref = '/' }) {
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-controls="mobile-nav"
-          className="ms-auto grid size-9 place-items-center rounded-[0.625rem] border border-hairline lg:hidden"
+          className={cn(
+            'ms-auto grid size-9 place-items-center rounded-[0.625rem] border border-hairline lg:hidden',
+            chrome,
+          )}
         >
           <span className="sr-only">
             {menuOpen ? 'Close menu' : 'Open menu'}

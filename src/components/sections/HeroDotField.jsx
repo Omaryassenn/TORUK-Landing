@@ -44,7 +44,7 @@ const PEAK_ALPHA = 0.5 // directly under the cursor
 
 const GLOW_RADIUS = 200 // px reach of the reveal
 const PULL_RADIUS = 100 // px reach of the magnetism — tighter than the glow
-const PULL_MAX = 10 // px, the furthest a dot ever strays from home
+const PULL_MAX = 5 // px, the furthest a dot ever strays from home
 const PULL_CLAMP = 0.5 // never travel more than half the way to the cursor
 const RING_WIDTH = 46 // px thickness of the click pulse's sweeping ring
 

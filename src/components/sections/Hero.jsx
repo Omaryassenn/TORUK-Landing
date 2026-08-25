@@ -1,5 +1,6 @@
 import { hero } from '@/content/hero'
 import { useReveal } from '@/hooks/useReveal'
+import { useSplash } from '@/components/splash/context'
 import { Button } from '@/components/ui/Button'
 import { ChainBackdrop } from '@/components/sections/ChainBackdrop'
 
@@ -16,15 +17,25 @@ import { ChainBackdrop } from '@/components/sections/ChainBackdrop'
  */
 export function Hero() {
   const { ref, revealed } = useReveal()
+  const { active: splashActive, contentReady } = useSplash()
+
+  /*
+   * On a first load the hero is already in view, so the observer fires straight
+   * away — the splash holds the cascade back until the lockup is on its way to
+   * the navbar, and the copy then rises through the clearing black layer rather
+   * than waiting for it to finish.
+   */
+  const shown = revealed && contentReady
 
   /** Cascades the eyebrow → headline → CTAs → capability list. */
   const step = (index) => ({
-    'data-revealed': revealed,
+    'data-revealed': shown,
     style: { '--reveal-delay': `${index * 90}ms` },
   })
 
   return (
     <section
+      inert={splashActive}
       className="relative isolate flex min-h-svh flex-col overflow-hidden bg-canvas"
     >
       <ChainBackdrop />
@@ -58,7 +69,7 @@ export function Hero() {
           </div>
         </div>
 
-        <ul
+        {/* <ul
           className="reveal font-display mt-auto list-disc ps-[1.875rem] pt-12 text-capability leading-[1.4] font-light text-ink uppercase lg:self-end lg:pt-0"
           {...step(3)}
         >
@@ -67,7 +78,7 @@ export function Hero() {
               {capability}
             </li>
           ))}
-        </ul>
+        </ul> */}
       </div>
     </section>
   )

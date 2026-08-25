@@ -82,6 +82,17 @@
     font-family: var(--font-sans);
   }
 
+  /*
+   * Nothing scrolls behind the splash. `scrollbar-gutter: stable` keeps the
+   * reserved scrollbar width the same while `overflow` is locked, so releasing
+   * the lock can't shunt the layout sideways on platforms with classic
+   * scrollbars. On overlay-scrollbar platforms both lines are already a no-op.
+   */
+  html[data-splash='active'] {
+    overflow: hidden;
+    scrollbar-gutter: stable;
+  }
+
   /* One visible focus treatment for every interactive element. */
   :focus-visible {
     outline: 1px solid var(--color-ink);

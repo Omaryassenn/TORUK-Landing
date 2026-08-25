@@ -58,7 +58,7 @@ export function ChainBackdrop() {
           className="absolute max-w-none"
           style={{
             left: '52%',
-            top: '53%',
+            top: '57%',
             width: '100%',
             height: '187%',
             transform: 'translate(-50%, -50%) rotate(123.48deg)',
