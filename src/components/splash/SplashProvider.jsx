@@ -3,52 +3,90 @@ import { SplashContext } from '@/components/splash/context'
 
 /**
  * The splash is a shared-element (FLIP) hand-off, not a screen that fades into
- * another screen: the wordmark the visitor watches load *is* the header's
+ * another screen: the wordmark the visitor watches assemble *is* the header's
  * wordmark, parked in the middle of the viewport by a transform and released
  * back to its own layout position when loading finishes. Nothing is duplicated,
  * so it can't drift out of alignment and it can't shift the page — the header
  * has been sitting in its final position the whole time, under an opaque layer.
  *
- * The provider owns the choreography and writes the logo's transform directly.
- * React state here only carries the coarse phase, so the per-frame work (the
- * progress fill and its readout) never re-renders the tree.
+ * The lockup activates rather than simply appearing:
+ *
+ *   1. the mark fades up alone, dead centre of the viewport;
+ *   2. the wordmark is wiped out of the mark's right edge, and the same motion
+ *      slides the mark left by exactly the offset that leaves the finished
+ *      lockup centred — the wipe opening and the mark travelling are one
+ *      transition on one curve, so the wordmark reads as displacing the mark
+ *      rather than appearing beside it;
+ *   3. the lockup eases the last thousandths of its scale, so it settles rather
+ *      than stops.
+ *
+ * Only then does it fly to the navbar. No glow, no light, no gradient: the black
+ * stays flat and the only things that move are a clip-path and a transform.
+ *
+ * The provider owns the choreography and writes every transform directly to the
+ * DOM. React state here carries nothing but the coarse phase, so the sequence
+ * never re-renders the tree while it runs.
  */
 
 /** Once per tab. Section links don't remount the app, reloads shouldn't replay. */
 const SEEN_KEY = 'toruk:splash-seen'
 
 /*
- * Milliseconds. The sequence is budgeted to land under 2.5s end to end:
- * enter 380, progress ~1150, hold 200, then the flight starts 150ms into the
- * progress fade-out and runs 820 — about 2.3s, with the page reveal running
- * underneath the flight rather than after it. The two fades the splash layer
- * owns (its own opacity, and the progress bar's) are declared in Splash.jsx.
+ * Milliseconds. Budgeted against the brief: the mark occupies 0–0.62s, the
+ * wordmark wipes (and displaces the mark) from 0.48s to 1.46s — overlapping the
+ * mark's arrival so the two read as one gesture — the settle and hold carry to
+ * ~2.14s, and the flight to the navbar runs 820 from there, with the page
+ * revealing underneath it rather than after it.
  */
 const T = {
-  enter: 380,
-  progressIn: 200,
-  minLoad: 950,
-  maxLoad: 2400,
-  hold: 200,
-  moveDelay: 150,
+  markIn: 620,
+  markScale: 860,
+  wordDelay: 480,
+  word: 980,
+  settle: 460,
+  hold: 220,
   move: 820,
   chromeDelay: 150,
   contentDelay: 260,
+  /* Hard cap on holding the settled lockup while the page is still fetching. */
+  maxWait: 3200,
+  reducedHold: 560,
   reducedOut: 260,
 }
 
-/** Site easing for the entrance; a symmetric power3-style curve for the flight. */
+/** Site easing for arrivals; a symmetric power3-style curve for the flight. */
 const EASE_ENTER = 'cubic-bezier(0.16, 1, 0.3, 1)'
+/* Gentle departure, quick middle, long decelerating tail — a wipe drawn by
+ * hand rather than switched on. Carries the mark's displacement too, which is
+ * what welds the two halves of the reveal into one motion. */
+const EASE_REVEAL = 'cubic-bezier(0.45, 0.02, 0.12, 1)'
+const EASE_SETTLE = 'cubic-bezier(0.22, 1, 0.36, 1)'
 const EASE_MOVE = 'cubic-bezier(0.76, 0, 0.24, 1)'
 
-/** How much of the fill is withheld until the page has actually finished. */
-const PENDING_CEILING = 0.92
-/**
- * Per-frame approach rate — the whole easing of the bar comes from this. The
- * fill trails a linear target, so it reads as a steady climb that settles into
- * the last few percent rather than stopping dead on 100.
+/*
+ * The wipe, in the lockup's own coordinates. Closed, the visible strip ends at
+ * 30% — a shade inside the wordmark's own left edge at 31.6%, because at exactly
+ * 31.6% the stem of the T leaks a sub-pixel of white before the reveal starts.
+ * The 1.6% of dead travel that buys costs about 20ms of the wipe and hides the
+ * seam completely. Only the right inset moves; the wipe is horizontal by
+ * construction, not by easing.
  */
-const LERP = 0.15
+const WORD_CLOSED = 'inset(0px 70% 0px 0px)'
+const WORD_OPEN = 'inset(0px 0% 0px 0px)'
+
+/*
+ * The mark occupies the leftmost 26.95% of the lockup box, so its centre sits at
+ * 13.475% of the width against the lockup's own 50%. The difference is the whole
+ * displacement: hold the lockup that far right and the *mark* is centred on the
+ * slot; release it to zero and the finished lockup is centred instead. One
+ * number, so the two framings can never disagree — and it is derived from the
+ * artwork's proportions rather than measured, so it holds at any viewport.
+ */
+const MARK_CENTRE = 0.13475
+
+/** How far off its final scale the lockup starts, and rests before settling. */
+const SCALE_IN = 0.982
+const SCALE_REVEAL = 0.994
 
 function prefersReducedMotion() {
   return (
@@ -81,18 +119,61 @@ function measure(logo, slot) {
     dx: to.left + to.width / 2 - (from.left + from.width / 2),
     dy: to.top + to.height / 2 - (from.top + from.height / 2),
     scale: to.width / from.width,
+    width: from.width,
   }
 }
 
-const transformFor = (g, factor = 1) =>
-  `translate3d(${g.dx}px, ${g.dy}px, 0) scale(${g.scale * factor})`
+/**
+ * `held` is the reveal's one parameter: 1 centres the mark, 0 centres the whole
+ * lockup, and the transition between them is the push. The offset is scaled by
+ * the same factor as the lockup so the mark stays exactly centred no matter what
+ * the scale is doing at the time.
+ */
+const transformFor = (g, factor = 1, held = 0) => {
+  const shift = held * (0.5 - MARK_CENTRE) * g.width * g.scale * factor
+  return `translate3d(${g.dx + shift}px, ${g.dy}px, 0) scale(${g.scale * factor})`
+}
 
-/** Hands the lockup back to the stylesheet once the flight is over. */
-function clearLogo(logo) {
-  logo.style.transition = ''
-  logo.style.transform = ''
-  logo.style.opacity = ''
-  logo.style.willChange = ''
+/** The two parts of the lockup that reveal separately. */
+function partsOf(logo) {
+  return {
+    mark: logo.querySelector('[data-lockup-mark]'),
+    word: logo.querySelector('[data-lockup-word]'),
+  }
+}
+
+/**
+ * Pre-reveal state: mark absent, wordmark fully masked inside the mark. Written
+ * with transitions off so nothing animates into the starting pose.
+ */
+function arrange(parts) {
+  const { mark, word } = parts
+  if (mark) {
+    mark.style.transition = 'none'
+    mark.style.transformOrigin = '50% 50%'
+    mark.style.transform = 'scale(0.86)'
+    mark.style.opacity = '0'
+    mark.style.willChange = 'transform, opacity'
+  }
+  if (word) {
+    word.style.transition = 'none'
+    word.style.clipPath = WORD_CLOSED
+    word.style.willChange = 'clip-path'
+  }
+}
+
+/** Hands the lockup and its parts back to the stylesheet, in one pass. */
+function release(logo) {
+  const nodes = [logo, ...Object.values(partsOf(logo))]
+  for (const node of nodes) {
+    if (!node) continue
+    node.style.transition = ''
+    node.style.transform = ''
+    node.style.transformOrigin = ''
+    node.style.opacity = ''
+    node.style.clipPath = ''
+    node.style.willChange = ''
+  }
 }
 
 /** Resolves once fonts and subresources are in — the real thing being waited on. */
@@ -116,17 +197,9 @@ export function SplashProvider({ children }) {
 
   const [logo, setLogo] = useState(null)
   const [slot, setSlot] = useState(null)
-  const barRef = useRef(null)
-  const percentRef = useRef(null)
 
   const registerLogo = useCallback((node) => setLogo(node), [])
   const registerSlot = useCallback((node) => setSlot(node), [])
-  const registerBar = useCallback((node) => {
-    barRef.current = node
-  }, [])
-  const registerPercent = useCallback((node) => {
-    percentRef.current = node
-  }, [])
 
   /* Fixed for the lifetime of the provider: whether this mount plays at all. */
   const playsRef = useRef(phase !== 'done')
@@ -187,82 +260,71 @@ export function SplashProvider({ children }) {
     let frame = 0
     let loaded = false
     let cancelled = false
-
-    const paint = (value) => {
-      const bar = barRef.current
-      const percent = percentRef.current
-      if (bar) bar.style.transform = `scaleX(${value})`
-      if (percent) {
-        percent.textContent = `${value >= 1 ? 100 : Math.min(99, Math.floor(value * 100))}%`
-      }
-    }
-
-    const runProgress = (onDone) => {
-      const start = performance.now()
-      let value = 0
-      const tick = (now) => {
-        // Time sets the pace; readiness sets the ceiling. If the page is still
-        // fetching, the fill parks short of full rather than lying about it.
-        const timed = Math.min((now - start) / T.minLoad, 1)
-        const target = Math.min(timed, loaded ? 1 : PENDING_CEILING)
-        value += (target - value) * LERP
-        if (target >= 1 && value > 0.995) value = 1
-        paint(value)
-        if (value >= 1) return onDone()
-        frame = requestAnimationFrame(tick)
-      }
-      frame = requestAnimationFrame(tick)
-    }
+    const opened = performance.now()
 
     whenLoaded().then(() => {
       loaded = true
     })
-    // Never hold the visitor hostage to a stalled subresource.
-    after(T.maxLoad, () => {
-      loaded = true
-    })
+
+    /*
+     * The one place readiness is allowed to affect the timeline. The reveal
+     * itself runs on its own clock — pacing a logo animation off network
+     * progress is what makes intros feel jittery — so the sequence simply holds
+     * on the finished, settled lockup until the page is actually there, and
+     * gives up waiting at `maxWait` rather than holding the visitor hostage to
+     * a stalled subresource.
+     */
+    const whenReady = (go) => {
+      const poll = () => {
+        if (cancelled) return
+        if (loaded || performance.now() - opened > T.maxWait) return go()
+        after(120, poll)
+      }
+      poll()
+    }
 
     if (reduced) {
       /*
-       * No travel and no scale under reduced motion: the splash carries its own
-       * copy of the lockup, the header's copy is already in place underneath,
-       * and the layer cross-fades between them on opacity alone.
+       * No travel, no scale, no wipe: the splash carries its own copy of the
+       * lockup, the header's copy is already in place underneath, and the layer
+       * cross-fades between them on opacity alone.
        */
-      setPhase('load')
-      runProgress(() => {
-        if (cancelled) return
-        setPhase('hold')
-        after(T.hold, () => {
+      setPhase('hold')
+      after(T.reducedHold, () =>
+        whenReady(() => {
           setPhase('move')
           after(T.reducedOut, finish)
-        })
-      })
+        }),
+      )
 
       return () => {
         cancelled = true
-        cancelAnimationFrame(frame)
         timers.forEach(clearTimeout)
         startedRef.current = false
       }
     }
 
+    const parts = partsOf(logo)
     let geometry = null
+    /* The lockup's current pose, so a resize can re-derive the transform
+     * mid-sequence without knowing which step is running. */
+    let factor = SCALE_IN
+    let held = 1
 
     const reposition = () => {
       const next = measure(logo, slot)
       if (!next) return
       geometry = next
       logo.style.transition = 'none'
-      logo.style.opacity = '1'
-      logo.style.transform = transformFor(geometry)
+      logo.style.transform = transformFor(geometry, factor, held)
     }
     window.addEventListener('resize', reposition)
 
     /*
-     * Park the lockup in the centre, then release it into the entrance. Both
-     * boxes have to be laid out for the delta to mean anything — a viewport
-     * that hasn't had its first layout yet (a restored background tab, a
-     * window opened at zero size) measures zero and would otherwise send the
+     * Park the lockup with the mark on the slot's centre, then start the
+     * reveal. Both boxes have to be laid out for the delta to mean anything — a
+     * viewport that hasn't had its first layout yet (a restored background tab,
+     * a window opened at zero size) measures zero and would otherwise send the
      * lockup to the corner. Retrying costs nothing visible: the header is only
      * raised over the black layer once this succeeds.
      */
@@ -279,45 +341,93 @@ export function SplashProvider({ children }) {
         return
       }
 
-      logo.style.willChange = 'transform, opacity'
-      logo.style.opacity = '0'
-      logo.style.transform = transformFor(geometry, 0.96)
-      void logo.offsetWidth
-      logo.style.transition = `opacity ${T.enter}ms linear, transform ${T.enter}ms ${EASE_ENTER}`
+      logo.style.willChange = 'transform'
       logo.style.opacity = '1'
-      logo.style.transform = transformFor(geometry)
+      logo.style.transform = transformFor(geometry, SCALE_IN, 1)
+      arrange(parts)
       // Only now is the header safe to raise above the black layer: until the
-      // transform is on, raising it would expose the lockup in the navbar.
+      // transform is on, raising it would expose the lockup in the navbar. The
+      // lockup is invisible at this instant — mark dark, wordmark masked — so
+      // what the visitor sees is still an empty black field.
       setStaged(true)
 
-      after(T.progressIn, startLoading)
+      void logo.offsetWidth
+      frame = requestAnimationFrame(revealMark)
     }
 
-    const startLoading = () => {
-      setPhase('load')
-      runProgress(() => {
-        if (cancelled) return
-        setPhase('hold')
+    /* 0 — 0.62s. The mark alone, centred: a soft fade under a long, decelerating
+     * scale. `held` stays at 1, so nothing has moved yet. */
+    const revealMark = () => {
+      if (cancelled) return
+      setPhase('mark')
 
-        after(T.hold, () => {
-          // Progress leaves first, so the completed state is the last thing
-          // read before the lockup starts moving.
-          setPhase('handoff')
+      factor = SCALE_REVEAL
+      logo.style.transition = `transform ${T.markScale}ms ${EASE_ENTER}`
+      logo.style.transform = transformFor(geometry, factor, held)
 
-          after(T.moveDelay, () => {
-            window.removeEventListener('resize', reposition)
-            setPhase('move')
-            logo.style.transition = `transform ${T.move}ms ${EASE_MOVE}`
-            logo.style.transform = 'none'
+      if (parts.mark) {
+        parts.mark.style.transition =
+          `opacity ${T.markIn}ms cubic-bezier(0.33, 0, 0.2, 1), ` +
+          `transform ${T.markScale}ms ${EASE_ENTER}`
+        parts.mark.style.opacity = '1'
+        parts.mark.style.transform = 'scale(1)'
+      }
 
-            after(T.chromeDelay, () => setChromeVisible(true))
-            after(T.contentDelay, () => setContentReady(true))
-            after(T.move, () => {
-              clearLogo(logo)
-              finish()
-            })
-          })
-        })
+      after(T.wordDelay, revealWord)
+    }
+
+    /*
+     * 0.48 — 1.46s. The wordmark wipes open while the lockup gives up its whole
+     * displacement — same duration, same curve, so the mark's travel and the
+     * wipe are the same motion. The glyphs are rigid inside the lockup, so each
+     * one slides left out from under the opening mask exactly as far as the mark
+     * does: the wordmark is displacing it, not accompanying it.
+     */
+    const revealWord = () => {
+      if (cancelled) return
+      setPhase('word')
+
+      held = 0
+      logo.style.transition = `transform ${T.word}ms ${EASE_REVEAL}`
+      logo.style.transform = transformFor(geometry, factor, held)
+
+      if (parts.word) {
+        parts.word.style.transition = `clip-path ${T.word}ms ${EASE_REVEAL}`
+        parts.word.style.clipPath = WORD_OPEN
+      }
+
+      after(T.word, settle)
+    }
+
+    /* 1.46 — 1.92s. The micro-settle: the last 0.6% of scale, on a centred and
+     * complete lockup. */
+    const settle = () => {
+      if (cancelled) return
+      setPhase('settle')
+
+      factor = 1
+      logo.style.transition = `transform ${T.settle}ms ${EASE_SETTLE}`
+      logo.style.transform = transformFor(geometry, factor, held)
+
+      after(T.settle + T.hold, () => whenReady(fly))
+    }
+
+    /* The hand-off. The lockup is complete and static from here — every part is
+     * already at its resting value, so the flight animates one transform on one
+     * element. */
+    const fly = () => {
+      if (cancelled) return
+      window.removeEventListener('resize', reposition)
+      setPhase('move')
+
+      logo.style.transition = `transform ${T.move}ms ${EASE_MOVE}`
+      logo.style.transform = 'none'
+
+      after(T.chromeDelay, () => setChromeVisible(true))
+      after(T.contentDelay, () => setContentReady(true))
+      after(T.move, () => {
+        release(logo)
+        finish()
       })
     }
 
@@ -328,7 +438,7 @@ export function SplashProvider({ children }) {
       cancelAnimationFrame(frame)
       timers.forEach(clearTimeout)
       window.removeEventListener('resize', reposition)
-      clearLogo(logo)
+      release(logo)
       setStaged(false)
       startedRef.current = false
     }
@@ -348,20 +458,8 @@ export function SplashProvider({ children }) {
       contentReady: contentReady || reduced,
       registerLogo,
       registerSlot,
-      registerBar,
-      registerPercent,
     }),
-    [
-      phase,
-      staged,
-      reduced,
-      chromeVisible,
-      contentReady,
-      registerLogo,
-      registerSlot,
-      registerBar,
-      registerPercent,
-    ],
+    [phase, staged, reduced, chromeVisible, contentReady, registerLogo, registerSlot],
   )
 
   return <SplashContext.Provider value={value}>{children}</SplashContext.Provider>
