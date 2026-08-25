@@ -1,5 +1,6 @@
 import { hero } from '@/content/hero'
 import { useReveal } from '@/hooks/useReveal'
+import { useViewportProgress } from '@/hooks/useViewportProgress'
 import { useSplash } from '@/components/splash/context'
 import { Button } from '@/components/ui/Button'
 import { ChainBackdrop } from '@/components/sections/ChainBackdrop'
@@ -14,10 +15,22 @@ import { ChainBackdrop } from '@/components/sections/ChainBackdrop'
  *
  * The reveal cascade is the project's own scroll-entry pattern, not something
  * the frame specifies.
+ *
+ * Stacking: from `md` up the hero is `sticky` at the top of the viewport, so the
+ * band below it slides up and over rather than pushing it off screen. As that
+ * happens the hero recedes — a slight scale-down behind a darkening veil — which
+ * is what sells the covering section as a card laid on top instead of a section
+ * that merely arrived. Below `md` it stays in normal flow: a sticky element
+ * taller than the viewport can never scroll to its own bottom edge, and on a
+ * short phone the hero copy is exactly that.
  */
 export function Hero() {
   const { ref, revealed } = useReveal()
   const { active: splashActive, contentReady } = useSplash()
+  /* 0 → 1 across the first screen, which is exactly the span over which the
+   * next band travels from the bottom of the viewport to fully covering this
+   * one. */
+  const covered = useViewportProgress(1)
 
   /*
    * On a first load the hero is already in view, so the observer fires straight
@@ -36,13 +49,38 @@ export function Hero() {
   return (
     <section
       inert={splashActive}
-      className="relative isolate flex min-h-svh flex-col overflow-hidden bg-canvas"
+      className="relative isolate flex min-h-svh flex-col overflow-hidden bg-canvas md:sticky md:top-0 md:h-svh md:min-h-0"
     >
       <ChainBackdrop />
+
+      {/*
+        * The veil. It sits above the artwork but below the copy so the whole
+        * composition dims together as the next section climbs over it. Capped
+        * well short of opaque — the covering section does the real occluding,
+        * this only has to stop the hero from competing with it.
+        */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-[5] hidden bg-canvas md:block"
+        style={{ opacity: covered * 0.72 }}
+      />
 
       <div
         ref={ref}
         className="relative z-10 flex w-full flex-1 flex-col px-6 pt-hero-top pb-[2.0625rem]"
+        /*
+         * Scale only — no vertical offset. Moving the copy up as it dims reads
+         * as a parallax bug once the covering section's edge is in frame.
+         *
+         * `will-change` is dropped the moment the hero is fully covered. The
+         * sticky hero stays pinned behind the whole page, so promoting it for
+         * the entire scroll would hold a viewport-sized layer alive long after
+         * anything on it can be seen.
+         */
+        style={{
+          transform: `scale(${1 - covered * 0.05})`,
+          willChange: covered < 1 ? 'transform' : 'auto',
+        }}
       >
         <div className="flex max-w-[54.0625rem] flex-col gap-[0.7rem]">
           <p

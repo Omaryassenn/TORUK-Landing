@@ -49,6 +49,46 @@
    */
   --spacing-hero-top: min(clamp(6rem, 3.865rem + 9.108vw, 12.0625rem), 22svh);
   --spacing-wordmark: clamp(1.125rem, 0.949rem + 0.7512vw, 1.625rem);
+
+  /*
+   * --- Page scale, added for the sections below the hero -------------------
+   *
+   * Same method as the hero ramps: every value is solved to land on its
+   * design figure at 1440 and interpolate down to a hand-set value at 375,
+   * so `clamp(min, intercept + slope*vw, max)` needs no media queries. Above
+   * 1440 the root font-size takes over, exactly as it does for the hero.
+   */
+  --text-micro: clamp(0.625rem, 0.603rem + 0.0939vw, 0.6875rem);     /* 11px */
+  --text-label: clamp(0.6875rem, 0.6435rem + 0.1878vw, 0.8125rem);   /* 13px */
+  --text-body: clamp(0.875rem, 0.853rem + 0.0939vw, 0.9375rem);      /* 15px */
+  --text-card: clamp(1rem, 0.912rem + 0.3756vw, 1.25rem);            /* 20px */
+  --text-section: clamp(1.25rem, 1.0739rem + 0.7512vw, 1.75rem);     /* 28px */
+  --text-price: clamp(1.75rem, 1.4859rem + 1.1268vw, 2.5rem);        /* 40px */
+  --text-display: clamp(1.75rem, 1.2218rem + 2.2535vw, 3.25rem);     /* 52px */
+
+  /*
+   * One vertical rhythm for every band on the page. The brief asks for a page
+   * that breathes, so this is deliberately generous — 140px at the design
+   * width — and it is the *only* section padding any band uses, which is what
+   * keeps the cadence even from the hero all the way to the footer.
+   */
+  --spacing-section: clamp(4.5rem, 3.0035rem + 6.385vw, 8.75rem);
+  /* Matches the hero's `px-6` so every band shares the frame's 24px gutter. */
+  --spacing-gutter: 1.5rem;
+
+  --color-canvas-raised2: #101010;
+
+  --animate-marquee: marquee 46s linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  /* The track holds two identical halves, so -50% is one seamless loop. */
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
 }
 
 @layer base {
@@ -74,6 +114,26 @@
     background-color: var(--color-canvas);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    /*
+     * The header is fixed, so an anchor jump would otherwise land the target's
+     * heading underneath it. This is the scrolled bar's height plus a little
+     * air; it applies to every `#anchor` in the nav and footer without each
+     * section having to declare a scroll margin.
+     */
+    scroll-padding-top: 5.5rem;
+  }
+
+  /*
+   * The nav is a table of contents for a single page, so its links should read
+   * as movement through one document rather than as navigations. Guarded below,
+   * because a full-page smooth scroll is exactly the kind of motion that makes
+   * some readers ill.
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   body {
@@ -139,10 +199,55 @@
   }
 }
 
+@layer components {
+  /*
+   * Edge mask for the client marquee. The strip runs full-bleed so the logos
+   * arrive and leave rather than popping at a container edge; without this the
+   * loop seam is visible at both ends.
+   */
+  .marquee-mask {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 8%,
+      #000 92%,
+      transparent
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 8%,
+      #000 92%,
+      transparent
+    );
+  }
+
+  /*
+   * The faint technical field used behind the calmer bands. It is the hero's
+   * dot grid at a lower amplitude, so the page keeps one background language
+   * instead of introducing a second texture halfway down.
+   */
+  .dot-field {
+    background-image: radial-gradient(
+      rgba(255, 255, 255, 0.11) 1px,
+      transparent 1px
+    );
+    background-size: 1.625rem 1.625rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+
+  /*
+   * The marquee is decorative — with motion reduced it simply stops, leaving a
+   * legible static row rather than disappearing.
+   */
+  .animate-marquee {
+    animation: none !important;
   }
 }

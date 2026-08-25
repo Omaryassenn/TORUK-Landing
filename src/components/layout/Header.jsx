@@ -4,10 +4,18 @@ import { site, nav, headerCta } from '@/content/site'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { Button } from '@/components/ui/Button'
 import { useSplash } from '@/components/splash/context'
+import { useScrolled } from '@/hooks/useScrolled'
 
 /**
- * Sits over the hero art rather than on its own bar — the Figma frame has no
- * header background, the artwork runs edge to edge behind it.
+ * Fixed to the top of the viewport for the whole page, so the nav is always
+ * reachable — the page is one long single-column argument and the nav doubles as
+ * its table of contents.
+ *
+ * Over the hero it has no bar at all: the Figma frame has no header background
+ * and the artwork runs edge to edge behind it. The bar only materialises once
+ * the page has scrolled, because from that point the header is sitting over
+ * real copy rather than over the hero's own dark plate. Tint plus blur rather
+ * than a solid fill, so the band underneath still reads as continuous.
  *
  * Frame metrics (node 10017:152335), 1440-wide: 29px from the top, 24px
  * gutters, logo 192 → 162px gap → a 696px nav distributing its four links →
@@ -23,6 +31,13 @@ import { useSplash } from '@/components/splash/context'
 export function Header({ activeHref = '/' }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const { active: splashActive, staged, chromeVisible, registerLogo } = useSplash()
+  /*
+   * The threshold is past the hero's own top padding, so the bar does not blink
+   * on during the first few pixels of a trackpad nudge. It is still false while
+   * the splash is up (nothing has scrolled yet), which is what keeps the lockup
+   * flying onto a clean, bar-less header.
+   */
+  const scrolled = useScrolled(48)
 
   /* Raised over the black layer only once the lockup is parked in the centre;
    * before that the header belongs under it like the rest of the page. */
@@ -39,9 +54,29 @@ export function Header({ activeHref = '/' }) {
       /* Nothing here is reachable while the black layer is up, by pointer or
        * by keyboard — the lockup is scenery for the duration, not a link. */
       inert={splashActive}
-      className={cn('absolute inset-x-0 top-0', lifted ? 'z-[60]' : 'z-20')}
+      className={cn(
+        'fixed inset-x-0 top-0 border-b transition-colors duration-300 ease-out-quint motion-reduce:transition-none',
+        /* Above the page's own stacking layer (z-10) at all times, and above
+         * the splash's black plate once the lockup has landed. */
+        lifted ? 'z-[60]' : 'z-30',
+        scrolled
+          ? 'border-hairline bg-canvas/72 backdrop-blur-md'
+          : 'border-transparent',
+      )}
     >
-      <div className="flex items-center px-6 pt-[1.5rem] lg:pt-[1.8125rem]">
+      {/*
+        * The block padding closes up as the bar appears. The splash lands the
+        * lockup against the un-scrolled measurements — `scrolled` is false for
+        * the whole flight — so the hand-off is unaffected by this.
+        */}
+      <div
+        className={cn(
+          'flex items-center px-6 transition-[padding] duration-300 ease-out-quint motion-reduce:transition-none',
+          scrolled
+            ? 'py-[0.8125rem] lg:py-[0.9375rem]'
+            : 'pt-[1.5rem] pb-0 lg:pt-[1.8125rem]',
+        )}
+      >
         <a
           ref={registerLogo}
           href="/"

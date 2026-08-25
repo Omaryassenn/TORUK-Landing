@@ -12,11 +12,16 @@ export const site = {
   email: 'hello@toruk.studio',
 }
 
+/*
+ * The nav mirrors the page's own argument rather than a site map — every entry
+ * is an anchor into a band below, so the header doubles as a table of contents
+ * for a single-page story.
+ */
 export const nav = [
-  { label: 'Home', href: '/' },
-  { label: 'Studio', href: '#studio' },
-  { label: 'Projects', href: '#projects' },
-  { label: 'Blogs', href: '#blogs' },
+  { label: 'Platform', href: '#platform' },
+  { label: 'Lifecycle', href: '#lifecycle' },
+  { label: 'Governance', href: '#governance' },
+  { label: 'Pricing', href: '#pricing' },
 ]
 
 export const headerCta = { label: 'Book a Demo', href: '#demo' }
