@@ -5,21 +5,7 @@ import { Wordmark } from '@/components/brand/Wordmark'
 import { Button } from '@/components/ui/Button'
 import { useSplash } from '@/components/splash/context'
 
-/**
- * Sits over the hero art rather than on its own bar — the Figma frame has no
- * header background, the artwork runs edge to edge behind it.
- *
- * Frame metrics (node 10017:152335), 1440-wide: 29px from the top, 24px
- * gutters, logo 192 → 162px gap → a 696px nav distributing its four links →
- * 156px gap → the 188px pill. That adds up to 1238px of fixed content, which
- * only clears the gutters at the design's own 1440 — at Tailwind's `xl` (1280)
- * it overruns and the pill lands on top of "Blogs". Hence the exact metrics are
- * gated on `min-[90rem]`, with a centred, evenly-gapped nav below that.
- *
- * The wordmark link doubles as the splash's shared element. It keeps its normal
- * layout slot throughout — the splash only ever writes a transform to it — so
- * the header never moves and the lockup lands exactly where it already was.
- */
+
 export function Header({ activeHref = '/' }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const { active: splashActive, staged, chromeVisible, registerLogo } = useSplash()
@@ -54,7 +40,7 @@ export function Header({ activeHref = '/' }) {
         <nav
           aria-label="Primary"
           className={cn(
-            'ms-8 hidden flex-1 items-center justify-center gap-8 lg:flex xl:gap-12 min-[90rem]:ms-[10.125rem] min-[90rem]:w-[43.5rem] min-[90rem]:flex-none min-[90rem]:justify-between min-[90rem]:gap-0',
+            'ms-8 hidden flex-1 items-center justify-center gap-8 lg:flex xl:gap-12 min-[90rem]:ms-[10.125rem] min-[90rem]:w-[43.5rem] min-[90rem]:flex-none min-[90rem]:gap-20',
             chrome,
           )}
         >
