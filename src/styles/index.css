@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'lenis/dist/lenis.css';
 
 /*
  * TORUK design tokens.
@@ -21,6 +22,23 @@
   --color-hairline: rgba(255, 255, 255, 0.14);
   --color-hairline-strong: rgba(255, 255, 255, 0.28);
 
+  /*
+   * Scrollbar thumb. It would read better as a third step on the hairline ramp
+   * above, but the thumb is a control rather than a rule and has to clear 3:1
+   * against the canvas, and neither hairline does — `hairline-strong` measures
+   * 2.31:1 over `#030303`.
+   *
+   * That threshold is crossed at 35% white, and the rest state sits above it
+   * at 3.98:1 rather than on it, because where the platform draws an overlay
+   * scrollbar the thumb floats over the page rather than over the gutter: in
+   * the hero that means it can be over the lit part of the chain instead of
+   * near-black. The headroom is for those few hundred pixels. Hover and press
+   * then carry it the rest of the way up.
+   */
+  --color-scroll-thumb: rgba(255, 255, 255, 0.42);
+  --color-scroll-thumb-hover: rgba(255, 255, 255, 0.62);
+  --color-scroll-thumb-active: rgba(255, 255, 255, 0.78);
+
   --ease-out-quint: cubic-bezier(0.16, 1, 0.3, 1);
 
   /*
@@ -41,6 +59,15 @@
   --text-headline: 1.875rem; /* 30px */
   --text-cta: 1.25rem; /* 20px */
   --text-capability: 1.25rem; /* 20px */
+  /*
+   * Section-level type, for the headings and body below the hero. The hero's
+   * own `headline` is a different job: uppercase, tight, and sized against the
+   * artwork. These two are read at normal reading distance and are sentence
+   * case, so they get their own steps rather than borrowing the hero's.
+   */
+  --text-section: 1.75rem; /* 28px */
+  --text-body: 1rem; /* 16px */
+
   /* Nav only renders from `lg`, so it needs no small-screen step. */
   --text-nav: 1.125rem; /* 18px */
 
@@ -49,9 +76,27 @@
    * components, because both have to step with the type: a taller label in a
    * fixed 40px pill crowds it, and a larger headline behind a fixed 46rem
    * measure just wraps to more lines instead of reading bigger.
+   *
+   * `hero-copy` is the block the eyebrow, headline and CTAs share (the frame's
+   * 865px text block) and it has to stay wider than `headline` at every tier —
+   * it is the outer cap, so a headline measure larger than it is silently
+   * clipped rather than applied.
    */
   --spacing-button: 2.5rem; /* 40px */
   --container-headline: 46rem; /* 736px */
+  --container-hero-copy: 54.0625rem; /* 865px */
+  /*
+   * Outer bound for sections below the hero, and their prose measure. The
+   * measure is wide for body copy on purpose: it is the wrap the frame sets,
+   * two lines under the section heading rather than four.
+   *
+   * `content` is sized so the glance section clears a laptop viewport: at 84rem
+   * the figure alone was 627px tall and the last rank of nodes fell below the
+   * fold. It cannot go much under this without the labels colliding with the
+   * start of their wires, which is fixed in the viewBox at x=165.
+   */
+  --container-content: 68rem; /* 1088px */
+  --container-measure: 50rem; /* 800px */
 
   /*
    * The hero's top padding is the difference between the copy clearing the
@@ -84,6 +129,93 @@
     background-color: var(--color-canvas);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    /*
+     * `scroll-behavior` is deliberately absent. The page runs Lenis (see
+     * `hooks/useSmoothScroll`), which eases wheel and trackpad input as well as
+     * in-page jumps, and the two fight over the same scroll if both are on —
+     * the native easing lands the jump while Lenis is still animating it.
+     *
+     * Under reduced motion Lenis never starts, and the correct behaviour there
+     * is the platform's own instant scroll, so there is nothing to restore.
+     */
+
+    /*
+     * The scrollbar was the one piece of chrome the design never authored: a
+     * 15px light-grey classic bar, arrow buttons and all, in a column right
+     * beside a near-black canvas.
+     *
+     * `color-scheme` is half the fix and is simply a true statement — these
+     * tokens define no light theme, so the page is dark whatever the reader's
+     * system says. Declaring it hands the browser the dark form of every
+     * native control it draws, scrollbars inside elements nothing here styles
+     * included.
+     *
+     * The other half is the standards pair rather than `::-webkit-scrollbar`,
+     * and that choice is the point of this block: a single webkit-scrollbar
+     * rule drops Chrome and Safari onto the legacy scrollbar path, which turns
+     * the macOS overlay scrollbar — a bar that fades out when the reader stops
+     * and costs no layout width — into a permanent gutter. `scrollbar-width`
+     * and `scrollbar-color` restyle the platform's own scrollbar and leave
+     * that behaviour intact. `thin` is also what drops the arrow buttons.
+     *
+     * `scrollbar-color` inherits and `scrollbar-width` does not, so every
+     * scroller on the page picks up the colour and keeps the platform's own
+     * width until it asks otherwise — which is the right split: the colour is
+     * the brand, the 4px this trims off the root gutter is a decision about
+     * this one bar. The colour reaching `.clients-viewport` is moot, since
+     * under reduced motion that strip hides its scrollbar outright.
+     *
+     * Neither property has a hover state to set. The thumb's hover and press
+     * response stays the platform's, which is why the two brighter tokens are
+     * read only by the fallback below.
+     */
+    color-scheme: dark;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-scroll-thumb) transparent;
+  }
+
+  /*
+   * Chrome before 121 and Safari before 18.2 have no `scrollbar-color`, so on
+   * those the bar above is still the platform default. They do have the webkit
+   * pseudo-elements, and here the legacy path costs nothing that isn't already
+   * being paid — so the same treatment is rebuilt from them, scoped to the
+   * browsers that need it.
+   *
+   * 12px of gutter carrying a 6px thumb. The pill is painted on the content
+   * box behind a 3px transparent border, which is the only way to inset a
+   * webkit thumb from its own track, and its radius is the button's. No track
+   * fill and no buttons, so the column is `canvas` with one stroke in it.
+   */
+  @supports not (scrollbar-color: auto) {
+    html::-webkit-scrollbar {
+      width: 0.75rem;
+      height: 0.75rem;
+    }
+
+    html::-webkit-scrollbar-track,
+    html::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+
+    html::-webkit-scrollbar-button {
+      display: none;
+    }
+
+    html::-webkit-scrollbar-thumb {
+      background-color: var(--color-scroll-thumb);
+      background-clip: content-box;
+      border: 0.1875rem solid transparent;
+      border-radius: 62.5rem;
+    }
+
+    html::-webkit-scrollbar-thumb:hover {
+      background-color: var(--color-scroll-thumb-hover);
+    }
+
+    html::-webkit-scrollbar-thumb:active {
+      background-color: var(--color-scroll-thumb-active);
+    }
   }
 
   body {
@@ -114,12 +246,13 @@
       --text-headline: 1.375rem; /* 22px */
       --text-cta: 1rem; /* 16px */
       --text-capability: 1rem; /* 16px */
+      --text-section: 1.375rem; /* 22px */
       --spacing-wordmark: 1.3125rem; /* 21px */
     }
   }
 
   /*
-   * Large-desktop step. Above 120rem the composition held its 1440 values and
+   * Large-desktop step. Above 1900 the composition held its 1440 values and
    * turned all the extra width into empty canvas — the copy read as a small
    * block in the corner of a 2560 display. This scales the whole lockup-to-CTA
    * stack by a notch rather than the type alone, and restores two values the
@@ -129,17 +262,39 @@
    * A step, not a ramp — sizes stay whole numbers at every width inside the
    * tier, which is the point of having dropped the `vw` ramps.
    */
-  @media (width >= 120rem) {
+  @media (width >= 118.75rem) {
+    /* 1900px */
     :root {
       --text-eyebrow: 1.5rem; /* 24px */
       --text-headline: 2.25rem; /* 36px */
       --text-cta: 1.375rem; /* 22px */
       --text-capability: 1.5rem; /* 24px */
+      --text-section: 2.25rem; /* 36px */
+      --text-body: 1.125rem; /* 18px */
       --text-nav: 1.25rem; /* 20px */
       --spacing-button: 2.75rem; /* 44px — the frame's own height */
       --spacing-wordmark: 1.875rem; /* 30px — likewise */
       /* Grown in step with the headline so its line breaks hold. */
       --container-headline: 55rem; /* 880px */
+      --container-hero-copy: 64rem; /* 1024px — must clear the 880 above */
+    }
+  }
+
+  /*
+   * Ultra-wide step, and a measure change only — the type is already right at
+   * this size, what reads wrong is the composition: at 2560 an 880px measure
+   * leaves the copy as a narrow column against a very wide frame.
+   *
+   * 72rem is chosen, not rounded to: it takes the headline from 4 lines to 3
+   * and its longest line to 1130px (44% of the frame) with only 23px of rag.
+   * Wider caps stop paying for themselves — 78rem holds the same 3 lines and
+   * the same wrap points, and spends the extra 96px entirely on rag.
+   */
+  @media (width >= 160rem) {
+    /* 2560px */
+    :root {
+      --container-headline: 72rem; /* 1152px */
+      --container-hero-copy: 81rem; /* 1296px — clears the 1152 above */
     }
   }
 
@@ -196,3 +351,722 @@
     transition: none;
   }
 }
+
+@layer components {
+  /*
+   * Client strip in the hero's foot (Figma node 10857:167557).
+   *
+   * The frame measures the marks at 42px on an 81px gap; they are set 4px
+   * shorter here, which is also the height every mark was exported at. Both
+   * values step down below `md`, where 81px of air between two small logos
+   * reads as a broken row rather than a rhythm.
+   *
+   * The strip is the one full-bleed element in the hero, so the fade is what
+   * ties it back to the grid: `--clients-fade` is exactly the page's own
+   * gutter — the `px-6` the lockup, the headline and the CTAs are all inset
+   * by — so a mark is fully opaque the instant it crosses that column edge
+   * and dissolves only in the margin outside it. Ramping over any more than
+   * the gutter would dim marks that sit inside the content column.
+   */
+  .clients-viewport {
+    --clients-height: 2rem; /* 38px — the frame's 42px, trimmed */
+    --clients-gap: 5rem; /* 81px */
+    --clients-gutter: 15rem; /* the page's own px-6 */
+    --clients-fade: var(--clients-gutter);
+    /*
+     * One pass of the 16 marks. Travel is a duration rather than a speed, so
+     * adding or removing marks changes how fast the strip moves — re-time it
+     * here if the row's width changes much.
+     */
+    --clients-travel: 62s;
+
+    position: relative;
+    overflow: hidden;
+    /*
+     * Transparent at both edges, solid across the middle. `mask-image` rather
+     * than two gradient overlays: the hero's artwork sits behind the strip, so
+     * a pair of `bg-canvas` scrims would have to fake the chain to hide it.
+     */
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000000 var(--clients-fade),
+      #000000 calc(100% - var(--clients-fade)),
+      transparent 98%
+    );
+  
+  }
+
+  .clients-track {
+    display: flex;
+    width: max-content;
+    will-change: transform;
+    /*
+     * No gap between the two halves — each row carries its own trailing gap as
+     * padding, so the halves are exactly equal and -50% lands one full row
+     * along. A `gap` here would make that translate half a gap short and the
+     * seam would show once a loop.
+     */
+    animation: clients-travel var(--clients-travel) linear infinite;
+  }
+
+  .clients-row {
+    display: flex;
+    align-items: center;
+    gap: var(--clients-gap);
+    padding-right: var(--clients-gap);
+    margin: 0;
+    list-style: none;
+  }
+
+  /*
+   * Height is the token, width follows the mark's own ratio. Declaring the
+   * ratio rather than a width means the row can be re-scaled from one value
+   * and nothing distorts, and the slot is the right size before the file
+   * arrives — the strip never reflows as the logos load in.
+   */
+  .clients-item {
+    flex: none;
+    height: var(--clients-height);
+    aspect-ratio: var(--client-ratio);
+  }
+
+  @media (width < 48rem) {
+    .clients-viewport {
+      --clients-height: 1.75rem; /* 28px */
+      --clients-gap: 3rem; /* 48px */
+      --clients-travel: 42s;
+    }
+  }
+
+  /*
+   * Reduced motion stops the travel outright. The row is wider than the
+   * viewport, so it becomes a scroller the reader drives themselves rather
+   * than a strip that silently hides two thirds of its marks.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    .clients-viewport {
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .clients-viewport::-webkit-scrollbar {
+      display: none;
+    }
+
+    .clients-track {
+      animation: none;
+    }
+  }
+
+  .showcase-scope {
+    position: relative;
+  }
+
+  /*
+   * The hero holds its ground while the reel rides up over it: pinned, and
+   * otherwise untouched — no fade, no scale, nothing inside it moves. Sticky
+   * rather than fixed so it releases itself at the end of `.showcase-scope`,
+   * which is exactly the point the reel has finished covering it; nothing
+   * below pays for a full-screen layer that is no longer visible.
+   */
+  .hero-pin {
+    position: sticky;
+    top: 0;
+    z-index: 0;
+    height: 100svh;
+    overflow: hidden;
+  }
+
+  /*
+   * The track is scroll length, not layout: its only painted child is the
+   * stage, one viewport tall and stuck to the top. As the track scrolls up the
+   * stage rises over the hero and covers it; once the track fills the viewport
+   * the stage stops moving and the panel inside it does the rest.
+   *
+   * 240svh = one viewport of rise + 140svh of pin to grow and hold in.
+   */
+  .showcase-track {
+    position: relative;
+    height: 240svh;
+    view-timeline-name: --showcase;
+    view-timeline-axis: block;
+  }
+
+  .showcase-stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+  }
+
+  /*
+   * The panel's largest size is a box with real padding, not the viewport:
+   * `--showcase-top` clears the fixed navbar with air to spare, and the side
+   * and foot gaps give it the same breathing room on the other three edges.
+   * The reel is a framed screen at every point of the scroll, so it never
+   * reaches the viewport's edges and the bezel and radius are constants.
+   *
+   * The growth is then one uniform scale on that box — `--showcase-rest` of it
+   * when the panel arrives, all of it when the scroll has run — so the panel's
+   * width and height stay in step and its crop never shifts.
+   *
+   * The radius is authored pre-scale, so at rest it renders a touch tighter
+   * than the 36px here; that is the design's own 28px corner.
+   */
+  .showcase-frame {
+    --showcase-rest: 0.8;
+    --showcase-radius: 2.25rem;
+    --showcase-top: 6.5rem;
+    --showcase-gap: 3.5rem;
+    --showcase-foot: 3rem;
+
+    position: absolute;
+    inset: var(--showcase-top) var(--showcase-gap) var(--showcase-foot);
+    /*
+     * The finished state. The scroll animation below supplies everything
+     * before it, so wherever that animation does not run the panel is simply
+     * at full size — which is also why nothing here is derived through a
+     * `calc()` off an animated custom property. That version cost a style
+     * recalculation on the main thread every frame of the scroll; a plain
+     * `transform` between two fixed values stays on the compositor.
+     */
+    transform: scale(1);
+    transform-origin: 50% 50%;
+    will-change: transform;
+  }
+
+  .showcase-screen {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: var(--showcase-radius);
+  }
+
+  .showcase-bezel {
+    position: absolute;
+    inset: -0.875rem;
+    border: 1px solid var(--color-hairline);
+    border-radius: calc(var(--showcase-radius) + 0.875rem);
+  }
+
+  .showcase-idle {
+    transition: opacity 420ms var(--ease-out-quint);
+  }
+
+  .showcase-idle--spent {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /*
+   * A portrait viewport has nothing to gain from a wide crop of a 16:9 master,
+   * so below `md` the panel is the master's own shape, centred in the space
+   * under the navbar, and grows towards the screen's width. The centring is
+   * folded into `translate` rather than `transform` so it survives the
+   * `scale()` above it.
+   */
+  @media (width < 48rem) {
+    .showcase-frame {
+      --showcase-rest: 0.84;
+      --showcase-radius: 1.5rem;
+      --showcase-gap: 1.25rem;
+
+      top: calc(50% + var(--showcase-top) / 2);
+      right: var(--showcase-gap);
+      bottom: auto;
+      left: var(--showcase-gap);
+      height: auto;
+      aspect-ratio: 16 / 9;
+      translate: 0 -50%;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      /*
+       * `contain` is precisely the stretch during which the track covers the
+       * viewport — which is precisely the stretch during which the stage is
+       * pinned. Ending at 85% leaves the panel at full size for a beat before
+       * the track releases it.
+       */
+      .showcase-frame {
+        animation: showcase-expand linear both;
+        animation-timeline: --showcase;
+        animation-range: contain 0% contain 85%;
+      }
+    }
+  }
+
+  /*
+   * No timeline, no track. Both fallbacks land on the same thing: the reel as
+   * an ordinary one-viewport section, the hero as an ordinary one above it.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    .showcase-track {
+      height: auto;
+    }
+
+    .showcase-stage {
+      position: relative;
+    }
+
+    .hero-pin {
+      position: relative;
+    }
+  }
+
+  @supports not (animation-timeline: view()) {
+    .showcase-track {
+      height: auto;
+    }
+
+    .showcase-stage {
+      position: relative;
+    }
+
+    .hero-pin {
+      position: relative;
+    }
+  }
+}
+
+@keyframes showcase-expand {
+  from {
+    transform: scale(var(--showcase-rest));
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes clients-travel {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@layer components {
+  /*
+   * The navbar's glass.
+   *
+   * More than a blur: a translucent ground so the page reads through it and a
+   * one-pixel inner highlight along the top edge, which is what stops it
+   * looking like a flat grey panel. `saturate` keeps the artwork behind from
+   * going muddy as it blurs. No foot: the bar ends on the blur falling away,
+   * not on a rule.
+   */
+  .chrome-glass {
+    
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  /*
+   * Blur is the decoration, the bar is not. Anyone who has asked for less
+   * transparency gets the same bar as a solid one rather than losing it.
+   */
+  @media (prefers-reduced-transparency: reduce) {
+    .chrome-glass {
+      background-color: var(--color-canvas);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+  }
+
+  /*
+   * Platform diagram.
+   *
+   * Two orientations of one figure. Both lock the stage to the aspect ratio of
+   * their own viewBox, which is the whole trick: with the box and the viewBox
+   * in step, one SVG unit is a fixed percentage of the stage, so the nodes can
+   * be placed in CSS percentages and still land exactly on the ends of paths
+   * drawn in SVG units. Break either ratio and its wires miss their chips.
+   *
+   * `container-type: inline-size` is what makes the rest hold: chips and labels
+   * are sized in `cqw`, so they take the same share of the stage at every
+   * width. A clamped px range let them stall at a maximum while the viewBox
+   * kept growing, which opened a widening gap between each label and its wire.
+   */
+  .glance-diagram {
+    position: relative;
+    container-type: inline-size;
+    margin-inline: auto;
+    margin-top: clamp(2rem, 4vw, 3.5rem);
+  }
+
+  .glance-wires {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .glance-wire {
+    stroke-width: 1.1;
+    stroke-linecap: round;
+  }
+
+  /* Where a wire meets the orb, not a bead on the line. */
+  .glance-contact {
+    fill: #dce3fb;
+    fill-opacity: 0.8;
+  }
+
+  /*
+   * Traffic, the hover pulse and the entrance sweep are motion-only: they are
+   * off here and switched on inside the reduced-motion guard below, so a reader
+   * who has asked for stillness gets the finished diagram and nothing else.
+   */
+  .glance-particle,
+  .glance-sweep {
+    display: none;
+  }
+
+  .glance-particle {
+    fill: #dce3fb;
+  }
+
+  /*
+   * Orb. Centred on the point every wire is aimed at, in both orientations.
+   * The sphere is inset by the frame's own 30.38/307, which is what leaves
+   * room for the dashed ring around it.
+   */
+  .glance-orb {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+  }
+
+  .glance-orb-sphere {
+    position: absolute;
+    inset: 9.895%;
+    width: 80.21%;
+    height: 80.21%;
+  }
+
+  /* Never a box of its own: the two lists lay out against the stage. */
+  .glance-lists {
+    display: contents;
+  }
+
+  .glance-nodes {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .glance-node {
+    position: absolute;
+    display: flex;
+    align-items: center;
+  }
+
+  .glance-chip {
+    display: grid;
+    flex: none;
+    place-items: center;
+    aspect-ratio: 1;
+    border-radius: 5rem;
+    background: linear-gradient(91deg, #3C3C3C 2.2%, #1F1F1F 71.24%, #141414 99%);
+  }
+
+  .glance-icon {
+    width: 48%;
+    height: 48%;
+    opacity: 0.9;
+  }
+
+  .glance-label {
+    line-height: 1.25;
+    color: var(--color-ink-muted);
+  }
+
+  /*
+   * Landscape. Five ranks a side, chips on the outer edge, wires leaving the
+   * inner edge at x=165 and x=1035.
+   *
+   * Rows sit at 44, 162, 280, 398 and 516 of the 560-unit viewBox, the same
+   * numbers the wires use; the two have to agree or the wires miss the chips.
+   */
+  @media (width >= 80rem) {
+    .glance-diagram {
+      aspect-ratio: 1200 / 560;
+      /*
+       * The section's text stays on the page gutter, but the figure is capped
+       * and centred. Left to fill the width it kept growing while the chips
+       * held a sensible reading size, so it read as oversized on a wide screen.
+       */
+      max-width: var(--container-content);
+    }
+
+    .glance-wires--portrait {
+      display: none;
+    }
+
+    .glance-node {
+      top: calc((44 + var(--row) * 118) / 560 * 100%);
+      gap: 0.85cqw;
+      translate: 0 -50%;
+      white-space: nowrap;
+    }
+
+    .glance-node--in {
+      left: 0;
+    }
+
+    .glance-node--out {
+      right: 0;
+      flex-direction: row-reverse;
+    }
+
+    .glance-orb {
+      width: 33.333%;
+    }
+
+    .glance-chip {
+      width: 3.3cqw;
+    }
+
+    .glance-label {
+      font-size: 1.32cqw;
+    }
+  }
+
+  /*
+   * Portrait. The same figure turned through ninety degrees: the orb holds the
+   * centre and the two fans leave its top and bottom hemispheres instead of its
+   * sides. Nodes are chip-over-label here so they stay narrow enough for the
+   * outer wires to pass down the gutters and the middle one to drop through the
+   * gap between the inner pair.
+   */
+  @media (width < 80rem) {
+    .glance-diagram {
+      aspect-ratio: 600 / 1250;
+      /*
+       * Capped and centred like the landscape figure. The cap is what keeps
+       * `cqw` in a known range, so the chips and labels hold their proportions
+       * from a 320px phone up to the breakpoint. Raising it much further makes
+       * a 2:1 portrait figure very tall on a tablet for little gain.
+       */
+      max-width: 26rem;
+    }
+
+    .glance-wires--landscape {
+      display: none;
+    }
+
+    .glance-node {
+      left: calc(var(--px) / 600 * 100%);
+      top: calc(var(--py) / 1250 * 100%);
+      width: 28%;
+      flex-direction: column;
+      gap: 0.5rem;
+      translate: -50% -50%;
+      text-align: center;
+    }
+
+    /* Both groups read the same way round; only the wires differ. */
+    .glance-node--out {
+      flex-direction: column;
+    }
+
+    /* 264 of the 600-unit viewBox, so its ring is the circle the wires land on. */
+    .glance-orb {
+      width: 44%;
+    }
+
+    .glance-chip {
+      width: clamp(2.5rem, 11cqw, 2.875rem);
+    }
+
+    .glance-label {
+      font-size: clamp(0.875rem, 3.7cqw, 1rem);
+    }
+  }
+
+}
+
+@layer components {
+  /*
+   * The entrance, and the life afterwards.
+   *
+   * One sequence, entirely declarative: the diagram root flips `data-revealed`
+   * when it scrolls in and every delay below is derived from `--i`, the pair
+   * index. Nothing is timed in JavaScript, so nothing can drift.
+   *
+   *   sphere      200ms   arrives and settles
+   *   ring sweep  520ms   travels the ring once, then stops
+   *   wires       620ms   draw outward from the sphere, pairs 100ms apart
+   *   nodes      1180ms   fade in as their own line lands
+   *   traffic    2600ms   begins once the figure is complete
+   *
+   * Easing is the site's own `--ease-out-quint` throughout.
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    .glance-orb {
+      opacity: 0;
+      scale: 0.92;
+    }
+
+    .glance-diagram[data-revealed='true'] .glance-orb {
+      animation:
+        glance-orb-in 900ms var(--ease-out-quint) 200ms both,
+        /*
+         * Breathing starts only after the entrance has finished, so the two
+         * never fight over `scale`. 1% either way: felt, not watched.
+         */
+        glance-breathe 9s ease-in-out 2400ms infinite;
+    }
+
+    /* Drawn from the sphere outward: the dash is offset off the far end. */
+    .glance-wire {
+      stroke-dasharray: 1 1;
+      stroke-dashoffset: -1;
+    }
+
+    .glance-diagram[data-revealed='true'] .glance-wire {
+      animation: glance-draw 760ms var(--ease-out-quint) both;
+      animation-delay: calc(620ms + var(--i) * 100ms);
+    }
+
+    .glance-contact,
+    .glance-node {
+      opacity: 0;
+    }
+
+    .glance-diagram[data-revealed='true'] .glance-contact,
+    .glance-diagram[data-revealed='true'] .glance-node {
+      animation: glance-fade-in 520ms var(--ease-out-quint) both;
+      animation-delay: calc(1180ms + var(--i) * 100ms);
+    }
+
+    .glance-sweep {
+      display: block;
+      stroke-dasharray: 0.12 0.88;
+      opacity: 0;
+    }
+
+    .glance-diagram[data-revealed='true'] .glance-sweep {
+      animation: glance-sweep 1700ms var(--ease-out-quint) 520ms both;
+    }
+
+    @supports (offset-path: path("M0 0H1")) {
+      /*
+       * Traffic. A 15s cycle with the travel in the first fifth, so each path
+       * is quiet far longer than it is busy; staggering the delays across the
+       * cycle leaves two or three moving at any moment rather than all ten.
+       */
+      .glance-diagram[data-revealed='true'] .glance-particle {
+        display: block;
+        animation: glance-traffic 15s linear infinite;
+        animation-delay: calc(2600ms + var(--i) * 1400ms);
+      }
+
+      /*
+       * Both halves run the same way, node to sphere, because every path is
+       * authored from its feature inward: traffic reads as capabilities feeding
+       * the core rather than as two opposing streams.
+       *
+       * Scoped through the root as well, so this outranks the rule above it and
+       * the outbound half still gets its own offset in the cycle instead of
+       * marching in step with the inbound half.
+       */
+      .glance-diagram[data-revealed='true'] .glance-link--out .glance-particle {
+        animation-delay: calc(3300ms + var(--i) * 1400ms);
+      }
+
+    }
+  }
+}
+
+@keyframes glance-orb-in {
+  from {
+    opacity: 0;
+    scale: 0.92;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes glance-breathe {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.01;
+  }
+}
+
+/*
+ * A negative offset puts the dash past the end of the path, so the line grows
+ * backwards from the sphere toward its feature as the offset returns to zero.
+ */
+@keyframes glance-draw {
+  from {
+    stroke-dashoffset: -1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes glance-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes glance-sweep {
+  0% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.5;
+  }
+  75% {
+    opacity: 0.5;
+  }
+  100% {
+    stroke-dashoffset: -1;
+    opacity: 0;
+  }
+}
+
+@keyframes glance-traffic {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  3% {
+    opacity: 0.85;
+  }
+  17% {
+    opacity: 0.85;
+  }
+  20% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+

@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "toruk-landing",
+      "name": "toruk-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "run",

@@ -22,9 +22,33 @@ export function Header({ activeHref = '/' }) {
     <header
      
       inert={splashActive}
-      className={cn('absolute inset-x-0 top-0', lifted ? 'z-[60]' : 'z-20')}
+      /*
+       * Fixed, not absolute: the navbar stays put for the whole page, so it
+       * survives the hero being pinned and the reel scrolling up over it. At
+       * the top of the document the two positionings are identical, which is
+       * what the splash measures its hand-off against.
+       */
+      className={cn(
+        'fixed inset-x-0 top-0',
+        lifted ? 'z-[60]' : 'z-20',
+        /*
+         * The glass is held back until the splash is spent. The overlay is an
+         * opaque black layer and the header sits above it once staged, so a
+         * translucent bar would be a visible seam across an otherwise blank
+         * screen for the length of the intro.
+         */
+        !splashActive && 'chrome-glass',
+      )}
     >
-      <div className="flex items-center px-6 pt-[1.5rem] lg:pt-[1.8125rem]">
+      {/*
+        * Symmetric padding now that the bar has a ground and a foot. The
+        * frame's top-only value doubled came to 103px once the bar had a box,
+        * which is a tenth of the viewport for a navbar, so it is trimmed to
+        * 18px: 77px tall on the standard tier and 81px where the CTA pill
+        * steps up to 44px. The lockup sits a few pixels higher than the frame
+        * as a result.
+        */}
+      <div className="flex items-center px-6 py-[1.125rem]">
         <div className="flex flex-1 items-center">
           <a
             ref={registerLogo}
