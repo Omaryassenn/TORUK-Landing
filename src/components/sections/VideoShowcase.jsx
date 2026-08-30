@@ -34,11 +34,33 @@ export function VideoShowcase() {
   return (
     <section
       id="reel"
-      aria-label={showcase.label}
+      aria-labelledby="reel-title"
       className="showcase-track z-10"
     >
       <div className="showcase-stage bg-canvas">
-        <div className="showcase-frame">
+        {/*
+          * The copy that introduces the reel. It lives inside the stage, not
+          * in a section above it: the stage is the opaque layer that rises
+          * over the hero, so anything outside it would be covered on the way
+          * up rather than arriving with the panel.
+          */}
+        <header className="showcase-header">
+          <p className="text-gradient-eyebrow font-display w-fit text-section-eyebrow leading-[1.333] font-light uppercase">
+            {showcase.eyebrow}
+          </p>
+          <h2
+            id="reel-title"
+            className="font-display text-section leading-[1.2] font-normal text-ink"
+          >
+            {showcase.headline}
+          </h2>
+          <p className="font-display max-w-measure text-body leading-[1.55] font-light text-ink-muted">
+            {showcase.body}
+          </p>
+        </header>
+
+        <div className="showcase-body">
+          <div className="showcase-frame">
           {/*
             * Device bezel: a hairline ring sitting just outside the screen.
             * It holds at every size, because the panel is never full bleed —
@@ -110,6 +132,7 @@ export function VideoShowcase() {
                 </span>
               </button>
             </div>
+          </div>
           </div>
         </div>
       </div>

@@ -17,8 +17,7 @@ export const glance = {
    * "unifes" -> "unifies", "real ward" -> "real world".
    */
   body:
-    'Build AI apps and employees, connect them to your knowledge and systems, extend them with skills and functions, automate with triggers, and deploy' +
-    ' - all through one unified platform.',
+    ' Build AI apps and employees, connect knowledge and systems, extend them with skills and functions, automate workflows, and deploy everything through one governed platform.',
 
   /** Left half: what the platform draws on. */
   inputs: [

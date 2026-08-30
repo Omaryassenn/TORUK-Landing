@@ -42,12 +42,20 @@ function Row({ hidden }) {
   )
 }
 
-export function ClientsMarquee({ className }) {
+/**
+ * `labelledBy` points at a visible caption naming the strip. When one is on
+ * the page it becomes the group's accessible name, because a visible label and
+ * a second `aria-label` saying something else is the one combination a screen
+ * reader cannot reconcile with what the reader is looking at. Without it the
+ * strip falls back to naming itself.
+ */
+export function ClientsMarquee({ className, labelledBy }) {
   return (
     <div
       className={cn('clients-viewport', className)}
       role="group"
-      aria-label={clientsLabel}
+      aria-label={labelledBy ? undefined : clientsLabel}
+      aria-labelledby={labelledBy}
     >
       <div className="clients-track">
         <Row />

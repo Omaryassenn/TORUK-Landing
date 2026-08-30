@@ -67,6 +67,34 @@
    */
   --text-section: 1.75rem; /* 28px */
   --text-body: 1rem; /* 16px */
+  /*
+   * The eyebrow above a section heading, which is not the hero's eyebrow even
+   * though it is set in the same gradient and caps. The hero's sits over a
+   * 30px headline; this one sits over 28px and reads two notches down from it,
+   * so at this tier it is trimmed to 18px where the hero's stays 20px.
+   *
+   * It tracks `eyebrow` exactly at the outer two tiers — 14px small, 24px above
+   * 1900 — because the gap it is closing only exists at this one. Keep the two
+   * in step there: they are the same mark doing the same job, and a section
+   * label that outgrew the hero's would read as an error.
+   */
+  --text-section-eyebrow: 1.125rem; /* 18px */
+
+  /*
+   * The smallest step on the scale: a caption that names a strip or a figure
+   * rather than heading a section. Flat across the lower two tiers — 12px is
+   * the floor where Satoshi's caps still read at arm's length, so the small
+   * screen has nothing left to trim and only the 1900 tier steps up.
+   */
+  --text-micro: 0.75rem; /* 12px */
+
+  /*
+   * The line under the hero headline. Read at hero distance rather than
+   * reading distance, so it sits a step above `body` and steps with the
+   * artwork. It carries the same three values as `capability` because it
+   * takes that list's place in the composition and in the stack.
+   */
+  --text-hero-body: 1.20rem; /* 20px */
 
   /* Nav only renders from `lg`, so it needs no small-screen step. */
   --text-nav: 1.125rem; /* 18px */
@@ -247,6 +275,9 @@
       --text-cta: 1rem; /* 16px */
       --text-capability: 1rem; /* 16px */
       --text-section: 1.375rem; /* 22px */
+      /* Back in step with `eyebrow`: 18px under a 22px heading is not a label. */
+      --text-section-eyebrow: 0.875rem; /* 14px */
+      --text-hero-body: 1rem; /* 16px */
       --spacing-wordmark: 1.3125rem; /* 21px */
     }
   }
@@ -270,6 +301,10 @@
       --text-cta: 1.375rem; /* 22px */
       --text-capability: 1.5rem; /* 24px */
       --text-section: 2.25rem; /* 36px */
+      /* In step with `eyebrow` again, against a 36px heading. */
+      --text-section-eyebrow: 1.5rem; /* 24px */
+      --text-micro: 0.875rem; /* 14px */
+      --text-hero-body: 1.5rem; /* 24px */
       --text-body: 1.125rem; /* 18px */
       --text-nav: 1.25rem; /* 20px */
       --spacing-button: 2.75rem; /* 44px — the frame's own height */
@@ -493,19 +528,82 @@
     view-timeline-axis: block;
   }
 
+  /*
+   * A column, so the panel measures itself against what the copy above leaves
+   * rather than against the viewport. `--showcase-top` clears the fixed navbar
+   * with air to spare, the side and foot gaps hold the panel off the other
+   * three edges, and `--showcase-lede` is the space between the copy and the
+   * panel it introduces.
+   *
+   * The side gap is the widest of the three. It used to sit near the foot's,
+   * which left the panel all but full-bleed on a wide display: 1328 of 1440.
+   * The extra room a side is what pulls it back off the edges and reads as a
+   * framed screen rather than a second viewport.
+   */
   .showcase-stage {
+    --showcase-rest: 0.8;
+    --showcase-radius: 2.25rem;
+    /*
+     * `top` clears the fixed navbar and is not free space: the bar is 77px on
+     * this tier and 81px where its CTA steps up, and it never hides, so at 1rem
+     * the eyebrow and the heading both sat behind the glass for the whole pin.
+     * 5.5rem is the tightest value that still leaves air under it.
+     *
+     * The panel is height-bound at every desktop size, so the room it gains
+     * comes out of `lede` and `foot` instead, where nothing is behind it.
+     */
+    --showcase-top: 5.5rem;
+    --showcase-gap: 1rem;
+    --showcase-foot: 1.25rem;
+    --showcase-lede: 1rem;
+
     position: sticky;
     top: 0;
+    display: flex;
     height: 100svh;
+    flex-direction: column;
     overflow: hidden;
   }
 
   /*
-   * The panel's largest size is a box with real padding, not the viewport:
-   * `--showcase-top` clears the fixed navbar with air to spare, and the side
-   * and foot gaps give it the same breathing room on the other three edges.
-   * The reel is a framed screen at every point of the scroll, so it never
-   * reaches the viewport's edges and the bezel and radius are constants.
+   * Centred on the stage's own axis, which is the panel's axis too. The gaps
+   * are symmetric, so centring inside them centres on the viewport.
+   */
+  .showcase-header {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: var(--showcase-top) var(--showcase-gap) 0;
+    text-align: center;
+  }
+
+  /*
+   * `min-height: 0` is the load-bearing line: a flex item refuses to shrink
+   * below its content without it, so the panel would push itself off the foot
+   * of the stage the moment the copy above ran to one more line.
+   */
+  .showcase-body {
+    display: grid;
+    flex: 1;
+    min-height: 0;
+    /*
+     * A size container, so the panel below can measure itself against both of
+     * this box's axes at once. That is the whole mechanism behind the fit.
+     */
+    container-type: size;
+    padding: var(--showcase-lede) var(--showcase-gap) var(--showcase-foot);
+    place-items: center;
+  }
+
+  /*
+   * The panel holds the master's own 16:9 rather than taking whatever shape
+   * the viewport leaves over. It used to be `inset`-driven, so its ratio moved
+   * with the window and `object-cover` paid the difference; with the copy now
+   * above it that box would have reached 2.2 on a wide display and cropped a
+   * fifth of the frame away. The ratio is fixed and both maxima are set, so
+   * the panel fits whichever axis runs out first and never crops.
    *
    * The growth is then one uniform scale on that box — `--showcase-rest` of it
    * when the panel arrives, all of it when the scroll has run — so the panel's
@@ -515,14 +613,17 @@
    * than the 36px here; that is the design's own 28px corner.
    */
   .showcase-frame {
-    --showcase-rest: 0.8;
-    --showcase-radius: 2.25rem;
-    --showcase-top: 6.5rem;
-    --showcase-gap: 3.5rem;
-    --showcase-foot: 3rem;
-
-    position: absolute;
-    inset: var(--showcase-top) var(--showcase-gap) var(--showcase-foot);
+    position: relative;
+    /*
+     * Fit inside whatever the copy leaves, without ever breaking the master's
+     * ratio. `max-width` and `max-height` cannot do this between them: the
+     * specified axis wins, the other is clamped, and the ratio goes with it —
+     * which is how a 390px phone briefly held a 985px-wide panel. Sizing the
+     * width against both of the container's axes picks the binding one first,
+     * and the ratio derives the height from it.
+     */
+    width: min(100cqw, 100cqh * 16 / 9);
+    aspect-ratio: 16 / 9;
     /*
      * The finished state. The scroll animation below supplies everything
      * before it, so wherever that animation does not run the panel is simply
@@ -560,25 +661,19 @@
   }
 
   /*
-   * A portrait viewport has nothing to gain from a wide crop of a 16:9 master,
-   * so below `md` the panel is the master's own shape, centred in the space
-   * under the navbar, and grows towards the screen's width. The centring is
-   * folded into `translate` rather than `transform` so it survives the
-   * `scale()` above it.
+   * Below `md` the panel keeps the master's shape the same way it does above
+   * it — that is now the column's own behaviour, so this tier only retunes the
+   * chrome. The gaps come in, the corner tightens, and the copy takes less of
+   * the stage so the panel is still the larger half of it.
    */
   @media (width < 48rem) {
-    .showcase-frame {
+    .showcase-stage {
       --showcase-rest: 0.84;
       --showcase-radius: 1.5rem;
+      --showcase-top: 5rem;
       --showcase-gap: 1.25rem;
-
-      top: calc(50% + var(--showcase-top) / 2);
-      right: var(--showcase-gap);
-      bottom: auto;
-      left: var(--showcase-gap);
-      height: auto;
-      aspect-ratio: 16 / 9;
-      translate: 0 -50%;
+      --showcase-lede: 1.5rem;
+      --showcase-foot: 2rem;
     }
   }
 
@@ -696,7 +791,7 @@
     position: relative;
     container-type: inline-size;
     margin-inline: auto;
-    margin-top: clamp(2rem, 4vw, 3.5rem);
+    margin-top: clamp(1.5rem, 2.75vw, 2.5rem);
   }
 
   .glance-wires {
@@ -799,14 +894,14 @@
    * numbers the wires use; the two have to agree or the wires miss the chips.
    */
   @media (width >= 80rem) {
+    /*
+     * No cap here: the section's own column is `content` wide at every width,
+     * so the figure is already bounded and centred by its parent. It used to
+     * carry the cap alone, back when the heading beside it still ran to the
+     * page gutter. Capping it twice would only let the two drift apart again.
+     */
     .glance-diagram {
       aspect-ratio: 1200 / 560;
-      /*
-       * The section's text stays on the page gutter, but the figure is capped
-       * and centred. Left to fill the width it kept growing while the chips
-       * held a sensible reading size, so it read as oversized on a wide screen.
-       */
-      max-width: var(--container-content);
     }
 
     .glance-wires--portrait {

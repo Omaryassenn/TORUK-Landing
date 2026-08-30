@@ -288,12 +288,25 @@ export function PlatformGlance() {
     <section
       id="platform"
       aria-labelledby="glance-title"
-      className="relative z-10 bg-canvas px-6 py-[clamp(4rem,7vw,6rem)]"
+      className="relative z-10 bg-canvas px-6 py-[clamp(3rem,4.5vw,4.5rem)]"
     >
-      <div ref={ref}>
-        <header className="flex max-w-hero-copy flex-col gap-[0.7rem]">
+      {/*
+        * One centred column for the whole section. The heading used to sit on
+        * the page gutter while the figure was capped and centred below it, so
+        * at 1440 the two started 152px apart and the section read as two
+        * unrelated blocks. Both are now bound by `content`, which is the width
+        * the figure was already capped to — so nothing about the figure moves.
+        */}
+      <div ref={ref} className="mx-auto max-w-content">
+        {/*
+          * Centred on its own axis rather than ragged-left, because the figure
+          * below is bilaterally symmetric about the orb: a left-aligned
+          * heading over it puts the section's optical centre and the type's in
+          * two different places.
+          */}
+        <header className="mx-auto flex max-w-measure flex-col items-center gap-[0.25rem] text-center">
           <p
-            className="reveal text-gradient-eyebrow font-display w-fit text-eyebrow leading-[1.333] font-light uppercase"
+            className="reveal text-gradient-eyebrow font-display w-fit text-section-eyebrow leading-[1.333] font-light uppercase"
             {...step(0)}
           >
             {glance.eyebrow}
@@ -306,7 +319,7 @@ export function PlatformGlance() {
             {glance.headline}
           </h2>
           <p
-            className="reveal font-display max-w-measure text-body leading-[1.55] font-light text-ink-muted"
+            className="reveal font-display text-body leading-[1.55] font-light text-ink-muted"
             {...step(2)}
           >
             {glance.body}
