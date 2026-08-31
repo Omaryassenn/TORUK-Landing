@@ -21,29 +21,29 @@ const VIEW = { w: 1200, h: 560 }
  * (centre 600,280, r 200) at the angle its row approaches from, so the fan
  * converges instead of five lines meeting at one point.
  *
- * They start at x=180, which is as close to the labels as the longest one can
+ * They start at x=220, which is as close to the labels as the longest one can
  * take. Both ends of a wire are fixed in SVG units while the chips scale with
  * the stage, so this clearance is the thing that has to hold at every width;
  * it is why the chips are sized in `cqw` rather than in a clamped px range.
- * Growing the type moved this out from 165: "Knowledge bases" is the label the
- * whole clearance is set by, and at the larger size it reached past the old
- * start. The visible gap still closed, because the node grew more than the
- * wire moved.
+ * Growing the type has moved this out twice, 165 then 180: "Knowledge bases"
+ * is the label the whole clearance is set by, and at each larger size it
+ * reached past the old start. The visible gap still closes each time, because
+ * the node grows by more than the wire moves.
  */
 const WIRES = {
   in: [
-    'M180 44C325 44 410 68 485 116',
-    'M180 162C285 162 355 172 423 186',
-    'M180 280H400',
-    'M180 398C285 398 355 388 423 374',
-    'M180 516C325 516 410 492 485 444',
+    'M220 44C325 44 410 68 485 116',
+    'M220 162C285 162 355 172 423 186',
+    'M220 280H400',
+    'M220 398C285 398 355 388 423 374',
+    'M220 516C325 516 410 492 485 444',
   ],
   out: [
-    'M1020 44C875 44 790 68 715 116',
-    'M1020 162C915 162 845 172 777 186',
-    'M1020 280H800',
-    'M1020 398C915 398 845 388 777 374',
-    'M1020 516C875 516 790 492 715 444',
+    'M980 44C875 44 790 68 715 116',
+    'M980 162C915 162 845 172 777 186',
+    'M980 280H800',
+    'M980 398C915 398 845 388 777 374',
+    'M980 516C875 516 790 492 715 444',
   ],
 }
 
@@ -53,8 +53,8 @@ const WIRES = {
  * other way, and the ramp is directional.
  */
 const RAMP = {
-  in: { x1: 180, y1: 280, x2: 450, y2: 280 },
-  out: { x1: 1020, y1: 280, x2: 750, y2: 280 },
+  in: { x1: 220, y1: 280, x2: 450, y2: 280 },
+  out: { x1: 980, y1: 280, x2: 750, y2: 280 },
 }
 
 /** Where a wire meets the orb, for the contact glow that sits on the end. */
