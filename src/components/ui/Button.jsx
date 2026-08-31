@@ -31,7 +31,7 @@ export function Button({ as = 'a', variant = 'solid', className, ...props }) {
   return (
     <Tag
       className={cn(
-        'inline-flex h-button items-center justify-center rounded-[62.5rem] px-[1.4375rem]',
+        'inline-flex h-button items-center justify-center rounded-[1rem] px-[1.4375rem]',
         'font-display text-cta leading-none font-medium uppercase whitespace-nowrap',
         'transition-colors duration-200 active:scale-[0.98] motion-reduce:active:scale-100',
         variants[variant],

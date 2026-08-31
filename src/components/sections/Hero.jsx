@@ -12,7 +12,7 @@ export function Hero() {
 
   const shown = revealed && contentReady
 
-  /** Cascades the eyebrow → headline → CTAs → capability list. */
+  /** Cascades the eyebrow → headline → sub-line → CTAs → client strip. */
   const step = (index) => ({
     'data-revealed': shown,
     style: { '--reveal-delay': `${index * 90}ms` },
@@ -49,12 +49,32 @@ export function Hero() {
           </p>
 
           <div className="flex flex-col gap-[1.5rem]">
-            <h1
-              className="reveal font-display max-w-headline text-headline leading-[1.3125] font-normal text-ink uppercase"
-              {...step(1)}
-            >
-              {hero.headline}
-            </h1>
+            {/*
+              * Headline and its sub-line are one block on a tight gap, so they
+              * read as a statement and its qualifier rather than as two
+              * separate elements sharing the 1.5rem rhythm around them.
+              */}
+            <div className="flex flex-col gap-[0.75rem]">
+              {/*
+                * Sentence case, not caps. The weight step on the closing
+                * phrase is what carries the emphasis, and under caps it is
+                * invisible — every letter is already at full height.
+                */}
+              <h1
+                className="reveal font-display max-w-headline text-headline leading-[1.2] font-normal text-ink"
+                {...step(1)}
+              >
+                {hero.headline.lead}{' '}
+               {hero.headline.emphasis}
+              </h1>
+
+              <p
+                className="reveal font-display max-w-measure text-hero-body leading-[1.5] font-light text-ink-muted"
+                {...step(2)}
+              >
+                {hero.body}
+              </p>
+            </div>
 
             {/*
               * Stacked and full-bleed below `md`, side by side above it. The
@@ -65,7 +85,7 @@ export function Hero() {
               */}
             <div
               className="reveal flex flex-col gap-[1rem] md:flex-row md:flex-wrap md:items-center"
-              {...step(2)}
+              {...step(3)}
             >
               <Button href={hero.primaryCta.href} className="w-full md:w-auto">
                 {hero.primaryCta.label}
@@ -81,8 +101,35 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="reveal mt-auto -mx-6 pt-10" {...step(3)}>
-          <ClientsMarquee />
+        <div className="reveal mt-auto pt-10" {...step(4)}>
+          {/*
+            * Names the strip on the page rather than only to assistive tech,
+            * so the group below takes its accessible name from this line
+            * instead of carrying a second, different one of its own.
+            *
+            * It sits inside the gutter while the strip stays full-bleed: the
+            * marks run off both edges by design, but a caption that did the
+            * same would read as clipped rather than as continuing.
+            *
+            * Centred on the strip's own axis, not the copy's. The gutter is
+            * symmetric, so centring inside it centres on the viewport, which
+            * is where the marks are centred too.
+            *
+            * One treatment across the whole line. Splitting it on colour to
+            * lean on the copy's own case read as two labels rather than one
+            * sentence at this size, so the caption takes a single weight and
+            * colour throughout.
+            */}
+          <p
+            id="clients-label"
+            className="font-display text-micro leading-[1.4] font-light tracking-[0.08em] text-ink-muted text-center"
+          >
+            Engaged with Leading Organizations
+          </p>
+
+          <div className="-mx-6 pt-7">
+            <ClientsMarquee labelledBy="clients-label" />
+          </div>
         </div>
 
         {/* <ul

@@ -17,16 +17,15 @@ export const glance = {
    * "unifes" -> "unifies", "real ward" -> "real world".
    */
   body:
-    'Build AI apps and employees, connect them to your knowledge and systems, extend them with skills and functions, automate with triggers, and deploy' +
-    ' - all through one unified platform.',
+    ' Build AI apps and employees, connect knowledge and systems, extend them with skills and functions, automate workflows, and deploy everything through one governed platform.',
 
   /** Left half: what the platform draws on. */
   inputs: [
-    { id: 'ai-employees', label: 'AI employees' },
-    { id: 'ai-squad', label: 'AI Squad' },
+    { id: 'ai-employees', label: 'AI Employees' },
+    { id: 'ai-squad', label: 'AI Squads' },
     { id: 'storage', label: 'Storage' },
     { id: 'integrations', label: 'Integrations' },
-    { id: 'knowledge-bases', label: 'Knowledge bases' },
+    { id: 'knowledge-bases', label: 'Knowledge Bases' },
   ],
 
   /** Right half: what it produces. */

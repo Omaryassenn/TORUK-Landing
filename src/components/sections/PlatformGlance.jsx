@@ -288,12 +288,25 @@ export function PlatformGlance() {
     <section
       id="platform"
       aria-labelledby="glance-title"
-      className="relative z-10 bg-canvas px-6 py-[clamp(4rem,7vw,6rem)]"
+      className="relative z-10 bg-canvas px-6 py-[clamp(3rem,4.5vw,4.5rem)]"
     >
-      <div ref={ref}>
-        <header className="flex max-w-hero-copy flex-col gap-[0.7rem]">
+      {/*
+        * One centred column for the whole section. The heading used to sit on
+        * the page gutter while the figure was capped and centred below it, so
+        * at 1440 the two started 152px apart and the section read as two
+        * unrelated blocks. Both are now bound by `content`, which is the width
+        * the figure was already capped to — so nothing about the figure moves.
+        */}
+      <div ref={ref} className="mx-auto max-w-content">
+        {/*
+          * Centred on its own axis rather than ragged-left, because the figure
+          * below is bilaterally symmetric about the orb: a left-aligned
+          * heading over it puts the section's optical centre and the type's in
+          * two different places.
+          */}
+        <header className="mx-auto flex max-w-measure flex-col items-center gap-[0.25rem] text-center">
           <p
-            className="reveal text-gradient-eyebrow font-display w-fit text-eyebrow leading-[1.333] font-light uppercase"
+            className="reveal text-gradient-eyebrow font-display w-fit text-section-eyebrow leading-[1.333] font-light uppercase"
             {...step(0)}
           >
             {glance.eyebrow}
@@ -306,7 +319,7 @@ export function PlatformGlance() {
             {glance.headline}
           </h2>
           <p
-            className="reveal font-display max-w-measure text-body leading-[1.55] font-light text-ink-muted"
+            className="reveal font-display text-body leading-[1.55] font-light text-ink-muted"
             {...step(2)}
           >
             {glance.body}
@@ -350,9 +363,10 @@ export function PlatformGlance() {
               className="glance-orb-sphere"
             />
             {/*
-              * Halo and dashed ring, lifted verbatim from the frame's export.
-              * They are vector in the original and stay vector here so the ring
-              * keeps its 1px dashes at any size.
+              * Halo and mark, lifted from the frame's export and kept vector.
+              * The frame's dashed ring sat on the halo's edge and is dropped;
+              * the sphere's inset still leaves that band clear, so the halo
+              * reads as a soft edge rather than a drawn one.
               */}
             <svg
               viewBox="0 0 307 307"
@@ -362,19 +376,10 @@ export function PlatformGlance() {
               className="absolute inset-0 size-full"
             >
               <circle cx="153.5" cy="153.5" r="153.23" fill="#6F84DB" opacity="0.1" />
-              <circle
-                cx="153.5"
-                cy="153.5"
-                r="153.23"
-                stroke="#ffffff"
-                strokeOpacity="0.1"
-                strokeWidth="1.11"
-                strokeDasharray="6.71 6.71"
-              />
               {/*
-                * A short bright arc that travels the ring once as the sphere
-                * arrives, then stops. It is the ring's own circle stroked with
-                * a single dash, so it tracks the ring exactly at any size.
+                * A short bright arc that travels the halo's edge once as the
+                * sphere arrives, then stops. It runs the same circle the ring
+                * used to be drawn on, so it still tracks that edge exactly.
                 */}
               <circle
                 className="glance-sweep"
