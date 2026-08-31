@@ -363,9 +363,10 @@ export function PlatformGlance() {
               className="glance-orb-sphere"
             />
             {/*
-              * Halo and dashed ring, lifted verbatim from the frame's export.
-              * They are vector in the original and stay vector here so the ring
-              * keeps its 1px dashes at any size.
+              * Halo and mark, lifted from the frame's export and kept vector.
+              * The frame's dashed ring sat on the halo's edge and is dropped;
+              * the sphere's inset still leaves that band clear, so the halo
+              * reads as a soft edge rather than a drawn one.
               */}
             <svg
               viewBox="0 0 307 307"
@@ -375,19 +376,10 @@ export function PlatformGlance() {
               className="absolute inset-0 size-full"
             >
               <circle cx="153.5" cy="153.5" r="153.23" fill="#6F84DB" opacity="0.1" />
-              <circle
-                cx="153.5"
-                cy="153.5"
-                r="153.23"
-                stroke="#ffffff"
-                strokeOpacity="0.1"
-                strokeWidth="1.11"
-                strokeDasharray="6.71 6.71"
-              />
               {/*
-                * A short bright arc that travels the ring once as the sphere
-                * arrives, then stops. It is the ring's own circle stroked with
-                * a single dash, so it tracks the ring exactly at any size.
+                * A short bright arc that travels the halo's edge once as the
+                * sphere arrives, then stops. It runs the same circle the ring
+                * used to be drawn on, so it still tracks that edge exactly.
                 */}
               <circle
                 className="glance-sweep"

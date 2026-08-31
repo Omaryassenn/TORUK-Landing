@@ -118,13 +118,49 @@
    * measure is wide for body copy on purpose: it is the wrap the frame sets,
    * two lines under the section heading rather than four.
    *
-   * `content` is sized so the glance section clears a laptop viewport: at 84rem
-   * the figure alone was 627px tall and the last rank of nodes fell below the
-   * fold. It cannot go much under this without the labels colliding with the
-   * start of their wires, which is fixed in the viewBox at x=165.
+   * `content` is the shared measure for the two figures below the hero: the
+   * reel's panel and the glance diagram sit on the same column, so the page
+   * has one width rather than two that nearly agree.
+   *
+   * It is set from the reel, because the reel is the constrained one. That
+   * panel is height-bound — it fits the stage under its own copy and holds
+   * 16:9 — and at a 900-tall window that lands it at 1189px. 74rem is the
+   * step just under, so the panel reaches the column instead of stopping
+   * short of it and the two line up exactly.
+   *
+   * It cannot go much under 68rem without the glance labels colliding with the
+   * start of their wires, which is fixed in the viewBox at x=165, and 84rem is
+   * the far end: the figure alone was 627px tall there and the last rank of
+   * nodes fell below the fold. This sits between the two at 553px.
    */
-  --container-content: 68rem; /* 1088px */
+  --container-content: 74rem; /* 1184px */
   --container-measure: 50rem; /* 800px */
+
+  /*
+   * The shared width of the two figures below the hero: the reel's panel and
+   * the glance diagram.
+   *
+   * Derived rather than fixed, because the panel is the constrained one. It
+   * holds the master's 16:9 inside whatever the stage leaves under its own
+   * copy, so its width falls out of the viewport's HEIGHT, not its width. A
+   * fixed column agreed with it only on a tall window: at 1440x797 the two sat
+   * 178px apart, the panel at 1006 and the diagram at the full 1184.
+   *
+   * `showcase-chrome` is everything in the stage that is not the panel — the
+   * navbar clearance, the copy, and the two gaps. It is a measured constant per
+   * tier rather than a live measurement, and it is the one number here that has
+   * to be re-measured if that copy ever changes height.
+   *
+   * The width term is `3rem` rather than the stage's own `2rem` of side gap so
+   * the diagram, which sits on the page's wider `px-6` gutter, can reach the
+   * same value; otherwise the two would part company by 16px on a tablet.
+   */
+  --showcase-chrome: 16.4375rem; /* 263px */
+  --figure-width: min(
+    100vw - 3rem,
+    (100svh - var(--showcase-chrome)) * 16 / 9,
+    var(--container-content)
+  );
 
   /*
    * The hero's top padding is the difference between the copy clearing the
@@ -277,6 +313,8 @@
       --text-section: 1.375rem; /* 22px */
       /* Back in step with `eyebrow`: 18px under a 22px heading is not a label. */
       --text-section-eyebrow: 0.875rem; /* 14px */
+      /* Smaller copy, but wider gaps on this tier. Measured: 239px. */
+      --showcase-chrome: 16.6875rem;
       --text-hero-body: 1rem; /* 16px */
       --spacing-wordmark: 1.3125rem; /* 21px */
     }
@@ -304,6 +342,8 @@
       /* In step with `eyebrow` again, against a 36px heading. */
       --text-section-eyebrow: 1.5rem; /* 24px */
       --text-micro: 0.875rem; /* 14px */
+      /* The copy steps up with the tier's type. Measured: 255px. */
+      --showcase-chrome: 17.9375rem;
       --text-hero-body: 1.5rem; /* 24px */
       --text-body: 1.125rem; /* 18px */
       --text-nav: 1.25rem; /* 20px */
@@ -541,8 +581,16 @@
    * framed screen rather than a second viewport.
    */
   .showcase-stage {
-    --showcase-rest: 0.8;
+    /* The size the panel arrives at, before the scroll grows it to full. */
+    --showcase-rest: 0.9;
     --showcase-radius: 2.25rem;
+    /*
+     * The bezel ring is drawn OUTSIDE the panel by this much, so it is part of
+     * the panel's footprint even though it is not part of its box. Both gaps
+     * below add it back: without that the ring landed 1px under the copy while
+     * the gap above it measured a nominal 12px.
+     */
+    --showcase-bezel: 0.875rem;
     /*
      * `top` clears the fixed navbar and is not free space: the bar is 77px on
      * this tier and 81px where its CTA steps up, and it never hides, so at 1rem
@@ -554,8 +602,9 @@
      */
     --showcase-top: 5.5rem;
     --showcase-gap: 1rem;
-    --showcase-foot: 1.25rem;
-    --showcase-lede: 1rem;
+    /* Both are the gap you actually see, measured from the bezel, not the box. */
+    --showcase-foot: 0.75rem;
+    --showcase-lede: 1.25rem;
 
     position: sticky;
     top: 0;
@@ -593,7 +642,8 @@
      * this box's axes at once. That is the whole mechanism behind the fit.
      */
     container-type: size;
-    padding: var(--showcase-lede) var(--showcase-gap) var(--showcase-foot);
+    padding: calc(var(--showcase-lede) + var(--showcase-bezel)) var(--showcase-gap)
+      calc(var(--showcase-foot) + var(--showcase-bezel));
     place-items: center;
   }
 
@@ -622,7 +672,14 @@
      * width against both of the container's axes picks the binding one first,
      * and the ratio derives the height from it.
      */
-    width: min(100cqw, 100cqh * 16 / 9);
+    /*
+     * The two `cq` terms are the panel measuring the space it is actually in,
+     * and stay as the safety: if the copy above ever runs to another line they
+     * bind first and the panel still fits. `figure-width` is the same value
+     * arrived at from the viewport, and is what the glance diagram can also
+     * read from outside this stage.
+     */
+    width: min(100cqw, 100cqh * 16 / 9, var(--figure-width));
     aspect-ratio: 16 / 9;
     /*
      * The finished state. The scroll animation below supplies everything
@@ -646,9 +703,9 @@
 
   .showcase-bezel {
     position: absolute;
-    inset: -0.875rem;
+    inset: calc(var(--showcase-bezel) * -1);
     border: 1px solid var(--color-hairline);
-    border-radius: calc(var(--showcase-radius) + 0.875rem);
+    border-radius: calc(var(--showcase-radius) + var(--showcase-bezel));
   }
 
   .showcase-idle {
@@ -790,6 +847,12 @@
   .glance-diagram {
     position: relative;
     container-type: inline-size;
+    /*
+     * The same width as the reel's panel, off the same expression. The column
+     * around it stays `content` wide for the copy; only the figure tracks the
+     * panel, because the panel is the thing it has to line up with.
+     */
+    max-width: var(--figure-width);
     margin-inline: auto;
     margin-top: clamp(1.5rem, 2.75vw, 2.5rem);
   }
@@ -829,8 +892,9 @@
 
   /*
    * Orb. Centred on the point every wire is aimed at, in both orientations.
-   * The sphere is inset by the frame's own 30.38/307, which is what leaves
-   * room for the dashed ring around it.
+   * The sphere is inset by the frame's own 30.38/307. That band held the
+   * frame's dashed ring, which is gone; the inset stays because the halo and
+   * the entrance sweep are both drawn across it and the wires end on it.
    */
   .glance-orb {
     position: absolute;

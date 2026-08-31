@@ -54,7 +54,14 @@ export function VideoShowcase() {
           >
             {showcase.headline}
           </h2>
-          <p className="font-display max-w-measure text-body leading-[1.55] font-light text-ink-muted">
+          {/*
+            * `pretty`, not `balance`. Both clear the orphan the last word was
+            * landing in, but `balance` evens the two lines by pulling them
+            * BOTH in — it rendered 459px inside an 800px measure, so the copy
+            * read narrow next to the glance section's identical block.
+            * `pretty` only reflows the tail, holding the full measure.
+            */}
+          <p className="font-display max-w-measure text-body leading-[1.55] font-light text-ink-muted text-pretty">
             {showcase.body}
           </p>
         </header>
