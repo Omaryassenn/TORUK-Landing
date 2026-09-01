@@ -559,11 +559,14 @@
    * stage rises over the hero and covers it; once the track fills the viewport
    * the stage stops moving and the panel inside it does the rest.
    *
-   * 240svh = one viewport of rise + 140svh of pin to grow and hold in.
+   * 200svh = one viewport of rise + 100svh of pin to grow and hold in. It was
+   * 240; the extra 40 was all hold, after the panel had already finished
+   * growing, and it read as the page having stopped responding rather than as
+   * a beat.
    */
   .showcase-track {
     position: relative;
-    height: 240svh;
+    height: 200svh;
     view-timeline-name: --showcase;
     view-timeline-axis: block;
   }
@@ -581,8 +584,20 @@
    * framed screen rather than a second viewport.
    */
   .showcase-stage {
-    /* The size the panel arrives at, before the scroll grows it to full. */
-    --showcase-rest: 0.9;
+    /*
+     * The size the panel arrives at, before the scroll grows it to full.
+     *
+     * 0.96, not the 0.9 this started at. The growth is meant to be felt rather
+     * than watched — a tenth of the panel's width is a resize, and it made the
+     * pin read as a long interaction whose whole content was a box getting
+     * bigger. Four percent still registers as the panel settling into place.
+     *
+     * The far end stays at 1, which is `--figure-width` exactly: that is the
+     * column the glance diagram and the two "Dive Into TORUK" cards also sit
+     * on, and a panel that stopped short of it would leave three figures on
+     * two edges down the page.
+     */
+    --showcase-rest: 0.96;
     --showcase-radius: 2.25rem;
     /*
      * The bezel ring is drawn OUTSIDE the panel by this much, so it is part of
@@ -725,7 +740,8 @@
    */
   @media (width < 48rem) {
     .showcase-stage {
-      --showcase-rest: 0.84;
+      /* Wider range than the desktop tier's, in step with it: 8% against 4%. */
+      --showcase-rest: 0.92;
       --showcase-radius: 1.5rem;
       --showcase-top: 5rem;
       --showcase-gap: 1.25rem;
@@ -739,13 +755,15 @@
       /*
        * `contain` is precisely the stretch during which the track covers the
        * viewport — which is precisely the stretch during which the stage is
-       * pinned. Ending at 85% leaves the panel at full size for a beat before
-       * the track releases it.
+       * pinned. Ending at 45% gets the panel to full size in the first half of
+       * the pin and leaves it there; at 85% the growth ran almost the whole
+       * way and the reader was still scrolling a resize when they expected to
+       * be watching the reel.
        */
       .showcase-frame {
         animation: showcase-expand linear both;
         animation-timeline: --showcase;
-        animation-range: contain 0% contain 85%;
+        animation-range: contain 0% contain 45%;
       }
     }
   }
@@ -1229,3 +1247,409 @@
   }
 }
 
+
+
+/*
+ * The two progresses "Dive Into TORUK" runs on, registered so they are real
+ * numbers rather than substituted tokens.
+ *
+ * Registration is what lets the rules below do arithmetic on them —
+ * `calc((1 - var(--cards)) * 1.5rem)` is a syntax error against an
+ * unregistered property, because the substituted text has no type. It also
+ * gives each one an initial value, which is the state the section renders in
+ * before the scene has booted and written the first frame: the hint up, the
+ * cards not yet arrived.
+ *
+ * `DiveIntoToruk` writes both every frame. Nothing else sets them.
+ */
+@property --hint {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+@property --cards {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@layer components {
+  /*
+   * "Dive Into TORUK" (Figma node 11062:107758).
+   *
+   * The scope is scroll length and nothing else: its one painted child is the
+   * stage, one viewport tall and stuck to the top of it. Everything the reader
+   * sees happens inside that one screen — the mark whole, the mark breaking as
+   * the camera goes through it, and the two environments on cards.
+   *
+   * 300svh is a budget, not a round number. The mark is whole for the first
+   * 30svh, the break takes the next 108, the cards arrive over 84, and the
+   * last 54 is the reader sitting on the finished composition with the section
+   * still pinned — long enough to read both cards without the page moving.
+   */
+  .dive-scope {
+    position: relative;
+    height: 300svh;
+    background-color: #000;
+  }
+
+  /*
+   * Sticky rather than fixed, so the stage releases itself at the end of the
+   * scope. `overflow: hidden` is what clips the scene to the section; the
+   * canvas is sized to this box, so the two always agree.
+   */
+  .dive-stage {
+    /*
+     * `top` clears the fixed navbar the same way the reel's does — the bar is
+     * 77px on the standard tier and never hides, so anything under 5.5rem puts
+     * the eyebrow behind the glass for the whole pin.
+     */
+    --dive-top: 5.5rem;
+    --dive-foot: 3rem;
+    /*
+     * The page's own gutter, not a wider one of this section's own. It has to
+     * be exactly `px-6` so the `100vw - 3rem` term inside `--figure-width` is
+     * the thing that binds the cards below, and not this padding — a wider
+     * gutter here and the card row stops short of the column the reel and the
+     * glance share on a narrow window.
+     */
+    --dive-gutter: 1.5rem;
+
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+  }
+
+  /*
+   * The scene fills the stage. It is sized in JS to the stage's own box rather
+   * than to the viewport, so a browser with a visible URL bar does not render
+   * a canvas taller than the box it is clipped to and lose the mark's feet.
+   */
+  .dive-canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /*
+   * The column the heading and the cards share, centred as one group.
+   *
+   * Centring the pair rather than placing each is what makes the finished
+   * state hold together at every height: the gap between the heading and the
+   * cards is fixed, and the air above and below is whatever the viewport has
+   * left. `pointer-events: none` because nothing in it is interactive and it
+   * covers the whole stage — a live layer here would swallow the scroll.
+   */
+  .dive-body {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    padding: var(--dive-top) var(--dive-gutter) var(--dive-foot);
+    place-content: center;
+    gap: clamp(1.75rem, 3.5vh, 2.75rem);
+    pointer-events: none;
+  }
+
+  /*
+   * The section header. The same block, the same tokens and the same 0.25rem
+   * stack as the reel's and the glance's — this section is not a special case
+   * and should not read as one. It holds the top of the stage for the whole
+   * scroll; only what sits under it changes.
+   */
+  .dive-head {
+    display: flex;
+    max-width: var(--container-measure);
+    flex-direction: column;
+    align-items: center;
+    justify-self: center;
+    gap: 0.25rem;
+    text-align: center;
+  }
+
+  /*
+   * The scroll hint, on the foot of the stage rather than under the heading.
+   *
+   * It has its own progress because it has a different job: the heading is
+   * still worth reading a little way into the scroll, but a prompt to start
+   * scrolling is wrong the moment the reader has. It is gone by 6%.
+   */
+  .dive-hint {
+    position: absolute;
+    bottom: var(--dive-foot);
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-ink-faint);
+    letter-spacing: 0.2em;
+    opacity: var(--hint);
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  /*
+   * A short rule that travels down toward the label, on a loop. It is the only
+   * thing on the stage that moves on its own while the mark is drifting, so it
+   * is what the eye catches — which is the whole point of a hint.
+   */
+  .dive-hint-rule {
+    display: block;
+    width: 1px;
+    height: 2rem;
+    background: linear-gradient(to bottom, transparent, var(--color-hairline-strong));
+    animation: dive-hint-fall 2.4s var(--ease-out-quint) infinite;
+    transform-origin: 50% 0;
+  }
+
+  /* --- The two environments --------------------------------------------- */
+
+  /*
+   * Two equal columns on the page's shared figure column.
+   *
+   * `--figure-width` is the same expression the reel's panel and the glance
+   * diagram are sized from, so all three line up on one edge down the page
+   * rather than on three that nearly agree. It is derived from the viewport's
+   * HEIGHT as much as its width — the reel is height-bound — which means this
+   * row also narrows on a short window, and that is the right behaviour here
+   * too: the stage cannot scroll, so a shorter window has less to give.
+   */
+  .dive-cards {
+    display: grid;
+    width: min(100%, var(--figure-width));
+    justify-self: center;
+    gap: clamp(1.25rem, 2.5vw, 2.5rem);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    opacity: var(--cards);
+    transform: translate3d(0, calc((1 - var(--cards)) * 1.75rem), 0);
+  }
+
+  /*
+   * A matte panel rather than a card on a page: it sits over a live scene, so
+   * its ground is a wash of the scene's own black plus a hairline. No blur —
+   * by the time the cards are up the scene behind them has been dropped and
+   * there is nothing left to blur, so it would cost a full-stage filter pass
+   * per frame for no visible difference.
+   */
+  .dive-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--color-hairline);
+    border-radius: 1.5rem;
+    background:
+      linear-gradient(165deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.012) 60%),
+      rgba(10, 10, 10, 0.72);
+    padding: clamp(1rem, 1.6vw, 1.5rem);
+  }
+
+  /*
+   * The picture. A fixed ratio so the two cards' copy starts on the same line
+   * whatever the column width — the drawings have different amounts of ink in
+   * them and would otherwise settle at different heights.
+   */
+  .dive-figure {
+    overflow: hidden;
+    border: 1px solid var(--color-hairline);
+    border-radius: 0.75rem;
+    background-color: rgba(255, 255, 255, 0.022);
+    aspect-ratio: 320 / 150;
+  }
+
+  .dive-figure-art {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* The drawing's palette: one hairline, two fills, one accentless port. */
+  .dive-node {
+    fill: rgba(255, 255, 255, 0.03);
+    stroke: var(--color-hairline);
+    stroke-width: 1;
+  }
+
+  .dive-node--filled {
+    fill: rgba(255, 255, 255, 0.07);
+  }
+
+  .dive-wire path {
+    fill: none;
+    stroke: var(--color-hairline-strong);
+    stroke-width: 1;
+  }
+
+  .dive-port {
+    fill: #0a0a0a;
+    stroke: var(--color-ink-muted);
+    stroke-width: 1;
+  }
+
+  .dive-fill {
+    fill: rgba(255, 255, 255, 0.16);
+  }
+
+  .dive-fill-strong {
+    fill: rgba(255, 255, 255, 0.42);
+  }
+
+  .dive-bar {
+    fill: rgba(255, 255, 255, 0.28);
+  }
+
+  /*
+   * "01 - TORUK Studio". The number is the destination's name inside the
+   * section, not a list bullet, so it is set as part of the label rather than
+   * as a counter.
+   */
+  .dive-index {
+    margin-top: clamp(1rem, 1.8vw, 1.5rem);
+    color: var(--color-ink-faint);
+    font-family: var(--font-display);
+    font-size: var(--text-micro);
+    font-weight: 300;
+    letter-spacing: 0.08em;
+  }
+
+  .dive-card-title {
+    margin-top: 0.5rem;
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-size: var(--text-section);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .dive-card-body {
+    margin-top: 0.625rem;
+    color: var(--color-ink-muted);
+    font-family: var(--font-display);
+    font-size: var(--text-body);
+    font-weight: 300;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  /*
+   * Below `md` the pair stacks. Two cards side by side at that width give each
+   * one a measure of about twenty characters, which is a column of single
+   * words rather than a paragraph.
+   */
+  @media (width < 48rem) {
+    .dive-stage {
+      --dive-top: 5rem;
+      --dive-foot: 2rem;
+    }
+
+    .dive-cards {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    /*
+     * The figure goes with them. Stacked, the two pictures are most of the
+     * section's height and say the least per pixel of anything in it — the
+     * copy is what the reader came down here for.
+     */
+    .dive-figure {
+      display: none;
+    }
+  }
+
+  /*
+   * The one thing in the composition that can be given up on a short window.
+   *
+   * The stage is a single unscrollable screen, so the heading and both cards
+   * have to fit inside it at every height — and the figure is the only part
+   * that is decoration rather than content.
+   *
+   * 40rem is measured, not chosen. The card row is on `--figure-width`, which
+   * is itself derived from the viewport's height, so the whole composition
+   * already narrows — and therefore shortens — as the window loses height.
+   * That carries it down to about 640, where the copy starts wrapping to a
+   * fourth line faster than the figure shrinks. Below there the figure goes,
+   * and the stage cannot scroll to make room for it.
+   */
+  @media (height < 40rem) {
+    .dive-figure {
+      display: none;
+    }
+  }
+
+  /*
+   * The static form: reduced motion, or no WebGL.
+   *
+   * Not a degraded version of the journey — an ordinary section that happens
+   * to carry the same copy. The scope stops being scroll length, the stage
+   * stops being pinned, and the flat mark stands in for the plate above a
+   * heading that no longer has anywhere to travel from.
+   */
+  .dive-scope[data-static] {
+    height: auto;
+    padding: clamp(3rem, 4.5vw, 4.5rem) 0;
+    background-color: var(--color-canvas);
+  }
+
+  .dive-scope[data-static] .dive-stage {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+
+  .dive-scope[data-static] .dive-canvas,
+  .dive-scope[data-static] .dive-hint {
+    display: none;
+  }
+
+  .dive-scope[data-static] .dive-body {
+    position: static;
+    padding: 0 var(--dive-gutter);
+  }
+
+  .dive-scope[data-static] .dive-cards {
+    opacity: 1;
+    transform: none;
+  }
+
+  /*
+   * Only ever rendered in the static form, where it takes the plate's place in
+   * the column — under the header, over the cards.
+   */
+  .dive-glyph {
+    width: min(17rem, 46vw);
+    justify-self: center;
+    opacity: 0.9;
+  }
+}
+
+/*
+ * The hint's rule falls once and restarts. Held at the top for the first fifth
+ * of the loop so it reads as a repeated gesture rather than as a continuously
+ * scrolling line.
+ */
+@keyframes dive-hint-fall {
+  0%,
+  18% {
+    transform: scaleY(0.15);
+    opacity: 0;
+  }
+
+  45% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+
+  75%,
+  100% {
+    transform: translateY(1.5rem) scaleY(0.15);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dive-hint-rule {
+    animation: none;
+  }
+}
