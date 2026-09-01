@@ -11,7 +11,7 @@ export const showcase = {
   label: 'TORUK platform reel',
   eyebrow: 'See TORUK in action',
   headline: 'From idea to production in one platform.',
-  body: 'See how teams build AI applications, connect enterprise knowledge and tools, automate workflows, and deploy them securely.',
+  body: 'See how teams build AI applications, connect enterprise knowledge and tools and automate workflows.',
   poster: '/media/toruk-reel-poster.webp',
   sources: [
     { src: '/media/toruk-reel.webm', type: 'video/webm' },

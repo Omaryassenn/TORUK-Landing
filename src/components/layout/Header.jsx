@@ -4,11 +4,27 @@ import { site, nav, headerCta } from '@/content/site'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { Button } from '@/components/ui/Button'
 import { useSplash } from '@/components/splash/context'
+import { useAtViewportTop } from '@/hooks/useAtViewportTop'
+
+
+/*
+ * The sections that put a surface under the bar. Module-level so the observer
+ * is set up once rather than torn down and rebuilt on every render.
+ */
+const GROUNDED_SECTIONS = ['#reel', '#platform']
 
 
 export function Header({ activeHref = '/' }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const { active: splashActive, staged, chromeVisible, registerLogo } = useSplash()
+
+  /*
+   * The bar has no ground over the hero. There the lockup sits on the hero's
+   * own artwork and the two read as one composition; the glass exists to
+   * separate the chrome from a page moving under it, and only the reel and the
+   * glance section put anything there to separate it from.
+   */
+  const grounded = useAtViewportTop(GROUNDED_SECTIONS)
 
 
   const lifted = staged
@@ -32,12 +48,14 @@ export function Header({ activeHref = '/' }) {
         'fixed inset-x-0 top-0',
         lifted ? 'z-[60]' : 'z-20',
         /*
-         * The glass is held back until the splash is spent. The overlay is an
+         * The glass waits on two things. The splash, because that overlay is an
          * opaque black layer and the header sits above it once staged, so a
          * translucent bar would be a visible seam across an otherwise blank
-         * screen for the length of the intro.
+         * screen for the length of the intro. And one of the sections below
+         * reaching the bar, because over the hero there is nothing behind it
+         * but the hero it belongs to.
          */
-        !splashActive && 'chrome-glass',
+        !splashActive && grounded && 'chrome-glass',
       )}
     >
       {/*
