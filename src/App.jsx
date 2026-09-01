@@ -2,6 +2,7 @@ import { Header } from '@/components/layout/Header'
 import { Hero } from '@/components/sections/Hero'
 import { VideoShowcase } from '@/components/sections/VideoShowcase'
 import { PlatformGlance } from '@/components/sections/PlatformGlance'
+import { DiveIntoToruk } from '@/components/sections/DiveIntoToruk'
 import { Splash } from '@/components/splash/Splash'
 import { SplashProvider } from '@/components/splash/SplashProvider'
 import { useSplash } from '@/components/splash/context'
@@ -43,6 +44,14 @@ export default function App() {
         </div>
 
         <PlatformGlance />
+
+        {/*
+          * The glance says everything is connected in one place; this says
+          * what the two halves of that place are. It follows for that reason
+          * and not just because it is the newest section — it is the answer to
+          * the question the diagram above leaves open.
+          */}
+        <DiveIntoToruk />
       </main>
       <Splash />
     </SplashProvider>
