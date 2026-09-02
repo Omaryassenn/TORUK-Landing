@@ -21,9 +21,21 @@ import { createFracture } from './fracture'
  * prototype's; the framing and the pacing are this section's.
  */
 
-/* Where the break has run its course, in section progress. */
-const BREAK_START = 0.05
-const BREAK_END = 0.46
+/*
+ * Where the break has run its course, in section progress.
+ *
+ * These are fractions of the scope, and the scope is no longer the 300svh they
+ * were set at: it has grown to 400 to give the two panels below the mark the
+ * scroll they need. Left alone, the break would have grown with it and run a
+ * third slower than it was tuned to.
+ *
+ * So they are re-derived rather than left: 15svh of approach and 123svh of
+ * break, which are the lengths the prototype's pacing was set at, expressed
+ * against the scope as it is now. Anything that changes `--dive-scope`'s height
+ * has to come back through here.
+ */
+const BREAK_START = 0.0375
+const BREAK_END = 0.345
 
 /* The plate's near face is at z = +0.1, so this is just past its back. */
 const Z_THROUGH = -0.12
@@ -261,7 +273,8 @@ export function createPortal(canvas, { detail = 'full' } = {}) {
      * clearing to transparent and nothing else, which is what lets the cards
      * come in over a scene that costs nothing to keep alive.
      */
-    const spent = p > 0.52
+    /* 18svh past the end of the break, as it was when the scope was 300svh. */
+    const spent = p > 0.39
     mark.visible = !spent
     if (!spent) {
       solid.visible = rim.visible = fade < 0.999

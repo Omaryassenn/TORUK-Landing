@@ -1,6 +1,7 @@
 import { Header } from '@/components/layout/Header'
 import { Hero } from '@/components/sections/Hero'
 import { VideoShowcase } from '@/components/sections/VideoShowcase'
+import { TorukMindset } from '@/components/sections/TorukMindset'
 import { PlatformGlance } from '@/components/sections/PlatformGlance'
 import { DiveIntoToruk } from '@/components/sections/DiveIntoToruk'
 import { Splash } from '@/components/splash/Splash'
@@ -43,8 +44,17 @@ export default function App() {
           <VideoShowcase />
         </div>
 
-        <PlatformGlance />
+        {/*
+          * Before the platform, not after it. The two sections below are both
+          * answers — what is connected, and where it is built and used — and
+          * they only land on a reader who has already accepted the premise
+          * that AI is something you employ rather than something you open. This
+          * is where that premise is argued, so it comes first.
+          */}
+        
 
+        <PlatformGlance />
+        <TorukMindset />
         {/*
           * The glance says everything is connected in one place; this says
           * what the two halves of that place are. It follows for that reason

@@ -297,7 +297,7 @@ export function PlatformGlance() {
         * unrelated blocks. Both are now bound by `content`, which is the width
         * the figure was already capped to — so nothing about the figure moves.
         */}
-      <div ref={ref} className="mx-auto max-w-content">
+      <div ref={ref} className="page-column">
         {/*
           * Centred on its own axis rather than ragged-left, because the figure
           * below is bilaterally symmetric about the orb: a left-aligned

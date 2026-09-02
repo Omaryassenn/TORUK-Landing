@@ -16,6 +16,11 @@ import { useReducedMotion } from '@/hooks/useReducedMotion'
  * this file owns the scroll reading, the copy over the scene, and the way the
  * section renders when the scene cannot run.
  *
+ * The two environments are a panel each, the width of the page's column, and
+ * they are traded rather than shown side by side: Studio's fades up where the
+ * mark was and then never moves again, and Everyday's slides up from under it,
+ * one stage-height with the scroll, and stops on it exactly.
+ *
  * One loop drives both halves. It writes the phase progresses onto the stage
  * as custom properties and hands the same value to the renderer, so the copy
  * and the camera cannot drift apart — which they did when the copy was on its
@@ -25,11 +30,36 @@ import { useReducedMotion } from '@/hooks/useReducedMotion'
 /*
  * Where each piece comes in and goes out, in section progress.
  *
- * Only two things move. The header is not one of them.
+ * The header is not one of them: it holds the top of the stage for the whole
+ * scroll. What changes underneath it is the hint — wrong the moment the reader
+ * has started — then Studio's panel, and then Everyday's, which slides up over
+ * Studio's and stops on it. A panel is the width of the page's column, so two
+ * of them cannot sit side by side on a screen that does not scroll; one covers
+ * the other instead.
+ *
+ * Studio has no `out`. It arrives, and then it is stationary for the rest of
+ * the section — what takes it off the stage is the panel that lands on top of
+ * it, not a fade or a lift of its own.
+ *
+ * Everyday's band is the whole of its travel, and the width of the band is the
+ * speed. The panel moves one stage-height (`100svh`, in the stylesheet) and the
+ * band is 0.38 of a 400svh scope, which is 152svh of scrolling — so it rises at
+ * about two thirds of the rate the reader is scrolling at. It was 1:1 and read
+ * as too quick: at 1:1 the panel is at the reader's own speed, and a sheet that
+ * heavy wants to be visibly slower than the hand pushing it.
+ *
+ * The gap between the two is what 0.56 buys. The break (`lib/portal`, 0.0375 to
+ * 0.345) owns the first third; Studio lands at 0.49 and Everyday's band opens at
+ * 0.56, but its top edge does not clear the foot of the stage until about
+ * 0.68 — the first third of that travel is spent under the stage's own clip. So
+ * Studio holds the stage by itself for around 78svh, and Everyday holds the
+ * finished composition for the last 24 before the pin releases and the section
+ * scrolls away with it still up.
  */
 const PHASES = {
   hint: { out: [0.01, 0.06] },
-  cards: { in: [0.54, 0.82] },
+  studio: { in: [0.42, 0.49] },
+  everyday: { in: [0.56, 0.94] },
 }
 
 /*
@@ -55,102 +85,75 @@ function level(p, phase) {
 }
 
 /**
- * The picture on a card.
+ * How far a phase still has to travel, in units the stylesheet multiplies out.
  *
- * Line drawings rather than product screenshots, and the two are different
- * kinds of picture on purpose: Studio is a graph of wired nodes — something
- * you assemble and can see the whole of — and Everyday is an exchange that
- * ends in an artefact. Swap either for a real capture by replacing the case
- * here; the frame around it does not change.
+ * 1 before it has arrived, 0 once it is in place. The distance itself is the
+ * stylesheet's business — 1.75rem for the panel that fades up into position, a
+ * whole stage-height for the one that slides over it — so this stays a plain
+ * ramp and the two cannot disagree about where "arrived" is.
  */
-function Figure({ kind }) {
-  return (
-    <div className="dive-figure" aria-hidden="true">
-      <svg viewBox="0 0 320 168" fill="none" className="dive-figure-art">
-        {kind === 'graph' ? (
-          <g>
-            {/* Wires first, so the nodes sit on top of where they land. */}
-            <g className="dive-wire">
-              <path d="M92 84C110 84 106 46 124 46" />
-              <path d="M92 84C110 84 106 122 124 122" />
-              <path d="M212 46C230 46 226 84 244 84" />
-              <path d="M212 122C230 122 226 84 244 84" />
-            </g>
-
-            {[
-              [16, 60, 76, 48],
-              [124, 24, 88, 44],
-              [124, 100, 88, 44],
-              [244, 60, 60, 48],
-            ].map(([x, y, w, h]) => (
-              <g key={`${x}-${y}`}>
-                <rect x={x} y={y} width={w} height={h} rx="8" className="dive-node" />
-                {/* A title bar and one rule — enough to read as a card. */}
-                <rect x={x + 10} y={y + 12} width={w * 0.42} height="4" rx="2" className="dive-fill-strong" />
-                <rect x={x + 10} y={y + 24} width={w * 0.66} height="3" rx="1.5" className="dive-fill" />
-                <rect x={x + 10} y={y + 33} width={w * 0.5} height="3" rx="1.5" className="dive-fill" />
-              </g>
-            ))}
-
-            {/* Ports, on the ends of the wires. */}
-            {[[92, 84], [124, 46], [124, 122], [212, 46], [212, 122], [244, 84]].map(([cx, cy]) => (
-              <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="3.5" className="dive-port" />
-            ))}
-          </g>
-        ) : (
-          <g>
-            {/* Two turns of a conversation, right then left. */}
-            <rect x="150" y="18" width="154" height="30" rx="10" className="dive-node dive-node--filled" />
-            <rect x="164" y="29" width="90" height="4" rx="2" className="dive-fill-strong" />
-            <rect x="164" y="38" width="120" height="3" rx="1.5" className="dive-fill" />
-
-            <rect x="16" y="58" width="176" height="42" rx="10" className="dive-node" />
-            <rect x="30" y="70" width="110" height="4" rx="2" className="dive-fill-strong" />
-            <rect x="30" y="80" width="146" height="3" rx="1.5" className="dive-fill" />
-            <rect x="30" y="89" width="96" height="3" rx="1.5" className="dive-fill" />
-
-            {/* What the exchange produced. */}
-            <rect x="16" y="110" width="288" height="46" rx="10" className="dive-node" />
-            <rect x="30" y="121" width="72" height="4" rx="2" className="dive-fill-strong" />
-            {[0, 1, 2, 3].map((i) => (
-              <rect
-                key={i}
-                x={30 + i * 16}
-                y={146 - [10, 18, 13, 22][i]}
-                width="9"
-                height={[10, 18, 13, 22][i]}
-                rx="2"
-                className="dive-bar"
-              />
-            ))}
-            <rect x="120" y="134" width="164" height="3" rx="1.5" className="dive-fill" />
-            <rect x="120" y="143" width="128" height="3" rx="1.5" className="dive-fill" />
-          </g>
-        )}
-      </svg>
-    </div>
-  )
+function rise(p, phase) {
+  return 1 - (phase.in ? band(p, phase.in) : 1)
 }
 
 /**
- * One environment's card. Studio and Everyday are the same object with
- * different copy and a different drawing — what tells them apart is what they
+ * One environment's panel — Figma nodes 11087:110778 and 11087:110873.
+ *
+ * Copy on the left, a capture of the environment on the right, and three
+ * capabilities under a rule. Studio and Everyday are the same object with
+ * different copy and a different capture; what tells them apart is what they
  * show, not how they are built.
+ *
+ * The capture is decorative. It is a picture of the environment the copy beside
+ * it has just named, at a size where its own labels are not readable, so
+ * announcing it would repeat the panel rather than add to it.
  */
-function Destination({ id, item }) {
+function Destination({ id, item, phase }) {
   return (
-    <article className="dive-card" aria-labelledby={`${id}-title`}>
-      <Figure kind={item.figure} />
+    <article className={`dive-card dive-card--${phase}`} aria-labelledby={`${id}-title`}>
+      {/*
+        * The frame's one piece of colour, on the top edge above the padding:
+        * the sheen off the mark's own gradient, cropped by the panel to the
+        * few pixels of it that clear the edge.
+        */}
+      <span className="dive-card-edge" aria-hidden="true" />
 
-      <p className="dive-index">
-        {item.index} <span aria-hidden="true">-</span> {item.label}
-      </p>
+      <div className="dive-card-copy">
+        <p className="dive-index font-display font-light">
+          {item.index} <span aria-hidden="true">-</span> {item.label}
+        </p>
 
-      <h3 id={`${id}-title`} className="dive-card-title">
-        {item.headline}
-      </h3>
+        <h3 id={`${id}-title`} className="dive-card-title font-display font-normal text-ink">
+          {item.headline}
+        </h3>
 
-      <p className="dive-card-body">{item.body}</p>
+        <p className="dive-card-body font-display font-light text-ink-muted text-pretty">
+          {item.body}
+        </p>
+
+        <span className="dive-card-rule" aria-hidden="true" />
+
+        <ul className="dive-caps">
+          {item.capabilities.map((cap) => (
+            <li key={cap.label} className="dive-cap">
+              <span className="dive-cap-tile" aria-hidden="true">
+                <img src={cap.icon} alt="" width="21" height="21" decoding="async" />
+              </span>
+
+              <div>
+                <p className="dive-cap-label font-display font-medium text-ink">{cap.label}</p>
+                <p className="dive-cap-note font-display font-normal text-ink-muted text-pretty">
+                  {cap.body}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="dive-shot">
+        <img src={item.shot} alt="" loading="lazy" decoding="async" />
+      </div>
     </article>
   )
 }
@@ -219,7 +222,14 @@ export function DiveIntoToruk() {
       if (q === written) return
       written = q
       stage.style.setProperty('--hint', level(q, PHASES.hint).toFixed(3))
-      stage.style.setProperty('--cards', level(q, PHASES.cards).toFixed(3))
+      stage.style.setProperty('--studio', level(q, PHASES.studio).toFixed(3))
+      stage.style.setProperty('--studio-y', rise(q, PHASES.studio).toFixed(3))
+      /*
+       * Everyday has no opacity of its own: it is never faded, only moved. It
+       * is outside the stage's box until it is not, and the stage's own clip is
+       * what hides it until then.
+       */
+      stage.style.setProperty('--everyday-y', rise(q, PHASES.everyday).toFixed(3))
     }
 
     publish(read())
@@ -367,9 +377,15 @@ export function DiveIntoToruk() {
             />
           )}
 
+          {/*
+            * Both panels are in the same grid cell and in the DOM from the
+            * first frame, so the copy is always there to be read out and the
+            * cell is as tall as the taller of the two for the whole scroll —
+            * nothing above them moves when Everyday lands on Studio.
+            */}
           <div className="dive-cards">
-            <Destination id="dive-studio" item={inside.studio} />
-            <Destination id="dive-everyday" item={inside.everyday} />
+            <Destination id="dive-studio" item={inside.studio} phase="studio" />
+            <Destination id="dive-everyday" item={inside.everyday} phase="everyday" />
           </div>
         </div>
 

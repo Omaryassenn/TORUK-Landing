@@ -23,6 +23,18 @@
   --color-hairline-strong: rgba(255, 255, 255, 0.28);
 
   /*
+   * The one non-neutral pair in the palette: the sheen off the mark's own
+   * gradient, which the Dive panels catch along their top edge. The frame
+   * (11087:110778) draws it as a 121px bar of it plus the blue haze that falls
+   * off it, so these are stated as the gradient's two ends rather than as an
+   * accent — nothing else on the page takes a colour from them, and a button
+   * or a link in either of them would be a different decision than this one.
+   */
+  --color-edge-start: #90f6d3;
+  --color-edge-end: #8a8ff9;
+  --color-edge-haze: rgba(140, 184, 233, 0.3);
+
+  /*
    * Scrollbar thumb. It would read better as a third step on the hairline ramp
    * above, but the thumb is a control rather than a rule and has to clear 3:1
    * against the canvas, and neither hairline does — `hairline-strong` measures
@@ -81,6 +93,39 @@
   --text-section-eyebrow: 1.125rem; /* 18px */
 
   /*
+   * The mindset section's own three steps, named for the roles they play in
+   * Figma node 11069:107918.
+   *
+   * `headline` is the frame's Display sm (30/38). It is the same number as the
+   * hero's `headline` and steps with it, but it is stated separately because
+   * the two are different jobs — the hero's is sized against artwork, this one
+   * is a section heading that happens to land on the same step.
+   *
+   * `term` is Text lg (18/28), the term the reader is being moved TO, and
+   * `note` is Text sm (14/20), carried by both the struck term above it and
+   * the line of body under it. 14px is the frame's own card size and is a step
+   * this scale did not have; it sits between `body` and `micro`.
+   */
+  --text-mindset-headline: 1.875rem; /* 30px */
+  --text-mindset-term: 1.125rem; /* 18px */
+  --text-mindset-note: 0.875rem; /* 14px */
+
+  /*
+   * The Dive panels' own two steps (Figma nodes 11087:110778 and 11087:110873),
+   * on the same reasoning the Mindset section's three are stated separately:
+   * the frame sizes them against each other inside the panel, not against the
+   * page's scale.
+   *
+   * `title` is the frame's Text xl (20/30) — the environment's name, which has
+   * to read a clear notch under the section heading above it rather than
+   * competing with it, so it cannot borrow `section`. `note` is Text sm (14/20),
+   * carried by the panel's index line and by each capability's label; the line
+   * under a capability is `micro`, which the scale already had.
+   */
+  --text-dive-title: 1.25rem; /* 20px */
+  --text-dive-note: 0.875rem; /* 14px */
+
+  /*
    * The smallest step on the scale: a caption that names a strip or a figure
    * rather than heading a section. Flat across the lower two tiers — 12px is
    * the floor where Satoshi's caps still read at arm's length, so the small
@@ -137,28 +182,59 @@
   --container-measure: 50rem; /* 800px */
 
   /*
-   * The shared width of the two figures below the hero: the reel's panel and
-   * the glance diagram.
-   *
-   * Derived rather than fixed, because the panel is the constrained one. It
-   * holds the master's 16:9 inside whatever the stage leaves under its own
-   * copy, so its width falls out of the viewport's HEIGHT, not its width. A
-   * fixed column agreed with it only on a tall window: at 1440x797 the two sat
-   * 178px apart, the panel at 1006 and the diagram at the full 1184.
-   *
-   * `showcase-chrome` is everything in the stage that is not the panel — the
-   * navbar clearance, the copy, and the two gaps. It is a measured constant per
-   * tier rather than a live measurement, and it is the one number here that has
-   * to be re-measured if that copy ever changes height.
-   *
-   * The width term is `3rem` rather than the stage's own `2rem` of side gap so
-   * the diagram, which sits on the page's wider `px-6` gutter, can reach the
-   * same value; otherwise the two would part company by 16px on a tablet.
+   * `showcase-chrome` is everything in the pinned stage that is not the panel —
+   * the navbar clearance, the copy, the two gaps and the bezel's own share of
+   * them. It is a measured constant per tier rather than a live measurement,
+   * and it is the one number here that has to be re-measured if that copy ever
+   * changes height.
    */
   --showcase-chrome: 16.4375rem; /* 263px */
-  --figure-width: min(
+
+  /*
+   * The bezel ring, drawn OUTSIDE the panel's box.
+   *
+   * Here rather than on `.showcase-stage` because it is part of the page's
+   * column arithmetic as well as the stage's own. The ring is what a reader
+   * sees as the edge of the reel, so the ring is the thing that has to land on
+   * the column, and the video inside it is sized from the column less two of
+   * these. Sizing the video TO the column instead left the ring hanging 14px
+   * past the navbar's pill on each side.
+   */
+  --showcase-bezel: 0.875rem; /* 14px */
+
+  /*
+   * The page's column. One edge for the navbar's pill, the glance section, the
+   * Mindset section, the Dive cards and the reel's bezel.
+   *
+   * It is the reel's expression because the reel is the constrained one and
+   * cannot be argued with: 16:9 inside a stage that cannot scroll, so its width
+   * falls out of the viewport's HEIGHT rather than its width. Everything else
+   * CAN be argued with, so everything else follows it. A fixed column agreed
+   * with the reel only on a tall window — at 1333x835 the pill sat 1184 wide
+   * over a 1045 reel, 70px of overhang a side, which is what this removes.
+   *
+   * At the design's own 1440x1024 the `content` ceiling binds and the column is
+   * 1184, so the frame is reproduced as drawn; below there the page narrows as
+   * one rather than the reel narrowing alone.
+   *
+   * `max(..., 48rem)` is the floor. The height term is sane while a window is
+   * roughly the shape a page is read in and absurd outside it: a landscape phone
+   * at 812x375 resolves it to 220px, and a 220px-wide navbar is not an
+   * alignment, it is a collapse. Below the floor the page's own gutter binds
+   * instead and the reel alone keeps shrinking — the two part company there, and
+   * a window that short is one nothing here is composed for.
+   *
+   * The width term is `3rem` rather than the stage's own `2rem` of side gap so
+   * the reel can reach the same value as the sections, which sit on the page's
+   * wider `px-6` gutter; otherwise the two would part company by 16px on a
+   * tablet.
+   */
+  --grid-width: min(
     100vw - 3rem,
-    (100svh - var(--showcase-chrome)) * 16 / 9,
+    max(
+      (100svh - var(--showcase-chrome)) * 16 / 9 + var(--showcase-bezel) * 2,
+      48rem
+    ),
     var(--container-content)
   );
 
@@ -313,6 +389,12 @@
       --text-section: 1.375rem; /* 22px */
       /* Back in step with `eyebrow`: 18px under a 22px heading is not a label. */
       --text-section-eyebrow: 0.875rem; /* 14px */
+      /* In step with the hero's headline on this tier, as at every other. */
+      --text-mindset-headline: 1.375rem; /* 22px */
+      --text-mindset-term: 1rem; /* 16px */
+      /* One notch down, and still clear of the 14px note under it. */
+      --text-dive-title: 1.125rem; /* 18px */
+      /* 14px is already the floor for this text; only the two above it step. */
       /* Smaller copy, but wider gaps on this tier. Measured: 239px. */
       --showcase-chrome: 16.6875rem;
       --text-hero-body: 1rem; /* 16px */
@@ -341,6 +423,11 @@
       --text-section: 2.25rem; /* 36px */
       /* In step with `eyebrow` again, against a 36px heading. */
       --text-section-eyebrow: 1.5rem; /* 24px */
+      --text-mindset-headline: 2.25rem; /* 36px */
+      --text-mindset-term: 1.375rem; /* 22px */
+      --text-mindset-note: 1rem; /* 16px */
+      --text-dive-title: 1.5rem; /* 24px */
+      --text-dive-note: 1rem; /* 16px */
       --text-micro: 0.875rem; /* 14px */
       /* The copy steps up with the tier's type. Measured: 255px. */
       --showcase-chrome: 17.9375rem;
@@ -557,18 +644,17 @@
    * The track is scroll length, not layout: its only painted child is the
    * stage, one viewport tall and stuck to the top. As the track scrolls up the
    * stage rises over the hero and covers it; once the track fills the viewport
-   * the stage stops moving and the panel inside it does the rest.
+   * the stage stops moving and the reader has the reel still, full-bleed, with
+   * its own control under the cursor.
    *
-   * 200svh = one viewport of rise + 100svh of pin to grow and hold in. It was
-   * 240; the extra 40 was all hold, after the panel had already finished
-   * growing, and it read as the page having stopped responding rather than as
-   * a beat.
+   * 150svh = one viewport of rise + 50svh of pin. It was 200, and the pin half
+   * of that used to be spent growing the panel; with the growth gone the whole
+   * pin is hold, and 100svh of a page that does not move under the scroll reads
+   * as broken rather than as a beat. 50 is enough to land on and click.
    */
   .showcase-track {
     position: relative;
-    height: 200svh;
-    view-timeline-name: --showcase;
-    view-timeline-axis: block;
+    height: 150svh;
   }
 
   /*
@@ -584,28 +670,13 @@
    * framed screen rather than a second viewport.
    */
   .showcase-stage {
-    /*
-     * The size the panel arrives at, before the scroll grows it to full.
-     *
-     * 0.96, not the 0.9 this started at. The growth is meant to be felt rather
-     * than watched — a tenth of the panel's width is a resize, and it made the
-     * pin read as a long interaction whose whole content was a box getting
-     * bigger. Four percent still registers as the panel settling into place.
-     *
-     * The far end stays at 1, which is `--figure-width` exactly: that is the
-     * column the glance diagram and the two "Dive Into TORUK" cards also sit
-     * on, and a panel that stopped short of it would leave three figures on
-     * two edges down the page.
-     */
-    --showcase-rest: 0.96;
     --showcase-radius: 2.25rem;
     /*
-     * The bezel ring is drawn OUTSIDE the panel by this much, so it is part of
-     * the panel's footprint even though it is not part of its box. Both gaps
-     * below add it back: without that the ring landed 1px under the copy while
-     * the gap above it measured a nominal 12px.
+     * `--showcase-bezel` is inherited from `:root`, because the page's column is
+     * derived from it too. Both gaps below add it back to the padding: without
+     * that the ring landed 1px under the copy while the gap above it measured a
+     * nominal 12px.
      */
-    --showcase-bezel: 0.875rem;
     /*
      * `top` clears the fixed navbar and is not free space: the bar is 77px on
      * this tier and 81px where its CTA steps up, and it never hides, so at 1rem
@@ -615,7 +686,7 @@
      * The panel is height-bound at every desktop size, so the room it gains
      * comes out of `lede` and `foot` instead, where nothing is behind it.
      */
-    --showcase-top: 5.5rem;
+    --showcase-top: 6.5rem;
     --showcase-gap: 1rem;
     /* Both are the gap you actually see, measured from the bezel, not the box. */
     --showcase-foot: 0.75rem;
@@ -670,12 +741,12 @@
    * fifth of the frame away. The ratio is fixed and both maxima are set, so
    * the panel fits whichever axis runs out first and never crops.
    *
-   * The growth is then one uniform scale on that box — `--showcase-rest` of it
-   * when the panel arrives, all of it when the scroll has run — so the panel's
-   * width and height stay in step and its crop never shifts.
-   *
-   * The radius is authored pre-scale, so at rest it renders a touch tighter
-   * than the 36px here; that is the design's own 28px corner.
+   * It does not scale on scroll any more. The panel used to arrive at 96% and
+   * grow into its box across the first half of the pin, which meant that for
+   * the whole of the arrival it was the one row on the page NOT on the shared
+   * column — 41px inside it at 1333x835, under a navbar pill sitting exactly
+   * on it. The beat was worth 4% of a resize and it cost the alignment the rest
+   * of the page is now built around.
    */
   .showcase-frame {
     position: relative;
@@ -690,23 +761,21 @@
     /*
      * The two `cq` terms are the panel measuring the space it is actually in,
      * and stay as the safety: if the copy above ever runs to another line they
-     * bind first and the panel still fits. `figure-width` is the same value
-     * arrived at from the viewport, and is what the glance diagram can also
-     * read from outside this stage.
+     * bind first and the panel still fits. `--grid-width` is the same value
+     * arrived at from the viewport, and is the term that normally binds.
+     *
+     * Two bezels come off both horizontal terms and neither vertical one. The
+     * ring is drawn outside this box either way, so across the width it is the
+     * box plus two rings that has to reach the column — while down the page the
+     * container's own padding has already set both rings aside, which is what
+     * `--showcase-chrome` counts.
      */
-    width: min(100cqw, 100cqh * 16 / 9, var(--figure-width));
+    width: min(
+      100cqw - var(--showcase-bezel) * 2,
+      100cqh * 16 / 9,
+      var(--grid-width) - var(--showcase-bezel) * 2
+    );
     aspect-ratio: 16 / 9;
-    /*
-     * The finished state. The scroll animation below supplies everything
-     * before it, so wherever that animation does not run the panel is simply
-     * at full size — which is also why nothing here is derived through a
-     * `calc()` off an animated custom property. That version cost a style
-     * recalculation on the main thread every frame of the scroll; a plain
-     * `transform` between two fixed values stays on the compositor.
-     */
-    transform: scale(1);
-    transform-origin: 50% 50%;
-    will-change: transform;
   }
 
   .showcase-screen {
@@ -741,7 +810,6 @@
   @media (width < 48rem) {
     .showcase-stage {
       /* Wider range than the desktop tier's, in step with it: 8% against 4%. */
-      --showcase-rest: 0.92;
       --showcase-radius: 1.5rem;
       --showcase-top: 5rem;
       --showcase-gap: 1.25rem;
@@ -750,27 +818,15 @@
     }
   }
 
-  @media (prefers-reduced-motion: no-preference) {
-    @supports (animation-timeline: view()) {
-      /*
-       * `contain` is precisely the stretch during which the track covers the
-       * viewport — which is precisely the stretch during which the stage is
-       * pinned. Ending at 45% gets the panel to full size in the first half of
-       * the pin and leaves it there; at 85% the growth ran almost the whole
-       * way and the reader was still scrolling a resize when they expected to
-       * be watching the reel.
-       */
-      .showcase-frame {
-        animation: showcase-expand linear both;
-        animation-timeline: --showcase;
-        animation-range: contain 0% contain 45%;
-      }
-    }
-  }
-
   /*
-   * No timeline, no track. Both fallbacks land on the same thing: the reel as
-   * an ordinary one-viewport section, the hero as an ordinary one above it.
+   * The pin is the motion here now that the panel does not grow: the hero held
+   * still while the reel covers it. Anyone who has asked for less gets the two
+   * as ordinary sections, one after the other.
+   *
+   * The `@supports not (animation-timeline: view())` twin of this used to sit
+   * below it, because the pin was scaffolding for a scroll-driven animation and
+   * was pointless in a browser that could not run one. Sticky positioning is
+   * all that is left, and that needs no feature query.
    */
   @media (prefers-reduced-motion: reduce) {
     .showcase-track {
@@ -785,29 +841,6 @@
       position: relative;
     }
   }
-
-  @supports not (animation-timeline: view()) {
-    .showcase-track {
-      height: auto;
-    }
-
-    .showcase-stage {
-      position: relative;
-    }
-
-    .hero-pin {
-      position: relative;
-    }
-  }
-}
-
-@keyframes showcase-expand {
-  from {
-    transform: scale(var(--showcase-rest));
-  }
-  to {
-    transform: scale(1);
-  }
 }
 
 @keyframes clients-travel {
@@ -821,30 +854,210 @@
 
 @layer components {
   /*
-   * The navbar's glass.
+   * The page's column, as a class. Every section wrapper below the hero is on
+   * it, so a change to `--grid-width` moves the whole page at once rather than
+   * four places that have to be kept in agreement.
    *
-   * More than a blur: a translucent ground so the page reads through it and a
-   * one-pixel inner highlight along the top edge, which is what stops it
-   * looking like a flat grey panel. `saturate` keeps the artwork behind from
-   * going muddy as it blurs. No foot: the bar ends on the blur falling away,
-   * not on a rule.
+   * `min(100%, ...)` rather than `max-width`, so it also works as the width of
+   * a grid item that would otherwise stretch.
    */
-  .chrome-glass {
-    
+  .page-column {
+    width: min(100%, var(--grid-width));
+    margin-inline: auto;
+  }
+
+  /*
+   * The navbar, in its two states.
+   *
+   * Over the hero the bar is full-bleed and has no ground: the lockup sits on
+   * the hero's own artwork and the two read as one composition, and there is
+   * nothing behind the bar but the hero it belongs to. From the reel down the
+   * page moves under it, so the bar becomes an object in its own right — a
+   * contained pill floating on the page's own gutter, with a hairline ring and
+   * the glass behind it.
+   *
+   * The whole difference between the two is the custom properties below. The
+   * rules that follow only read them, which is what keeps the morph to one
+   * transitioned property per element instead of a set that has to be kept in
+   * step by hand.
+   */
+  .chrome-frame {
+    /* The gap above the bar, and either side of it. Zero: full-bleed. */
+    --chrome-float: 0rem;
+    --chrome-gutter: 0rem;
+    /*
+     * The bar's own width. `100vw` rather than `100%` so both states are a
+     * length and the morph has something to interpolate; the frame has no
+     * gutter here, so the bar fills its box either way and the scrollbar's
+     * width makes no difference to what is drawn.
+     */
+    --chrome-width: 100vw;
+    --chrome-radius: 0rem;
+    /* The bar's own inside edge, and its top and bottom. */
+    --chrome-pad: 1.5rem;
+    --chrome-lead: 1.125rem;
+    /* And the open mobile panel's edges, which track the bar's outer ones. */
+    --chrome-menu: 1.5rem;
+    /*
+     * How long the ground's own decoration outlives the state it belongs to.
+     * See `.chrome-bar::before`: on the way in it has to be there before the
+     * layer is, and on the way out it has to still be there while the layer
+     * fades. One value, read from whichever state is being transitioned TO,
+     * covers both — a transition uses the after-change style's timing.
+     */
+    --chrome-hold: 520ms;
+
+    padding: var(--chrome-float) var(--chrome-gutter) 0;
+    transition: padding 520ms var(--ease-out-quint);
+  }
+
+  /*
+   * The pill is on `--grid-width`, which is the page's column and the reel
+   * panel's own width: the bar's two edges land on the edges of everything
+   * below it, at every window, including the panel it sits directly above.
+   *
+   * The gutter is the page's `px-6` and is what holds the pill off the edges
+   * when the column is wider than the window. It is not what sets the inset
+   * once the column binds — `--grid-width` caps at `100vw - 3rem`, so on a
+   * phone the pill lands on that 24px gutter whatever this value is.
+   *
+   * 12 + 14 + 40 + 14 = 80px of viewport, against the full-bleed bar's 76; the
+   * pill itself is 68. From 120rem up, where the CTA pill steps to 44px, both
+   * numbers gain 4.
+   */
+  .chrome-frame--compact {
+    --chrome-float: 0.75rem;
+    --chrome-gutter: 1.5rem;
+    --chrome-width: var(--grid-width);
+    --chrome-radius: 1.5rem;
+    --chrome-pad: 1rem;
+    --chrome-lead: 0.875rem;
+    /*
+     * Zero: the frame's gutter is already holding the panel in. The panel is
+     * `lg:hidden`, and every width it exists at is narrower than the column, so
+     * the pill is on that same gutter whenever the two are on screen together.
+     */
+    --chrome-menu: 0rem;
+    --chrome-hold: 0ms;
+  }
+
+  .chrome-bar {
+    position: relative;
+    max-width: var(--chrome-width);
+    margin-inline: auto;
+    border-radius: var(--chrome-radius);
+    transition:
+      max-width 520ms var(--ease-out-quint),
+      border-radius 520ms var(--ease-out-quint);
+  }
+
+  /*
+   * The ground, on a layer of its own so it can arrive on opacity alone.
+   *
+   * The blur, the wash and the ring are declared only in the compact state, not
+   * faded from nothing: `backdrop-filter` on a full-width fixed element makes a
+   * backdrop root of everything behind it, and over the hero — a WebGL scene
+   * under a pinned reel — that is a per-frame cost paid for an invisible blur.
+   *
+   * Which leaves the switch itself, and it has to fall on opposite sides of the
+   * fade in each direction: in behind a layer at zero opacity, and out only
+   * once the layer has gone. That is what `--chrome-hold` is — a delay on three
+   * zero-length transitions, 0ms entering and the fade's own length leaving.
+   * Without it the way back to the hero drops the blur and the ring in one
+   * frame and then spends half a second fading what is left of them.
+   */
+  .chrome-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 520ms var(--ease-out-quint),
+      background-color 0ms linear var(--chrome-hold),
+      box-shadow 0ms linear var(--chrome-hold),
+      backdrop-filter 0ms linear var(--chrome-hold);
+  }
+
+  .chrome-frame--compact .chrome-bar::before {
+    opacity: 1;
+    /*
+     * A wash of the page's own black under the blur. Without it the pill reads
+     * as a smear rather than a surface, because the canvas behind it is nearly
+     * black already and there is little for `saturate` to lift.
+     */
+    background-color: rgba(3, 3, 3, 0.335);
     backdrop-filter: blur(18px) saturate(160%);
     -webkit-backdrop-filter: blur(18px) saturate(160%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    /*
+     * The ring, and then the one-pixel highlight along the top edge that stops
+     * it looking like a flat grey panel. Both inset, so both follow the radius,
+     * and neither is in the box model — a real border would have shifted the
+     * lockup by a pixel in the full-bleed state, where there is no ring to see.
+     */
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  /*
+   * The bar is above the splash for the length of the intro, and that overlay is
+   * an opaque black layer: a translucent ground there would be a visible seam
+   * across an otherwise blank screen. Only the ground waits — the geometry does
+   * not, so a reload part-way down the page hands the lockup off to the pose it
+   * is going to keep.
+   */
+  .chrome-frame[data-chrome='bare'] .chrome-bar::before {
+    opacity: 0;
+  }
+
+  .chrome-row {
+    /*
+     * Positioned, and after the ground in tree order, which is the whole reason
+     * the ground needs no z-index: two z-auto positioned boxes paint in the
+     * order they are written.
+     */
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: var(--chrome-lead) var(--chrome-pad);
+    transition: padding 520ms var(--ease-out-quint);
+  }
+
+  /*
+   * The open mobile panel sits directly under the pill and on its edges, so it
+   * takes the frame's gutter as its own: 24px of page margin full-bleed, and
+   * nothing extra once the frame is already inset by that much.
+   */
+  .chrome-menu {
+    margin-inline: var(--chrome-menu);
+    transition: margin-inline 520ms var(--ease-out-quint);
   }
 
   /*
    * Blur is the decoration, the bar is not. Anyone who has asked for less
-   * transparency gets the same bar as a solid one rather than losing it.
+   * transparency gets the same pill on a solid ground rather than losing it.
    */
   @media (prefers-reduced-transparency: reduce) {
-    .chrome-glass {
+    .chrome-frame--compact .chrome-bar::before {
       background-color: var(--color-canvas);
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
+    }
+  }
+
+  /*
+   * Nothing here is load-bearing motion: both states are complete poses, so
+   * anyone who has asked for less gets the cut instead of the morph.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    .chrome-frame,
+    .chrome-bar,
+    .chrome-bar::before,
+    .chrome-row,
+    .chrome-menu {
+      transition: none;
     }
   }
 
@@ -866,11 +1079,11 @@
     position: relative;
     container-type: inline-size;
     /*
-     * The same width as the reel's panel, off the same expression. The column
-     * around it stays `content` wide for the copy; only the figure tracks the
-     * panel, because the panel is the thing it has to line up with.
+     * The column above governs; this only stops the figure stretching past it.
+     * `.page-column` on the section wrapper is where the width is decided, and
+     * the diagram is one of the things that has to land on it.
      */
-    max-width: var(--figure-width);
+    max-width: 100%;
     margin-inline: auto;
     margin-top: clamp(1.5rem, 2.75vw, 2.5rem);
   }
@@ -1283,15 +1496,37 @@
    * sees happens inside that one screen — the mark whole, the mark breaking as
    * the camera goes through it, and the two environments on cards.
    *
-   * 300svh is a budget, not a round number. The mark is whole for the first
-   * 30svh, the break takes the next 108, the cards arrive over 84, and the
-   * last 54 is the reader sitting on the finished composition with the section
-   * still pinned — long enough to read both cards without the page moving.
+   * 400svh is a budget, not a round number. The mark is whole for the first
+   * 15svh and the break takes the next 123 — both of those are the lengths the
+   * scene was tuned at when this figure was 300, held there by re-deriving
+   * `BREAK_START` and `BREAK_END` in `lib/portal` rather than letting them
+   * stretch with the scope. Studio's panel then fades up over 28 and holds the
+   * stage by itself for around 78, and the 152 after that are Everyday's
+   * slide: a stage-height of travel spread over half again as much scrolling,
+   * so the panel rises at about two thirds of the reader's own rate. The last
+   * 24 are the finished composition, still pinned.
+   *
+   * All of the growth from 300 has gone to the two panels, which is what the
+   * scope is for at this point — the break has not moved.
+   *
+   * The split is in `PHASES`, in the component; this is only the length it is
+   * spent over.
    */
   .dive-scope {
     position: relative;
-    height: 300svh;
-    background-color: #000;
+    height: 400svh;
+    /*
+     * The page's canvas, not the pure black the design handoff specifies for
+     * the renderer's clear colour. The difference is 3/255 and invisible on
+     * its own, but every other section on the page is `canvas` — so against
+     * the glance above it the two read as a seam straight across the viewport
+     * rather than as one continuous ground.
+     *
+     * The scene composites onto this rather than replacing it: the renderer
+     * clears to transparent, so whatever is set here is what the mark is lit
+     * against.
+     */
+    background-color: var(--color-canvas);
   }
 
   /*
@@ -1309,12 +1544,41 @@
     --dive-foot: 3rem;
     /*
      * The page's own gutter, not a wider one of this section's own. It has to
-     * be exactly `px-6` so the `100vw - 3rem` term inside `--figure-width` is
-     * the thing that binds the cards below, and not this padding — a wider
-     * gutter here and the card row stops short of the column the reel and the
-     * glance share on a narrow window.
+     * be exactly `px-6` so that on a window narrower than the column it is the
+     * page's margin binding the card row below and not this padding — a wider
+     * gutter here and the row stops short of the copy in every other section.
      */
     --dive-gutter: 1.5rem;
+    /*
+     * The panel's own padding, a token because the sheen on its top edge has
+     * to start on it: the frame lands the gradient bar exactly on the panel's
+     * left padding, and a literal in two places would part company the first
+     * time one of them was tuned.
+     */
+    --dive-pad: 1.5rem;
+    /*
+     * Everything on the stage that is not the panel's capture: the clearance
+     * and the foot, the heading, the gap under it and the panel's own padding.
+     * It is the same device as `--showcase-chrome` and has the same caveat — a
+     * constant per tier, not a live measurement, so it has to be re-measured if
+     * the heading or the panel's copy changes height.
+     *
+     * Re-measured for the panels (see the `--dive-shot` cap below), where the
+     * copy sits BESIDE the capture instead of under it: 5.5rem of clearance,
+     * 130 of heading, the 44 gap, 48 of panel padding and 3rem of foot.
+     */
+    --dive-chrome: 22.5rem; /* 360px */
+
+    /*
+     * The phases, in their state before the loop's first write: the hint up,
+     * Studio's panel not yet faded in, Everyday's a stage below. Stated rather
+     * than left to an unset `var()` so a frame that renders before the effect
+     * commits is the section's first frame and not both panels at once.
+     */
+    --hint: 1;
+    --studio: 0;
+    --studio-y: 1;
+    --everyday-y: 1;
 
     position: sticky;
     top: 0;
@@ -1409,95 +1673,138 @@
   /* --- The two environments --------------------------------------------- */
 
   /*
-   * Two equal columns on the page's shared figure column.
+   * One panel at a time, both in the same cell.
    *
-   * `--figure-width` is the same expression the reel's panel and the glance
-   * diagram are sized from, so all three line up on one edge down the page
-   * rather than on three that nearly agree. It is derived from the viewport's
-   * HEIGHT as much as its width — the reel is height-bound — which means this
-   * row also narrows on a short window, and that is the right behaviour here
-   * too: the stage cannot scroll, so a shorter window has less to give.
+   * The pair used to be two columns side by side. The frames replace them with
+   * one panel the width of the page's column — copy beside a capture — and a
+   * panel that wide cannot be halved and still hold a paragraph, a rule and
+   * three capabilities. So they are stacked on top of each other in a single
+   * grid cell and traded: Studio rises, holds, and leaves upward; Everyday
+   * comes up the same path behind it.
+   *
+   * Stacking rather than sequencing two cells also keeps the stage still. Both
+   * panels are laid out from the first frame, so the cell is as tall as the
+   * taller of the two for the whole scroll and the composition above it never
+   * shifts when they trade.
+   *
+   * `--grid-width` is the page's column: the same edge as the navbar's pill,
+   * the glance diagram, the Mindset row and the reel's bezel. `width` rather
+   * than `max-width` because this is a grid item that would otherwise stretch
+   * to the stage's gutter.
    */
   .dive-cards {
     display: grid;
-    width: min(100%, var(--figure-width));
+    width: min(100%, var(--grid-width));
     justify-self: center;
-    gap: clamp(1.25rem, 2.5vw, 2.5rem);
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    opacity: var(--cards);
-    transform: translate3d(0, calc((1 - var(--cards)) * 1.75rem), 0);
   }
 
   /*
-   * A matte panel rather than a card on a page: it sits over a live scene, so
-   * its ground is a wash of the scene's own black plus a hairline. No blur —
-   * by the time the cards are up the scene behind them has been dropped and
-   * there is nothing left to blur, so it would cost a full-stage filter pass
-   * per frame for no visible difference.
+   * A matte panel rather than a card on a page: a wash of light over the
+   * page's raised black plus a hairline. No blur — by the time a panel is up
+   * the scene behind it has been dropped and there is nothing left to blur, so
+   * it would cost a full-stage filter pass per frame for no visible
+   * difference.
+   *
+   * The ground is opaque, and has to be: Everyday's panel covers Studio's
+   * rather than replacing it, so anything translucent here would leave two
+   * paragraphs legible in the same place for the length of the slide.
+   *
+   * The frame's own proportions inside it: a 411px column of copy, a 17px gap
+   * and a 498px capture, carried as `fr` so the two share our wider column in
+   * the ratio the frame sets rather than at the pixel widths it sets them at.
    */
   .dive-card {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    position: relative;
+    overflow: hidden;
     border: 1px solid var(--color-hairline);
     border-radius: 1.5rem;
-    background:
-      linear-gradient(165deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.012) 60%),
-      rgba(10, 10, 10, 0.72);
-    padding: clamp(1rem, 1.6vw, 1.5rem);
+    background:#000000;
+    padding: var(--dive-pad);
+    gap: 1.0625rem; /* the frame's 17px */
+    grid-area: 1 / 1;
+    grid-template-columns: minmax(0, 411fr) minmax(0, 498fr);
+    align-items: start;
   }
 
   /*
-   * The picture. A fixed ratio so the two cards' copy starts on the same line
-   * whatever the column width — the drawings have different amounts of ink in
-   * them and would otherwise settle at different heights.
+   * Studio arrives where the mark was: it fades up the last 1.75rem into
+   * position, the same arrival the pair of cards here used to share, and then
+   * it does not move again for the rest of the section.
    */
-  .dive-figure {
-    overflow: hidden;
-    border: 1px solid var(--color-hairline);
-    border-radius: 0.75rem;
-    background-color: rgba(255, 255, 255, 0.022);
-    aspect-ratio: 320 / 150;
+  .dive-card--studio {
+    opacity: var(--studio);
+    transform: translate3d(0, calc(var(--studio-y) * 1.75rem), 0);
   }
 
-  .dive-figure-art {
-    display: block;
-    width: 100%;
-    height: 100%;
+  /*
+   * Everyday slides up from under Studio and stops on it, exactly.
+   *
+   * One stage-height of travel, so the panel starts below the stage's own clip
+   * whatever the composition inside it works out to — the panel's rest position
+   * is somewhere in the stage, so a full stage-height below that is always out
+   * of the box. `100svh` rather than the panel's own height for the same
+   * reason: `100%` would leave its lit top edge showing at the foot of the
+   * stage before the slide began.
+   *
+   * The rate is the band's business, not this distance's: `PHASES` spends 152svh
+   * of scroll on these 100svh of travel, so the panel comes up at about two
+   * thirds of the speed the reader is scrolling.
+   *
+   * Nothing else changes: no fade, no scale, no rotation. The panel is opaque
+   * and above Studio in the stack, so covering it is the whole of the effect —
+   * and `--everyday-y` reaching 0 is what parks it, on the pixel, in the place
+   * Studio is holding. `translate3d` rather than `translateY` for the layer;
+   * there is no `will-change` on top of it, which would hold that layer for the
+   * whole life of the page to save nothing.
+   */
+  .dive-card--everyday {
+    z-index: 1;
+    transform: translate3d(0, calc(var(--everyday-y) * 100svh), 0);
   }
 
-  /* The drawing's palette: one hairline, two fills, one accentless port. */
-  .dive-node {
-    fill: rgba(255, 255, 255, 0.03);
-    stroke: var(--color-hairline);
-    stroke-width: 1;
+  /*
+   * The sheen, on the top edge over the panel's left padding.
+   *
+   * It is the mark's own gradient: the frame hangs the glyph above the panel
+   * and lets the panel's own clip keep the few pixels of it that clear the
+   * edge — a 121px bar of the gradient, and the blue haze falling off it. Built
+   * here rather than shipped as the frame's masked bitmap because at the size
+   * it survives at, that bitmap is a gradient and a blur.
+   *
+   * The haze is the element and the bar is its `::after`, so the bar paints
+   * over the haze rather than under it. Negative `left` is clipped by the
+   * panel.
+   */
+  .dive-card-edge {
+    position: absolute;
+    top: 0;
+    left: -0.4375rem;
+    width: 11.3125rem; /* 181px */
+    height: 3.375rem; /* 54px */
+    background: radial-gradient(70% 100% at 45% 0%, var(--color-edge-haze), transparent 70%);
   }
 
-  .dive-node--filled {
-    fill: rgba(255, 255, 255, 0.07);
+  .dive-card-edge::after {
+    position: absolute;
+    top: 0;
+    left: 1.9375rem;
+    width: 7.5625rem; /* 121px */
+    height: 0.1875rem;
+    background: linear-gradient(to right, var(--color-edge-start), var(--color-edge-end));
+    content: '';
   }
 
-  .dive-wire path {
-    fill: none;
-    stroke: var(--color-hairline-strong);
-    stroke-width: 1;
-  }
-
-  .dive-port {
-    fill: #0a0a0a;
-    stroke: var(--color-ink-muted);
-    stroke-width: 1;
-  }
-
-  .dive-fill {
-    fill: rgba(255, 255, 255, 0.16);
-  }
-
-  .dive-fill-strong {
-    fill: rgba(255, 255, 255, 0.42);
-  }
-
-  .dive-bar {
-    fill: rgba(255, 255, 255, 0.28);
+  /*
+   * The copy. Margins rather than a flex `gap`, because the spacing is not one
+   * rhythm: the index sits 4px off the title, the title and body run on their
+   * own line-heights with nothing between them, and the rule and the
+   * capabilities are 21px apart.
+   */
+  .dive-card-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   /*
@@ -1506,74 +1813,194 @@
    * as a counter.
    */
   .dive-index {
-    margin-top: clamp(1rem, 1.8vw, 1.5rem);
     color: var(--color-ink-faint);
-    font-family: var(--font-display);
-    font-size: var(--text-micro);
-    font-weight: 300;
-    letter-spacing: 0.08em;
+    font-size: var(--text-dive-note);
+    line-height: 1.43;
   }
 
   .dive-card-title {
-    margin-top: 0.5rem;
-    color: var(--color-ink);
-    font-family: var(--font-display);
-    font-size: var(--text-section);
-    font-weight: 400;
-    line-height: 1.2;
+    margin-top: 0.25rem;
+    font-size: var(--text-dive-title);
+    line-height: 1.5;
   }
 
   .dive-card-body {
-    margin-top: 0.625rem;
-    color: var(--color-ink-muted);
-    font-family: var(--font-display);
     font-size: var(--text-body);
-    font-weight: 300;
-    line-height: 1.55;
-    text-wrap: pretty;
+    line-height: 1.5;
   }
 
   /*
-   * Below `md` the pair stacks. Two cards side by side at that width give each
-   * one a measure of about twenty characters, which is a column of single
-   * words rather than a paragraph.
+   * The rule under the copy, drawn as the frame draws it: lit at the edge the
+   * reading starts from and gone by the far end, so it closes the paragraph
+   * without boxing the capabilities under it.
+   */
+  .dive-card-rule {
+    width: 100%;
+    height: 1px;
+    margin-top: 1.3125rem;
+    background: linear-gradient(90deg, #D9D9D9 0%, rgba(217, 217, 217, 0.40) 50%, rgba(217, 217, 217, 0.00) 100%);
+  }
+
+  /*
+   * The three capabilities.
+   *
+   * Narrower than the paragraph above them on purpose — the frame sets them to
+   * 287 of the copy column's 411 — so the panel reads as a paragraph with a
+   * list beside its own margin rather than as two blocks of the same measure.
+   * 22rem is that ratio at our column, rounded to a step.
+   */
+  .dive-caps {
+    display: flex;
+    width: min(100%, 22rem);
+    flex-direction: column;
+    margin-top: 1.3125rem;
+    gap: 1.3125rem;
+    list-style: none;
+  }
+
+  .dive-cap {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  /*
+   * The tile behind a glyph. The glyphs are the frame's own exports and are
+   * drawn white, so the tile is the only thing carrying weight here: a wash
+   * off the panel's ground, no hairline, and the same 12px corner the capture
+   * beside it takes.
+   */
+  .dive-cap-tile {
+    display: grid;
+    width: 3.5rem;
+    height: 3.5rem;
+    flex-shrink: 0;
+    border-radius: 0.75rem;
+    background-color: rgba(255, 255, 255, 0.04);
+    place-items: center;
+  }
+
+  /*
+   * `contain` rather than a stretch: the exports are the frame's inner icon
+   * boxes, so they carry their own proportions — the document glyph is
+   * narrower than it is tall — and a square box would distort it.
+   */
+  .dive-cap-tile img {
+    display: block;
+    width: 1.3125rem;
+    height: 1.3125rem;
+    object-fit: contain;
+  }
+
+  .dive-cap-label {
+    font-size: var(--text-dive-note);
+    line-height: 1.43;
+  }
+
+  .dive-cap-note {
+    font-size: var(--text-micro);
+    line-height: 1.5;
+  }
+
+  /*
+   * The capture. A real picture of the environment, cropped to the frame's own
+   * window and committed under `public/inside/` — the same treatment the
+   * Mindset section's captures get.
+   *
+   * The ring is drawn as a border rather than as a bezel of its own, so the
+   * frame's 4px of light edge is inside the box the ratio is measured on and
+   * the capture cannot push the panel wider than the column.
+   *
+   * `max-height` is what gives on a short stage: the panel is inside a screen
+   * that cannot scroll, and this is the one part of it that is decoration
+   * rather than content. Capping the height rather than the width keeps the
+   * panel on the same edge as the navbar and every section below it, and
+   * `cover` crops the capture instead of letterboxing it.
+   */
+  .dive-shot {
+    overflow: hidden;
+    width: 100%;
+    border: 0.25rem solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    aspect-ratio: 498 / 373;
+    max-height: calc(100svh - var(--dive-chrome));
+  }
+
+  .dive-shot img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /*
+   * Below `md` the panel is copy alone.
+   *
+   * The capture is the frame's own screen at about a third of the width it was
+   * drawn at, where none of its labels can be read and it is a grey rectangle
+   * with a lit edge. The copy is what the reader came down here for, and one
+   * panel at a time means dropping the picture leaves the stage with something
+   * to hold rather than with a gap.
    */
   @media (width < 48rem) {
     .dive-stage {
       --dive-top: 5rem;
       --dive-foot: 2rem;
+      --dive-pad: 1rem;
     }
 
-    .dive-cards {
+    .dive-card {
       grid-template-columns: minmax(0, 1fr);
     }
 
-    /*
-     * The figure goes with them. Stacked, the two pictures are most of the
-     * section's height and say the least per pixel of anything in it — the
-     * copy is what the reader came down here for.
-     */
-    .dive-figure {
+    .dive-shot {
       display: none;
+    }
+
+    .dive-caps {
+      gap: 1rem;
     }
   }
 
   /*
-   * The one thing in the composition that can be given up on a short window.
+   * On a short window the copy is what runs out of stage, not the capture.
    *
-   * The stage is a single unscrollable screen, so the heading and both cards
-   * have to fit inside it at every height — and the figure is the only part
-   * that is decoration rather than content.
+   * The panel is as tall as the taller of its two columns, and below about 700
+   * the column narrows enough that the paragraph takes a fourth line while the
+   * capture keeps shrinking with the ratio — so from here it is the capabilities
+   * that give: a 48px tile and 14px between the rows, which is 38px off the
+   * stack, plus the 24 the clearance and the foot give up. Measured at
+   * 1280x620, where the panel ran 8px past the foot before this.
+   */
+  @media (height < 44rem) {
+    .dive-stage {
+      --dive-top: 5rem;
+      --dive-foot: 2rem;
+    }
+
+    .dive-caps {
+      gap: 0.875rem;
+    }
+
+    .dive-cap-tile {
+      width: 3rem;
+      height: 3rem;
+    }
+  }
+
+  /*
+   * Shorter than 40rem the capabilities go altogether, and the panel is the
+   * composition the section used to end on: an index, a heading, a line of body
+   * and the picture.
    *
-   * 40rem is measured, not chosen. The card row is on `--figure-width`, which
-   * is itself derived from the viewport's height, so the whole composition
-   * already narrows — and therefore shortens — as the window loses height.
-   * That carries it down to about 640, where the copy starts wrapping to a
-   * fourth line faster than the figure shrinks. Below there the figure goes,
-   * and the stage cannot scroll to make room for it.
+   * The stage cannot scroll, so something has to give, and this is the part
+   * that reads as an expansion of the panel rather than as the panel itself.
+   * 40rem is where the tightening above has spent everything it has: a 640-tall
+   * window is 100 short of the stack even at the smallest the rows get.
    */
   @media (height < 40rem) {
-    .dive-figure {
+    .dive-card-rule,
+    .dive-caps {
       display: none;
     }
   }
@@ -1589,7 +2016,6 @@
   .dive-scope[data-static] {
     height: auto;
     padding: clamp(3rem, 4.5vw, 4.5rem) 0;
-    background-color: var(--color-canvas);
   }
 
   .dive-scope[data-static] .dive-stage {
@@ -1608,9 +2034,23 @@
     padding: 0 var(--dive-gutter);
   }
 
+  /*
+   * Nothing is traded here, so the two panels are a column of two rather than
+   * one cell holding both, and the capture has no pinned stage to fit inside.
+   */
   .dive-scope[data-static] .dive-cards {
+    gap: 1.5rem;
+    grid-auto-flow: row;
+  }
+
+  .dive-scope[data-static] .dive-card {
+    grid-area: auto;
     opacity: 1;
     transform: none;
+  }
+
+  .dive-scope[data-static] .dive-shot {
+    max-height: none;
   }
 
   /*
@@ -1651,5 +2091,201 @@
 @media (prefers-reduced-motion: reduce) {
   .dive-hint-rule {
     animation: none;
+  }
+}
+
+@layer components {
+  /* --- The TORUK Mindset (Figma node 11069:107918) -----------------------
+   *
+   * Three cards filling the section's `.page-column`, which is `--grid-width`
+   * and therefore the same edge as the navbar's pill and the reel's bezel. The
+   * row itself is `100%`: the column above it is where the width is decided,
+   * here as in every other section below the hero.
+   *
+   * The frame draws the row 970px wide inside a 1440 artboard. It is on the
+   * page's column here instead: a row inset by another 107px each side would
+   * read as a mistake rather than as a choice.
+   */
+
+  .mindset-cards {
+    display: grid;
+    width: 100%;
+    padding: 0;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 1.5rem; /* the frame's 24px */
+    list-style: none;
+  }
+
+  /*
+   * `justify-content: flex-end` against a stretched row is the frame's own
+   * arrangement: the cards all take the tallest one's height and every copy
+   * block is pinned to the bottom, so the three terms sit on one line however
+   * differently the body copy wraps above them.
+   */
+  .mindset-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 1.0625rem; /* 17px */
+    /*
+     * The frame's own card stroke, and the one hairline on this page that is
+     * an opaque colour rather than a step on the white ramp — it is stated at
+     * #343333 in the design, which sits between this page's `hairline` and
+     * `hairline-strong` and matches neither.
+     */
+    border: 0.5px solid #1c1c1c;
+    border-radius: 1.5rem; /* 24px */
+    padding: 1rem; /* 16px */
+  }
+
+  /*
+   * The picture window, at the frame's 274x163. A fixed ratio so the three
+   * cards' copy starts on the same line whatever the column width.
+   *
+   * The frame itself is not consistent here: it pins a 274x163 capture behind
+   * cards one and two but lets card three's run at its natural 2.195, leaving
+   * that one picture shorter than its neighbours. The three are cropped to one
+   * window instead — the captures were re-cropped from source rather than
+   * rescaled, so nothing is squashed to achieve it.
+   */
+  .mindset-shot {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.75rem; /* 12px */
+    aspect-ratio: 274 / 163;
+  }
+
+  .mindset-shot img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /*
+   * The capture fades to black at its foot rather than ending on an edge, so
+   * the picture meets the copy with no rule between them. To pure black rather
+   * than to the card's ground, as the frame sets it — the captures are near
+   * black at the bottom already, so the two meet without a seam.
+   */
+  .mindset-shot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, #000000 100%);
+    pointer-events: none;
+  }
+
+  .mindset-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem; /* 4px */
+  }
+
+  /* The pair, tight against each other: no gap between the two terms. */
+  .mindset-terms {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /*
+   * The strike is the design's entire device for "this is the old way" —
+   * there is no arrow and no numbering. `from-font` and `skip-ink: none` are
+   * the frame's own settings: the rule takes the weight the face specifies and
+   * runs through descenders instead of breaking around them, which is what
+   * keeps it reading as struck out rather than as an underline in the wrong
+   * place.
+   */
+  .mindset-from {
+    color: #929292;
+    text-decoration-line: line-through;
+    text-decoration-style: solid;
+    text-decoration-thickness: from-font;
+    text-decoration-skip-ink: none;
+  }
+
+  .mindset-to {
+    color: var(--color-ink);
+  }
+
+  /* --- The cycle, under the cards ---------------------------------------
+   *
+   * Five stages hanging off one rule across the column, on the same five-up
+   * rhythm and the same 24px gutter the cards use, so the strip reads as the
+   * foot of the same object rather than as a new one.
+   */
+  .mindset-stages {
+    display: grid;
+    width: 100%;
+    margin-top: clamp(0.3rem, 2vw, 0.5rem);
+    padding: clamp(2rem, 3vw, 2.25rem) 0 0;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1.5rem;
+    /* The strip's own top edge, at the page's quieter hairline. */
+
+    list-style: none;
+  }
+
+  .mindset-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /*
+   * A rule per stage, above its name, and the thing that fills.
+   *
+   * Each stage takes its own share of the strip's `--progress`: a fifth of the
+   * travel each, clamped, so stage three is still empty while stage two is
+   * filling. The white is painted as a background image sized to that share
+   * rather than as a width, so nothing about the fill touches layout — it is a
+   * paint of one 1px strip per stage per frame.
+   *
+   * Deriving the five from one property is also why the loop writes a single
+   * value: five separate writes per frame would recalculate style five times
+   * for the same scroll position.
+   */
+  .mindset-stage-rule {
+    --fill: clamp(0, calc(var(--progress, 0) * 5 - var(--i, 0)), 1);
+
+    align-self: stretch;
+    height: 1px;
+    background-color: var(--color-hairline-strong);
+    background-image: linear-gradient(to right, var(--color-ink), var(--color-ink));
+    background-repeat: no-repeat;
+    background-size: calc(var(--fill) * 100%) 100%;
+  }
+
+  .mindset-stage-name {
+    margin-top: 1.125rem;
+    
+  }
+
+  /*
+   * Tight to the name above it. The note is that stage's caption, not a
+   * paragraph under a heading, and the gap has to read as smaller than the one
+   * between two stages for the pair to hold together — the name's `leading-none`
+   * and the note's 20px line box already add about 3px of their own on top of
+   * whatever is set here.
+   */
+  .mindset-stage-note {
+    margin-top: 0.4rem;
+  }
+
+  /*
+   * One column below `md`, for both rows. Five stages across a phone would put
+   * "Improve it with every cycle." on four lines in a 60px column.
+   */
+  @media (width < 48rem) {
+    .mindset-cards {
+      grid-auto-flow: row;
+    }
+
+    .mindset-stages {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.75rem;
+    }
   }
 }
