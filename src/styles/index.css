@@ -1813,19 +1813,19 @@
    * as a counter.
    */
   .dive-index {
-    color: var(--color-ink-faint);
-    font-size: var(--text-dive-note);
+    color: var(--color-white);
+    font-size: 1rem;
     line-height: 1.43;
   }
 
   .dive-card-title {
-    margin-top: 0.25rem;
+    margin-top: 0.3rem;
     font-size: var(--text-dive-title);
     line-height: 1.5;
   }
 
   .dive-card-body {
-    font-size: var(--text-body);
+    font-size: 0.9rem;
     line-height: 1.5;
   }
 
@@ -2287,5 +2287,414 @@
       grid-template-columns: minmax(0, 1fr);
       gap: 1.75rem;
     }
+  }
+}
+
+/* --- The page's foot (Figma node 11112:111077) -------------------------- */
+
+@layer components {
+  /*
+   * The band the columns and the legal line share, and the hole between them.
+   *
+   * The frame gives the band 466px and justifies two rows inside it — a 176px
+   * row of columns at the top and a 54px line at the foot — which leaves about
+   * 236px of nothing in the middle. That hole is the design: it is what makes
+   * the wordmark underneath read as a signature at the bottom of a page rather
+   * than as a caption under a nav.
+   *
+   * So the band takes whatever the screen has left over the wordmark and puts
+   * the two rows at its ends. The footer is one viewport tall, which makes the
+   * hole a function of the reader's screen rather than a number — on the
+   * frame's own 1440 x 831 the two land within a few pixels of where it sets
+   * them. `min-height` keeps it from collapsing where the screen is shorter
+   * than the content it has to hold.
+   */
+   #footer{
+    background-color: #090909
+   }
+  .footer-band {
+    display: flex;
+    min-height: clamp(18rem, 30vw, 29.125rem); /* 466px at the frame's width */
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 3rem;
+  }
+
+  /*
+   * Four columns on one line: the statement over the left half, then the three
+   * link lists sharing the right. `3fr` and three `1fr`s rather than two nested
+   * grids, so all four labels sit on the same line and the three lists are
+   * evenly spaced against each other instead of against their own half.
+   */
+  .footer-top {
+    display: grid;
+    grid-template-columns: 3fr repeat(3, minmax(0, 1fr));
+    gap: 2.5rem 2rem;
+  }
+
+  .footer-brand,
+  .footer-column {
+    display: flex;
+    flex-direction: column;
+    /* The frame's 24px between a label and what it heads. */
+    gap: 1.5rem;
+  }
+
+  /*
+   * The four labels. 12px on the frame's 0.24px tracking, held at 80% white:
+   * a label that names a column, not a link and not an eyebrow over a heading.
+   */
+  .footer-label {
+    color: color-mix(in srgb, var(--color-ink) 80%, transparent);
+    letter-spacing: 0.02em; /* 0.24px at 12px */
+  }
+
+  /*
+   * The closing line. Two sentences on one paragraph so a screen reader reads
+   * them as one, stacked tight — the frame sets 8px between the items of the
+   * list this takes the place of, and the pair holds together at that gap.
+   */
+  .footer-statement {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 4rem;
+    gap: 0.5rem;
+  }
+
+  .footer-links {
+    display: flex;
+    flex-direction: column;
+    /* The frame's 4px: a list of links, not a stack of paragraphs. */
+    gap: 0.25rem;
+    list-style: none;
+  }
+
+  /*
+   * Links rest at full white and dim on hover rather than lighting up, because
+   * white is where the ramp ends — there is nothing above it to move to. The
+   * legal line at the foot rests muted and comes up to white instead.
+   */
+  .footer-link {
+    color: var(--color-ink);
+    letter-spacing: 0.02em;
+    transition: color 200ms var(--ease-out-quint);
+  }
+
+  .footer-link:hover {
+    color: var(--color-ink-muted);
+  }
+
+  .footer-link:focus-visible {
+    outline: 1px solid var(--color-hairline-strong);
+    outline-offset: 4px;
+  }
+
+  /*
+   * The legal line, under the page's own hairline. The frame carries no rule
+   * here, but the handoff's own sketch draws one and the line needs it: with
+   * 236px of air above it, a 12px row at the foot of that hole otherwise
+   * reads as having been left behind rather than as the band's last row.
+   */
+  .footer-bottom {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-hairline);
+    gap: 1.5rem 2rem;
+    flex-wrap: wrap;
+  }
+
+  .footer-legal {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+  }
+
+  .footer-legal .footer-link {
+    color: var(--color-ink-muted);
+  }
+
+  .footer-legal .footer-link:hover {
+    color: var(--color-ink);
+  }
+
+  /* --- The wordmark at the foot -----------------------------------------
+   *
+   * The frame's own artwork, placed as a background rather than redrawn as
+   * type: each of the five letters carries its own left-to-right gradient that
+   * runs 19% white at its left edge, full white at its centre and 20% at its
+   * right, and that per-letter falloff is the whole reason it reads as metal.
+   * No face and no `background-clip: text` reproduces it.
+   *
+   * Full-bleed, as the frame sets it: the artwork runs the whole 1440 while the
+   * columns above it stop 16px short, so the word is the one thing on the page
+   * that touches both edges. It is the page's last line, and a signature that
+   * stopped on the content's gutter would read as another block of it.
+   *
+   * `aspect-ratio` from the export's own 1440 x 159.049, so the box is the
+   * artwork's shape at any width and the SVG is never squashed to fill it. It
+   * is the footer's floor: the band above takes the rest of the screen, so
+   * this sits on the bottom edge of the viewport with no rule about where.
+   *
+   * `isolation` is what keeps the shine local: the sheen inside blends in
+   * `screen`, and without an isolated group here it would screen against the
+   * page's black instead of against the letters.
+   */
+  .footer-lettering {
+    /*
+     * The beam's radius, so the light spans twice this. At the frame's own
+     * width that is about a letter and a quarter across — the shoulder still
+     * reaches the letter either side of whatever it is on, but the pool sits
+     * on one letter at a time rather than over a pair of them. A letter is 275
+     * of the artwork's 1440, for the arithmetic.
+     */
+    --spot-size: clamp(6.5rem, 12vw, 12rem);
+
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    /* The frame's 145px, as a floor under a band that has already spread. */
+    margin-top: clamp(3rem, 6vw, 9.0625rem);
+    aspect-ratio: 1440 / 159.049;
+  }
+
+  /*
+   * The box paints nothing itself. It is the frame the three light layers sit
+   * in, and the only thing in here that takes a pointer — everything inside is
+   * `pointer-events: none`, so the offsets on a move event are already in
+   * these coordinates and the spotlight never has to measure anything.
+   */
+  .footer-lettering > * {
+    pointer-events: none;
+  }
+
+  /*
+   * The word as it rests. It is also the word under the light: the spotlight
+   * layer is a second copy of this at full strength, so what the beam uncovers
+   * is the artwork rather than a lit version of it.
+   */
+  .footer-lettering-base {
+    position: absolute;
+    inset: 0;
+    background-image: url('/brand/toruk-lettering.svg');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    transition: opacity 520ms var(--ease-out-quint);
+  }
+
+  /*
+   * Down to almost nothing while a pointer is on it — enough to keep the shape
+   * of the word at the edge of the beam, not enough to compete with it. Faster
+   * in than out: the word drops away the moment the pointer lands and comes
+   * back up slowly once it has gone.
+   */
+  .footer-lettering[data-lit] .footer-lettering-base {
+    opacity: 0.12;
+    transition-duration: 280ms;
+  }
+
+  /*
+   * The shine, in two parts: this element is the window — the same letterforms
+   * again, flat, as a mask — and the band inside it is what moves. They are
+   * split because a transform on a masked element carries its own mask along
+   * with it, which would slide the letters instead of sweeping light across
+   * them.
+   *
+   * `screen` rather than a plain overlay: it lifts the dim ends of each letter
+   * and leaves the lit centres where they already are, which is how a highlight
+   * crosses metal. A normal white band would flatten every letter to white as
+   * it passed.
+   */
+  .footer-lettering-shine {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    mask-image: url('/brand/toruk-lettering-solid.svg');
+    mask-repeat: no-repeat;
+    mask-size: 100% 100%;
+    -webkit-mask-image: url('/brand/toruk-lettering-solid.svg');
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mix-blend-mode: screen;
+    transition: opacity 320ms var(--ease-out-quint);
+  }
+
+  /*
+   * One light at a time. The sweep is the word's own idle state and the beam
+   * is the reader's; the two crossing each other reads as a fault rather than
+   * as two sources.
+   */
+  .footer-lettering[data-lit] .footer-lettering-shine {
+    opacity: 0;
+  }
+
+  /*
+   * The band itself. Taller than the box so its angled edges clear the top and
+   * bottom of the letters, and it travels on `transform` alone — the sweep is
+   * a composited move of one layer, not a repaint of a 1400px-wide gradient.
+   *
+   * Wide and soft rather than a hard stripe: at 60% of the word it is always
+   * over two or three letters at once, and the five stops ramp it up and back
+   * down so no edge of it ever reads as a line. A narrow band on a word this
+   * wide arrives as a flash and leaves as one.
+   */
+  .footer-lettering-sheen {
+    position: absolute;
+    top: -50%;
+    bottom: -50%;
+    left: 0;
+    width: 60%;
+    background-image: linear-gradient(
+      105deg,
+      rgba(255, 255, 255, 0) 12%,
+      rgba(255, 255, 255, 0.18) 30%,
+      rgba(255, 255, 255, 0.7) 50%,
+      rgba(255, 255, 255, 0.18) 70%,
+      rgba(255, 255, 255, 0) 88%
+    );
+    opacity: 0;
+    transform: translate3d(-100%, 0, 0);
+    /*
+     * Eased rather than linear, and slow: the band accelerates off the left
+     * edge and settles as it leaves, which is how light moves across a
+     * surface that is turning. Linear reads as something being dragged.
+     */
+    animation: footer-sheen 9s cubic-bezier(0.42, 0, 0.3, 1) infinite;
+  }
+
+  /*
+   * One pass, then a rest. The sweep takes the first 36% of the cycle — about
+   * 3.2s — and the band then sits off the right edge for the remaining six. A
+   * shine that runs continuously stops reading as a highlight and starts
+   * reading as a loading state.
+   *
+   * It fades up and down inside its own travel as well, so the word is never
+   * caught mid-lit at either edge: the band is at full strength only while it
+   * is over the letters.
+   *
+   * 167% is the band's own width, so its left edge clears the right edge of
+   * the box: 60% of the box wide, so 100% of the box is 167% of the band.
+   */
+  @keyframes footer-sheen {
+    0% {
+      opacity: 0;
+      transform: translate3d(-100%, 0, 0);
+    }
+
+    8% {
+      opacity: 1;
+    }
+
+    30% {
+      opacity: 1;
+    }
+
+    36%,
+    100% {
+      opacity: 0;
+      transform: translate3d(167%, 0, 0);
+    }
+  }
+
+  /* --- The beam ---------------------------------------------------------
+   *
+   * The word again, at full strength, with a soft circle of a mask over it at
+   * the cursor. Everything outside the circle is masked away, so what is left
+   * is the artwork exactly as it was drawn, lit against the dimmed copy
+   * underneath. Nothing is added to it — that is the whole reason the light is
+   * a mask and not a white overlay: white over a gradient flattens it, and
+   * every letter this beam crossed would come up the same shade.
+   *
+   * `--spot-x` and `--spot-y` are written by the component, in this element's
+   * own pixels. They default to the middle of the word, which is where the
+   * circle sits for the frame before the first pointer event arrives — it is
+   * invisible until then either way.
+   *
+   * The stops are the softness. Solid to a third of the radius, then away to
+   * nothing by the edge, so the beam has no rim at any point: what the reader
+   * sees is a letter fading out of the dark, not a hole cut in it.
+   */
+  .footer-lettering-spot {
+    position: absolute;
+    inset: 0;
+    background-image: url('/brand/toruk-lettering.svg');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    mask-image: radial-gradient(
+      circle var(--spot-size) at var(--spot-x, 50%) var(--spot-y, 50%),
+      rgb(0 0 0 / 1) 0%,
+      rgb(0 0 0 / 0.92) 30%,
+      rgb(0 0 0 / 0.45) 58%,
+      rgb(0 0 0 / 0) 100%
+    );
+    -webkit-mask-image: radial-gradient(
+      circle var(--spot-size) at var(--spot-x, 50%) var(--spot-y, 50%),
+      rgb(0 0 0 / 1) 0%,
+      rgb(0 0 0 / 0.92) 30%,
+      rgb(0 0 0 / 0.45) 58%,
+      rgb(0 0 0 / 0) 100%
+    );
+    opacity: 0;
+    transition: opacity 360ms var(--ease-out-quint);
+  }
+
+  /*
+   * Up quickly and down slowly, against the base layer's opposite. The two
+   * cross in the middle of both transitions, so the word hands over from one
+   * copy of itself to the other without ever dipping darker than either.
+   */
+  .footer-lettering[data-lit] .footer-lettering-spot {
+    opacity: 1;
+    transition-duration: 220ms;
+  }
+
+  /*
+   * One column below `lg`. Four columns across a tablet puts "Documentation"
+   * on two lines in a 140px column, so the statement takes the full width and
+   * the three lists share the row under it.
+   */
+  @media (width < 64rem) {
+    .footer-top {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .footer-brand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (width < 48rem) {
+    .footer-band {
+      min-height: 0;
+      gap: 3.5rem;
+    }
+
+    .footer-top {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .footer-bottom {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+}
+
+/*
+ * The sweep is decoration and nothing else reads it, so it is removed rather
+ * than shortened — the lettering keeps the gradient it was exported with.
+ *
+ * The beam stays. It is a response to the pointer rather than motion the page
+ * decided to make, and taking it away would leave the word looking inert under
+ * a cursor that is clearly on it. The component drops its smoothing here as
+ * well, so the light sits on the cursor instead of travelling to it — what is
+ * left is a state that follows the reader, not an animation.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .footer-lettering-shine {
+    display: none;
   }
 }

@@ -1,4 +1,5 @@
 import { Header } from '@/components/layout/Header'
+import { Footer } from '@/components/layout/Footer'
 import { Hero } from '@/components/sections/Hero'
 import { VideoShowcase } from '@/components/sections/VideoShowcase'
 import { TorukMindset } from '@/components/sections/TorukMindset'
@@ -63,6 +64,7 @@ export default function App() {
           */}
         <DiveIntoToruk />
       </main>
+      <Footer />
       <Splash />
     </SplashProvider>
   )

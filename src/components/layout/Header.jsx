@@ -21,6 +21,19 @@ import { useAtViewportTop } from '@/hooks/useAtViewportTop'
  */
 const GROUNDED_SECTIONS = ['#reel', '#platform', '#mindset', '#inside']
 
+/*
+ * And the one thing that takes the pose back off. The footer is a screen of
+ * its own at the end of the page, and the bar is bare over it for the same
+ * reason it is bare over the hero: it is the composition's own top edge there,
+ * not chrome floating over something moving underneath.
+ *
+ * It has to be observed rather than inferred from the list above. The footer
+ * is exactly one viewport tall, so at the foot of the page the last grounded
+ * section's bottom edge and the footer's top edge are the same line, and both
+ * are in the strip for the whole of the hand-over. This one wins it.
+ */
+const BARE_SECTIONS = ['#footer']
+
 
 export function Header({ activeHref = '/' }) {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -32,7 +45,9 @@ export function Header({ activeHref = '/' }) {
    * pill exists to separate the chrome from a page moving under it, and the
    * hero is the one section with nothing there to separate it from.
    */
-  const grounded = useAtViewportTop(GROUNDED_SECTIONS)
+  const overGrounded = useAtViewportTop(GROUNDED_SECTIONS)
+  const overFooter = useAtViewportTop(BARE_SECTIONS)
+  const grounded = overGrounded && !overFooter
 
 
   const lifted = staged
