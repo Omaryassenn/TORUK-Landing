@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { footer } from '@/content/footer'
 import { useReveal } from '@/hooks/useReveal'
+import { resolveHref } from '@/lib/href'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 /**
@@ -180,8 +181,19 @@ function Lettering() {
   )
 }
 
+/**
+ * An absolute href leaves the site; an in-page one does not.
+ *
+ * Only the socials are absolute today, and they open in a new tab so a reader
+ * at the foot of the page does not lose it to a profile. `rel` is not optional
+ * on a `_blank`: without `noreferrer` the opened page gets a handle on this one.
+ */
+function outward(href) {
+  return /^https?:\/\//.test(href)
+}
+
 /** One link column. Label, then the links, on the frame's 24px/4px stack. */
-function LinkColumn({ column, revealed, index }) {
+function LinkColumn({ column, revealed, index, base }) {
   return (
     <div
       className="footer-column reveal"
@@ -197,9 +209,15 @@ function LinkColumn({ column, revealed, index }) {
           <li key={link.label}>
             <a
               className="footer-link font-display text-body leading-[1.4] font-normal"
-              href={link.href}
+              href={resolveHref(link.href, base)}
+              {...(outward(link.href)
+                ? { target: '_blank', rel: 'noreferrer' }
+                : null)}
             >
               {link.label}
+              {outward(link.href) && (
+                <span className="sr-only"> (opens in a new tab)</span>
+              )}
             </a>
           </li>
         ))}
@@ -208,7 +226,11 @@ function LinkColumn({ column, revealed, index }) {
   )
 }
 
-export function Footer() {
+/**
+ * @param {string} [base] Where this foot's in-page links resolve against. See
+ *   `resolveHref`: empty on the landing page, `'/'` on a document.
+ */
+export function Footer({ base = '' }) {
   const { ref: topRef, revealed: topShown } = useReveal({ threshold: 0.2 })
 
   return (
@@ -231,21 +253,67 @@ export function Footer() {
       <div ref={topRef} className="footer-band px-6">
         <div className="footer-top">
           {/*
-            * The statement sits under a label of its own so the four column
-            * headings share one line across the band, exactly as the frame
-            * sets them.
+            * The band's left half: the frame's closing statement, and the
+            * company's contact details under it.
             */}
           <div
             className="footer-brand reveal"
             data-revealed={topShown}
             style={{ '--reveal-delay': '0ms' }}
           >
-           
-
-            <p className="footer-statement font-display  leading-none font-normal">
+            <p className="footer-statement font-display leading-none font-normal">
               <span className="text-ink-muted">{footer.statement[0]}</span>
               <span className="text-ink">{footer.statement[1]}</span>
             </p>
+
+            {/*
+              * One `<address>`, which is what tells a screen reader these are
+              * the page's contact details rather than a list of strings. The
+              * icons are decorative — every row carries its own label, read out
+              * but not set, because the frame gives a row an icon and nothing
+              * else and a bare number announced on its own says nothing about
+              * what it is.
+              */}
+            <address className="footer-contact">
+              {footer.contact.map((row) => (
+                <p key={row.id} className="footer-contact-row">
+                  <img
+                    className="footer-contact-icon"
+                    src={row.icon}
+                    alt=""
+                    width="20"
+                    height="20"
+                    decoding="async"
+                  />
+
+                  <span className="sr-only">{row.label}: </span>
+
+                  <span
+                    className="footer-contact-values"
+                    data-inline={row.inline || undefined}
+                  >
+                    {row.values.map((value) =>
+                      value.href ? (
+                        <a
+                          key={value.text}
+                          href={value.href}
+                          className="footer-link font-display text-body leading-[1.5] font-normal"
+                        >
+                          {value.text}
+                        </a>
+                      ) : (
+                        <span
+                          key={value.text}
+                          className="font-display text-body leading-[1.5] font-normal text-ink"
+                        >
+                          {value.text}
+                        </span>
+                      ),
+                    )}
+                  </span>
+                </p>
+              ))}
+            </address>
           </div>
 
           {footer.columns.map((column, i) => (
@@ -254,6 +322,7 @@ export function Footer() {
               column={column}
               index={i}
               revealed={topShown}
+              base={base}
             />
           ))}
         </div>
@@ -268,7 +337,7 @@ export function Footer() {
               <li key={link.label}>
                 <a
                   className="footer-link font-display text-micro leading-[1.4] font-medium"
-                  href={link.href}
+                  href={resolveHref(link.href, base)}
                 >
                   {link.label}
                 </a>

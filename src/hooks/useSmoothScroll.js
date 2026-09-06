@@ -19,6 +19,8 @@ import Lenis from 'lenis'
  */
 export function useSmoothScroll(locked = false) {
   const lenis = useRef(null)
+  /* Whether the fragment the page was opened at has been honoured. */
+  const landed = useRef(false)
 
   useEffect(() => {
     /*
@@ -65,5 +67,75 @@ export function useSmoothScroll(locked = false) {
     if (!lenis.current) return
     if (locked) lenis.current.stop()
     else lenis.current.start()
+  }, [locked])
+
+  /*
+   * Land on the fragment the page was opened at.
+   *
+   * The browser does this itself on load, and on this page it does not stick:
+   * the splash locks `overflow` while it runs, so the jump is discarded and the
+   * reader is left at the top. That is what sent every link from the legal
+   * pages to the hero. The splash now stands down for a deep link, and this
+   * puts the reader where they asked to be once the scroller is live.
+   *
+   * The offset is read off the target's own `scroll-margin-top` rather than
+   * restated here, so it stays whatever the stylesheet says it is: a section
+   * landing under the navbar is the same requirement as for any other jump.
+   *
+   * Once only, and never again: after this the reader owns the scroll position,
+   * and `locked` flips whenever the splash does.
+   */
+  useEffect(() => {
+    if (locked || landed.current) return
+    landed.current = true
+
+    const hash = window.location.hash
+    if (hash.length < 2) return
+
+    let target = null
+    try {
+      target = document.querySelector(hash)
+    } catch {
+      /* A fragment that is not a valid selector is not one of ours. */
+    }
+    if (!target) return
+
+    /* Where this last put the page, so it can tell its own work from the reader's. */
+    let placed = -1
+
+    const land = () => {
+      /*
+       * The reader has taken over. Everything below is a correction to a
+       * position they have since moved off, so there is nothing left to
+       * correct.
+       */
+      if (placed >= 0 && Math.abs(window.scrollY - placed) > 2) return
+
+      /*
+       * Measured and applied here rather than inside a frame callback: a tab
+       * opened in the background never runs one, and the reader would come
+       * back to the top of the page. Reading the rect forces the layout this
+       * needs anyway.
+       */
+      const margin = parseFloat(getComputedStyle(target).scrollMarginTop) || 0
+      const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - margin)
+
+      placed = Math.round(top)
+      window.scrollTo({ top, behavior: 'auto' })
+      /* And through Lenis, so its own idea of the position agrees. */
+      lenis.current?.scrollTo(top, { immediate: true, force: true })
+    }
+
+    land()
+
+    /*
+     * Web fonts and late images change the height of everything above the
+     * target, so the position is asserted again as each settles. Both are
+     * no-ops once the reader has scrolled.
+     */
+    document.fonts?.ready.then(land).catch(() => {})
+    window.addEventListener('load', land, { once: true })
+
+    return () => window.removeEventListener('load', land)
   }, [locked])
 }

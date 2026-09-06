@@ -5,6 +5,8 @@ import { VideoShowcase } from '@/components/sections/VideoShowcase'
 import { TorukMindset } from '@/components/sections/TorukMindset'
 import { PlatformGlance } from '@/components/sections/PlatformGlance'
 import { DiveIntoToruk } from '@/components/sections/DiveIntoToruk'
+import { UseCases } from '@/components/sections/UseCases'
+import { BookDemo } from '@/components/sections/BookDemo'
 import { Splash } from '@/components/splash/Splash'
 import { SplashProvider } from '@/components/splash/SplashProvider'
 import { useSplash } from '@/components/splash/context'
@@ -30,7 +32,7 @@ export default function App() {
      */
     <SplashProvider>
       <SmoothScroll />
-      <Header activeHref="/" />
+      <Header activeHref="#hero" />
       <main>
         {/*
           * Hero and reel share one pin scope: the hero sticks to the top of it
@@ -38,7 +40,15 @@ export default function App() {
           * releases the moment the scope ends. Both halves of that are in the
           * `.showcase-*` rules in `styles/index.css`.
           */}
-        <div className="showcase-scope">
+        {/*
+          * `#hero` is on the scope and not on the hero inside it. The hero is
+          * `position: sticky` for the length of this scope, so once the reader
+          * has scrolled past it its own box is stuck to the top of the viewport
+          * and resolves to wherever they already are — a nav link aimed at it
+          * would scroll nowhere. The scope does not move, and its top edge is
+          * the top of the document, which is what "Home" means on one page.
+          */}
+        <div id="hero" className="showcase-scope">
           <div className="hero-pin">
             <Hero />
           </div>
@@ -63,6 +73,20 @@ export default function App() {
           * the question the diagram above leaves open.
           */}
         <DiveIntoToruk />
+        {/*
+          * Last of the four, and last in the nav. Everything above it argues
+          * the premise and shows the platform; this is the only section that
+          * answers "who is already doing this, and with what" — which is a
+          * question a reader only has once they have accepted the rest.
+          */}
+        <UseCases />
+        {/*
+          * Last, and the only section that asks for anything. Everything above
+          * it is the argument; this is where a reader who has accepted it is
+          * given somewhere to go, which is why it sits under the use cases
+          * rather than being repeated halfway up the page.
+          */}
+        <BookDemo />
       </main>
       <Footer />
       <Splash />

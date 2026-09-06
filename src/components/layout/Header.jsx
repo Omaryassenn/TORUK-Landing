@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/cn'
+import { resolveHref } from '@/lib/href'
 import { site, nav, headerCta } from '@/content/site'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { Button } from '@/components/ui/Button'
 import { useSplash } from '@/components/splash/context'
 import { useAtViewportTop } from '@/hooks/useAtViewportTop'
+import { useActiveSection } from '@/hooks/useActiveSection'
 
 
 /*
@@ -16,10 +18,23 @@ import { useAtViewportTop } from '@/hooks/useAtViewportTop'
  * each one leaves the strip under the bar the next has already entered it, so
  * the state never falls back to the hero's pose part-way down the page.
  *
+ * Contiguous also means a new section below the hero has to be added here when
+ * it is added to the page. A gap in this list is not a missing pill, it is a
+ * transparent bar over a page that is still moving: the section's own copy
+ * scrolls up through the nav links. That is what happened when `#usecases` was
+ * built and left off it.
+ *
  * Module-level so the observer is set up once rather than torn down and rebuilt
  * on every render.
  */
-const GROUNDED_SECTIONS = ['#reel', '#platform', '#mindset', '#inside']
+const GROUNDED_SECTIONS = [
+  '#reel',
+  '#platform',
+  '#mindset',
+  '#inside',
+  '#usecases',
+  '#demo',
+]
 
 /*
  * And the one thing that takes the pose back off. The footer is a screen of
@@ -34,8 +49,39 @@ const GROUNDED_SECTIONS = ['#reel', '#platform', '#mindset', '#inside']
  */
 const BARE_SECTIONS = ['#footer']
 
+/*
+ * What the scroll-spy watches: every in-page anchor in the bar, in the order it
+ * is listed. That is page order today, and `useActiveSection` re-derives the
+ * order from the document so it stays right if the two ever part company.
+ *
+ * The CTA's target is in here even though no nav item can be marked for it, and
+ * that is the point. The spy holds its last answer when nothing is crossing the
+ * band, so watching only the four links left `Use cases` lit for the whole of
+ * the demo section and the footer below it — long after the reader had left it.
+ * Watching the demo section moves the answer off `#usecases` on the way past,
+ * and since no link points at it, nothing is marked. Which is correct: down
+ * there the reader is in none of the four.
+ *
+ * Module-level so the observer is set up once rather than rebuilt per render.
+ */
+const NAV_ANCHORS = [...nav, headerCta]
+  .filter((item) => item.href.startsWith('#'))
+  .map((item) => item.href)
 
-export function Header({ activeHref = '/' }) {
+
+/**
+ * @param {string} activeHref Which item reads as current before the reader has
+ *   scrolled and the observer has first reported. After that the page decides.
+ * @param {string} [base] Where this bar's in-page links resolve against. Empty
+ *   on the landing page, where a fragment is a scroll; `'/'` on a document,
+ *   where the same fragment points at a section that is not on the page.
+ * @param {'compact'} [pose] Force the grounded pose for a page that has none of
+ *   `GROUNDED_SECTIONS` on it. The landing page infers its pose from what is
+ *   under the bar; a page that is one long document has nothing to infer from
+ *   and would sit bare over content moving underneath it, which is the pose
+ *   that exists for the hero and only the hero.
+ */
+export function Header({ activeHref = nav[0]?.href, pose, base = '' }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const { active: splashActive, staged, chromeVisible, registerLogo } = useSplash()
 
@@ -47,10 +93,97 @@ export function Header({ activeHref = '/' }) {
    */
   const overGrounded = useAtViewportTop(GROUNDED_SECTIONS)
   const overFooter = useAtViewportTop(BARE_SECTIONS)
-  const grounded = overGrounded && !overFooter
+  /*
+   * A stated pose still yields to the footer, which takes the bar's ground away
+   * on every page for the same reason: the footer is a screen of its own and
+   * the bar is its top edge there, not chrome over something scrolling past.
+   */
+  const grounded = (pose === 'compact' || overGrounded) && !overFooter
+
+  /*
+   * The lit item follows the reader down the page rather than naming a fixed
+   * one. It used to be `Home` for the whole scroll, which tells someone three
+   * sections in that they are on the home page; what a one-page nav has to say
+   * is where in the page they are.
+   */
+  const current = useActiveSection(NAV_ANCHORS) ?? activeHref
 
 
   const lifted = staged
+
+  const toggleRef = useRef(null)
+  const sheetRef = useRef(null)
+  const closeRef = useRef(null)
+
+  /*
+   * Nothing scrolls behind the sheet. The same lock the splash uses, on the
+   * same element and for the same reason: a menu covering the screen over a
+   * page that still moves under a thumb is two scrollers fighting.
+   */
+  useEffect(() => {
+    if (!menuOpen) return
+    document.documentElement.dataset.menu = 'open'
+    return () => {
+      delete document.documentElement.dataset.menu
+    }
+  }, [menuOpen])
+
+  /*
+   * Focus into the sheet on open and back to the button that opened it on
+   * close. Without the second half, closing leaves focus on the document and a
+   * reader on a keyboard has to tab from the top of the page again.
+   *
+   * The guard is a ref of its own and not `sheetRef`: by the time this runs on
+   * a close the sheet has unmounted and React has already nulled that one, so
+   * testing it meant the restore never happened.
+   */
+  const wasOpen = useRef(false)
+
+  useEffect(() => {
+    if (menuOpen) {
+      wasOpen.current = true
+      closeRef.current?.focus()
+      return
+    }
+    if (!wasOpen.current) return
+    wasOpen.current = false
+    toggleRef.current?.focus()
+  }, [menuOpen])
+
+  /*
+   * The sheet is `lg:hidden`, so a window that grows past the breakpoint would
+   * leave it open, invisible, and still holding the page's scroll.
+   */
+  useEffect(() => {
+    if (!menuOpen) return
+    const wide = window.matchMedia('(min-width: 64rem)')
+    const close = () => setMenuOpen(false)
+    wide.addEventListener('change', close)
+    return () => wide.removeEventListener('change', close)
+  }, [menuOpen])
+
+  /** Escape closes; Tab cycles inside rather than leaving for a hidden page. */
+  const onSheetKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      setMenuOpen(false)
+      return
+    }
+    if (event.key !== 'Tab') return
+
+    const focusable = sheetRef.current?.querySelectorAll('a[href], button')
+    if (!focusable?.length) return
+
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
 
   const chrome = cn(
     'transition-opacity duration-[520ms] ease-out-quint motion-reduce:transition-none',
@@ -110,12 +243,12 @@ export function Header({ activeHref = '/' }) {
             )}
           >
             {nav.map((item) => {
-              const active = item.href === activeHref
+              const active = item.href === current
               return (
                 <a
                   key={item.href}
-                  href={item.href}
-                  aria-current={active ? 'page' : undefined}
+                  href={resolveHref(item.href, base)}
+                  aria-current={active ? 'location' : undefined}
                   className={cn(
                     'font-display text-nav leading-[1.25rem] whitespace-nowrap transition-colors duration-200',
                     active
@@ -132,12 +265,18 @@ export function Header({ activeHref = '/' }) {
           {/* Mirror of the lockup's column, so the nav's centre is the header's. */}
           <div className="flex flex-1 items-center justify-end">
             <div className={cn('hidden lg:block', chrome)}>
-              <Button href={headerCta.href}>{headerCta.label}</Button>
+              <Button href={resolveHref(headerCta.href, base)}>{headerCta.label}</Button>
             </div>
 
+            {/*
+              * Opens only. The sheet covers this bar completely and carries its
+              * own close, so a button that also closed would be a control the
+              * reader cannot see while it is doing that job.
+              */}
             <button
+              ref={toggleRef}
               type="button"
-              onClick={() => setMenuOpen((open) => !open)}
+              onClick={() => setMenuOpen(true)}
               aria-expanded={menuOpen}
               aria-controls="mobile-nav"
               className={cn(
@@ -145,20 +284,14 @@ export function Header({ activeHref = '/' }) {
                 chrome,
               )}
             >
-              <span className="sr-only">
-                {menuOpen ? 'Close menu' : 'Open menu'}
-              </span>
+              <span className="sr-only">Open menu</span>
               <svg
                 viewBox="0 0 16 16"
                 aria-hidden="true"
                 className="w-4 stroke-ink"
                 strokeWidth="1.25"
               >
-                {menuOpen ? (
-                  <path d="M3 3l10 10M13 3L3 13" />
-                ) : (
-                  <path d="M2 5h12M2 11h12" />
-                )}
+                <path d="M2 5h12M2 11h12" />
               </svg>
             </button>
           </div>
@@ -166,39 +299,95 @@ export function Header({ activeHref = '/' }) {
       </div>
 
       {/*
-        * The open panel is its own surface below the bar rather than an
-        * extension of it: the bar has to stay clear of `overflow: hidden`,
-        * because the splash flies this header's real lockup in from the middle
-        * of the screen under a transform that would be clipped by it.
+        * The menu, as a sheet over the whole screen rather than a panel hanging
+        * off the bar.
         *
-        * `.chrome-menu` puts the panel's edges on the pill's in the compact
-        * state and on the page's gutter in the full-bleed one, so it lines up
-        * with the bar either way. Same radius as the pill — it is the same kind
-        * of object — and its own ground, since over the hero there is no pill
-        * behind it to read against.
+        * A panel under the bar left the page visible and scrollable behind it,
+        * which on a phone is a menu competing with the thing it is covering.
+        * The sheet is its own screen: the lockup and a close at the top, the
+        * links in the middle of what is left, and the one action at the foot
+        * where a thumb is.
+        *
+        * It is a dialog and behaves like one. Escape closes it, focus moves to
+        * the close on open and back to the button that opened it on close, and
+        * Tab cycles inside rather than wandering into a page nobody can see.
         */}
       {menuOpen && (
         <div
           id="mobile-nav"
-          className="chrome-menu mt-3 rounded-[1.5rem] border border-hairline bg-canvas/95 px-6 pb-6 backdrop-blur-sm lg:hidden"
+          ref={sheetRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${site.name} menu`}
+          onKeyDown={onSheetKeyDown}
+          className="chrome-sheet lg:hidden"
         >
-          <nav aria-label="Primary" className="flex flex-col">
-            {nav.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                onClick={() => setMenuOpen(false)}
-                className="border-b border-hairline py-4 font-display text-[1.0625rem] text-ink-muted hover:text-ink"
+          <div className="chrome-sheet-bar">
+            {/*
+              * A second lockup, and deliberately not the one the splash flies:
+              * that one is registered with the provider and measured against
+              * the slot, and there is only ever one of it.
+              */}
+            <a
+              href={base || '/'}
+              aria-label={`${site.name} home`}
+              className="chrome-sheet-logo"
+            >
+              <Wordmark />
+            </a>
+
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={() => setMenuOpen(false)}
+              className="chrome-sheet-close"
+            >
+              <span className="sr-only">Close menu</span>
+              <svg
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+                className="w-5 stroke-ink"
+                strokeWidth="1.25"
               >
-                {item.label}
-              </a>
-            ))}
+                <path d="M3 3l10 10M13 3L3 13" />
+              </svg>
+            </button>
+          </div>
+
+          <nav aria-label="Primary" className="chrome-sheet-nav">
+            {/*
+              * Same current state as the bar. The sheet is the same nav on a
+              * narrower screen, and a reader who opens it mid-page should be
+              * told where they are by the same rule.
+              */}
+            {nav.map((item) => {
+              const active = item.href === current
+              return (
+                <a
+                  key={item.href}
+                  href={resolveHref(item.href, base)}
+                  onClick={() => setMenuOpen(false)}
+                  aria-current={active ? 'location' : undefined}
+                  className="chrome-sheet-link font-display"
+                >
+                  {item.label}
+                </a>
+              )
+            })}
           </nav>
-          <Button href={headerCta.href} className="mt-6 w-full">
-            {headerCta.label}
-          </Button>
+
+          <div className="chrome-sheet-foot">
+            <Button
+              href={resolveHref(headerCta.href, base)}
+              onClick={() => setMenuOpen(false)}
+              className="chrome-sheet-cta w-full"
+            >
+              {headerCta.label}
+            </Button>
+          </div>
         </div>
       )}
+
     </header>
   )
 }

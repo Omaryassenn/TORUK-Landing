@@ -126,6 +126,45 @@
   --text-dive-note: 0.875rem; /* 14px */
 
   /*
+   * The Use cases cards' two steps (Figma nodes 11122:115679 / 11122:116097).
+   *
+   * The frame sets them as Text lg (18/28) over Text sm (14/20) — the same
+   * pair the Mindset cards carry, and stated separately for the same reason:
+   * the frame sizes a card against the card next to it, not against the page.
+   * `note` is also the pagination control's own size.
+   */
+  --text-usecase-title: 1.125rem; /* 18px */
+  --text-usecase-note: 0.875rem; /* 14px */
+
+  /*
+   * The two colours the Use cases section introduces, both stated by the frame
+   * rather than derived from this page's ramps.
+   *
+   * `usecase-body` is the card's second line at #ccc. It is lighter than
+   * `ink-muted` because it sits at 14px inside a bordered card rather than at
+   * 16px on the open canvas, and the frame lifts it to keep it legible there.
+   *
+   * `selector` is Colors/Secondary-Blue/400, the design system's own, and it
+   * appears in exactly one place: the 16x3 rule under the current page number.
+   * It is not an accent for the page — nothing else takes a colour from it, and
+   * a button or a link in it would be a different decision than this one.
+   */
+  --color-usecase-body: #cccccc;
+  --color-selector: #4b93ff;
+
+  /*
+   * The one colour on the page that is not a neutral, an edge or a selector:
+   * what a form says when it cannot accept what was typed.
+   *
+   * Functional rather than decorative, which is why it is a token and not part
+   * of the palette — nothing but an invalid field and a failed request may use
+   * it. Desaturated well under the page's ceiling and measured at 7.4:1 over
+   * the canvas, so a message set in it is readable as text and not only as a
+   * colour, which is the whole point for a reader who cannot see the hue.
+   */
+  --color-danger: #ff8a8a;
+
+  /*
    * The smallest step on the scale: a caption that names a strip or a figure
    * rather than heading a section. Flat across the lower two tiers — 12px is
    * the floor where Satoshi's caps still read at arm's length, so the small
@@ -375,6 +414,12 @@
     scrollbar-gutter: stable;
   }
 
+  /* And the same while the mobile sheet has the screen. See `Header`. */
+  html[data-menu='open'] {
+    overflow: hidden;
+    scrollbar-gutter: stable;
+  }
+
   /*
    * The one small-screen step. The old `vw` ramps interpolated continuously
    * between a 375-wide and a 1440-wide value; a single breakpoint gets the same
@@ -392,6 +437,8 @@
       /* In step with the hero's headline on this tier, as at every other. */
       --text-mindset-headline: 1.375rem; /* 22px */
       --text-mindset-term: 1rem; /* 16px */
+      /* In step with the Mindset card's term, which is the same size of thing. */
+      --text-usecase-title: 1rem; /* 16px */
       /* One notch down, and still clear of the 14px note under it. */
       --text-dive-title: 1.125rem; /* 18px */
       /* 14px is already the floor for this text; only the two above it step. */
@@ -426,6 +473,8 @@
       --text-mindset-headline: 2.25rem; /* 36px */
       --text-mindset-term: 1.375rem; /* 22px */
       --text-mindset-note: 1rem; /* 16px */
+      --text-usecase-title: 1.375rem; /* 22px */
+      --text-usecase-note: 1rem; /* 16px */
       --text-dive-title: 1.5rem; /* 24px */
       --text-dive-note: 1rem; /* 16px */
       --text-micro: 0.875rem; /* 14px */
@@ -867,6 +916,22 @@
   }
 
   /*
+   * Where a nav link lands.
+   *
+   * The bar is fixed, so a jump to a section would otherwise put that
+   * section's own top edge at the top of the viewport and the bar would sit
+   * over its heading. Lenis eases these jumps rather than the browser (
+   * `anchors: true` in `useSmoothScroll`) but it still scrolls to the same
+   * place, so the offset belongs here and not in the scroller.
+   *
+   * 6rem is the bar's own 72px plus a little air, which lands a section
+   * heading just under the pill rather than against it.
+   */
+  main section[id] {
+    scroll-margin-top: 6rem;
+  }
+
+  /*
    * The navbar, in its two states.
    *
    * Over the hero the bar is full-bleed and has no ground: the lockup sits on
@@ -1010,6 +1075,144 @@
    */
   .chrome-frame[data-chrome='bare'] .chrome-bar::before {
     opacity: 0;
+  }
+
+  /* --- The mobile menu, as a sheet ---------------------------------------
+   *
+   * Three rows over the whole screen: the lockup and a close at the top, the
+   * links in the middle of what is left, and the one action at the foot. It
+   * covers the bar rather than hanging off it, which is why it carries its own
+   * lockup and its own close.
+   *
+   * It is the last thing in the header and positioned, so it paints over the
+   * bar without a z-index of its own. The header's own layer is what puts the
+   * whole thing over the page.
+   */
+  .chrome-sheet {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    background-color: var(--color-canvas);
+    /*
+     * Notch and home-indicator, on the two edges that meet them. The rows
+     * inside carry their own padding on top of this.
+     */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    animation: chrome-sheet-in 240ms var(--ease-out-quint) both;
+  }
+
+  /*
+   * The top row, on the page's own gutter and the bar's own height, so the
+   * lockup does not move when the sheet opens over it.
+   */
+  .chrome-sheet-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: 4.5rem;
+    padding-inline: 1.5rem;
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .chrome-sheet-logo {
+    display: flex;
+    align-items: center;
+  }
+
+  /*
+   * 44px, which is a thumb. The glyph inside is 20px; the rest is target, and
+   * the negative margin keeps that target from pushing the row's edge off the
+   * gutter the lockup opposite it sits on.
+   */
+  .chrome-sheet-close {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-right: -0.625rem;
+    border-radius: 0.625rem;
+  }
+
+  /*
+   * The links, centred in whatever the two rows leave. `space-evenly` rather
+   * than a fixed gap: the row is what is left after a fixed top and foot, and
+   * on a short screen a fixed gap would push the last link into the button.
+   */
+  .chrome-sheet-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(1.25rem, 4.5vh, 2.5rem);
+    padding: 2rem 1.5rem;
+    overflow-y: auto;
+  }
+
+  .chrome-sheet-link {
+    font-size: 1.5rem;
+    line-height: 1.25;
+    color: var(--color-ink-muted);
+    transition: color 200ms var(--ease-out-quint);
+  }
+
+  /*
+   * Where the reader is, set exactly as the bar sets it: full white against a
+   * muted rest, and the medium weight. One rule for one state, in both places.
+   */
+  .chrome-sheet-link[aria-current] {
+    color: var(--color-ink);
+    font-weight: 500;
+  }
+
+  .chrome-sheet-foot {
+    padding: 1.5rem;
+  }
+
+  /*
+   * Taller than the bar's own pill. 40px is right for a cursor at the top of a
+   * desktop window; this one is the last thing under a thumb, and 48 is where a
+   * touch target stops being a guess.
+   */
+  .chrome-sheet-cta {
+    /*
+     * The token the button's own `h-button` resolves, redefined on this one
+     * button. Setting `height` here would lose: that class is a utility and
+     * utilities outrank this layer whatever the selector. Moving the variable
+     * moves the button without fighting the cascade.
+     */
+    --spacing-button: 3rem;
+  }
+
+  /*
+   * Up, not in. The sheet arrives from the direction the thumb that opened it
+   * came from, and the fade alone read as a light being switched on.
+   */
+  @keyframes chrome-sheet-in {
+    from {
+      opacity: 0;
+      transform: translateY(1.5rem);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chrome-sheet {
+      animation: none;
+    }
+  }
+
+  /* A short screen has no room for 24px links and the air around them. */
+  @media (height < 44rem) {
+    .chrome-sheet-link {
+      font-size: 1.25rem;
+    }
   }
 
   .chrome-row {
@@ -1934,13 +2137,19 @@
   }
 
   /*
-   * Below `md` the panel is copy alone.
+   * Below `md` the panel is one column, and the capture leads it.
    *
-   * The capture is the frame's own screen at about a third of the width it was
-   * drawn at, where none of its labels can be read and it is a grey rectangle
-   * with a lit edge. The copy is what the reader came down here for, and one
-   * panel at a time means dropping the picture leaves the stage with something
-   * to hold rather than with a gap.
+   * The two used to sit side by side and the capture was simply dropped here,
+   * on the grounds that at a third of its drawn width none of its labels can be
+   * read. That is true of the labels and wrong about the picture: it is what
+   * says the panel is about a real environment rather than a list of claims,
+   * and a phone was left with the only version of this section that has no
+   * product in it.
+   *
+   * So it stays, capped rather than scaled: the panel has one stage-height to
+   * fit copy and capture into, and the cap is what the copy leaves over. It is
+   * first because a picture under a list of capabilities is an orphan, and a
+   * picture above a title is a card.
    */
   @media (width < 48rem) {
     .dive-stage {
@@ -1954,7 +2163,15 @@
     }
 
     .dive-shot {
-      display: none;
+      order: -1;
+      /*
+       * `svh` rather than `%`: the card is a grid item in a stage whose own
+       * height is `svh`, and a percentage here would resolve against a row that
+       * is itself sized by this element.
+       */
+      max-height: min(24svh, 10.5rem);
+      /* Thinner than the 4px frame the wide panel carries, at this size. */
+      border-width: 0.1875rem;
     }
 
     .dive-caps {
@@ -2290,6 +2507,1041 @@
   }
 }
 
+@layer components {
+  /* --- Use cases (Figma nodes 11122:115679 / 11122:116097) ---------------
+   *
+   * Three cards across the section's `.page-column`, six to a page, and the
+   * pagination control under them. The frame draws the row 991px wide inside a
+   * 1440 artboard; it is on the page's column here for the same reason the
+   * Mindset row is — a row inset by another 96px a side would read as a
+   * mistake rather than as a choice, and the two rows have to share an edge.
+   *
+   * The frame's own proportions are all kept as ratios of the card rather than
+   * as the pixel sizes it states, so the three cards can take a third of
+   * whatever the column is: a 289x161 tile becomes an aspect ratio, and a
+   * 183px-wide mark inside it becomes 63.3% of the tile.
+   */
+
+  /*
+   * Every page stacked in one grid cell, and the deck given the height of
+   * whichever one is current — `--deck-h`, measured by the component.
+   *
+   * The height is what puts the pagination control under the last row of cards
+   * on both pages. Left at the tallest page's height the control would sit a
+   * whole empty row below page two's three cards, which reads as the section
+   * having lost something rather than as the page having fewer.
+   *
+   * It is eased for the same reason it was fixed before: the control moves
+   * under a cursor that has just clicked it, and a slide it can be followed
+   * through is not the same event as a jump. `auto` until the first
+   * measurement, so the deck is never zero-height and nothing below it shifts
+   * on load.
+   */
+  .usecase-deck {
+    display: grid;
+    width: 100%;
+    height: var(--deck-h, auto);
+    overflow: hidden;
+    transition: height 380ms var(--ease-out-quint);
+  }
+
+  /* A resize is not a page change. See the note on the observer. */
+  .usecase-deck[data-settling] {
+    transition: none;
+  }
+
+  .usecase-grid {
+    display: grid;
+    grid-area: 1 / 1;
+    /*
+     * Sized by its cards rather than stretched to the deck. The deck's height
+     * is read off this element, so a page that took its height from the deck
+     * would be feeding the measurement its own result.
+     */
+    align-self: start;
+    margin: 0;
+    padding: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    /* The frame's 23px between columns and 24px between rows. */
+    column-gap: 1.4375rem;
+    row-gap: 1.5rem;
+    align-content: start;
+    list-style: none;
+
+    /*
+     * `visibility` rather than opacity alone, so a page that is not current
+     * cannot be reached by a pointer or by find-in-page. It is held until the
+     * fade has finished, then flipped in one step.
+     */
+    visibility: hidden;
+    opacity: 0;
+    transition:
+      opacity 300ms var(--ease-out-quint),
+      visibility 0s linear 300ms;
+  }
+
+  .usecase-grid[data-active='true'] {
+    visibility: visible;
+    opacity: 1;
+    transition:
+      opacity 360ms var(--ease-out-quint),
+      visibility 0s;
+  }
+
+  .usecase {
+    display: flex;
+    flex-direction: column;
+    /* The frame's 16px between the tile and the copy under it. */
+    gap: 1rem;
+    /* The frame's own card stroke, an opaque colour rather than a step on the
+     * white ramp — #242424, which sits between this page's two hairlines and
+     * matches neither. */
+    border: 1px solid #242424;
+    border-radius: 1rem; /* 16px */
+    padding: 0.75rem; /* 12px */
+
+    /*
+     * The cards of the arriving page come up in reading order. The page's own
+     * fade is what says it changed; this is only what says which way to read
+     * the new one.
+     *
+     * Opacity and not a lift, because the deck clips to its height for the
+     * duration of the height change: a card offset downwards would have the
+     * bottom of it cut off for as long as it took to settle, on exactly the
+     * row the reader is watching arrive.
+     */
+    opacity: 0;
+    transition: opacity 420ms var(--ease-out-quint);
+    transition-delay: calc(var(--i, 0) * 40ms);
+  }
+
+  .usecase-grid[data-active='true'] .usecase {
+    opacity: 1;
+  }
+
+  /*
+   * The mark's tile, at the frame's 289x163 inside a 315px card — a ratio, so
+   * the copy on all three cards starts on the same line whatever the column
+   * width. The 1px of vertical padding is the frame's own and is what keeps a
+   * tall mark off the tile's rounded corners.
+   */
+  .usecase-tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 0.5rem; /* 8px */
+    padding: 1px 0.25rem;
+    aspect-ratio: 289 / 161;
+  }
+
+  .usecase-tile[data-tone='light'] {
+    background-color: #fffdfd;
+  }
+
+  .usecase-tile[data-tone='off'] {
+    background-color: #f8f8f8;
+  }
+
+  .usecase-tile[data-tone='dark'] {
+    background-color: #181818;
+  }
+
+  /*
+   * A brand's own ground, where the frame fills the tile with one instead of
+   * using a shared neutral. The value is on the card rather than named here:
+   * it belongs to the client, not to this page's palette, and a second one
+   * should not need a rule.
+   */
+  .usecase-tile[data-tone='tint'] {
+    background-color: var(--tile);
+  }
+
+  /*
+   * The mark itself. Width is its width in the frame's tile as a share of that
+   * tile, so every mark holds its size relative to every other one as the card
+   * scales; height falls out of the ratio, which is read off the file rather
+   * than off the frame. Both are set before the file loads, so the tile never
+   * reflows around it.
+   */
+  .usecase-tile img {
+    display: block;
+    /*
+     * 281 rather than the tile's own 289: a percentage width resolves against
+     * the content box, and the tile carries 4px of side padding.
+     */
+    width: calc(var(--logo-w) / 281 * 100%);
+    height: auto;
+    aspect-ratio: var(--logo-ratio);
+    object-fit: contain;
+  }
+
+  /* The frame's 2px: the two lines are one block, not a heading and a body. */
+  .usecase-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  /* --- The pagination control -------------------------------------------
+   *
+   * Centred under the deck, on the frame's 8px gutter, with every control on
+   * the same 24px square so the row has one baseline.
+   */
+  .usecase-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem; /* 8px */
+  }
+
+  .usecase-arrow,
+  .usecase-page-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.25rem; /* 4px */
+    color: var(--color-ink);
+    background: none;
+    cursor: pointer;
+    transition: opacity 200ms var(--ease-out-quint);
+  }
+
+  .usecase-arrow {
+    width: 1.5rem;
+    padding: 0 0.5rem;
+  }
+
+  .usecase-arrow:disabled {
+    /*
+     * Still 3:1 against the canvas at this opacity, which is what a disabled
+     * control has to clear to be read as present rather than as missing.
+     */
+    opacity: 0.38;
+    cursor: default;
+  }
+
+  .usecase-arrow:not(:disabled):hover,
+  .usecase-page-number:not([aria-current]):hover {
+    opacity: 0.7;
+  }
+
+  .usecase-chevron {
+    display: block;
+    width: 0.5rem;
+    height: 1rem;
+  }
+
+  .usecase-chevron[data-flip] {
+    transform: scaleX(-1);
+  }
+
+  /*
+   * The number, and the rule under it. The rule is positioned rather than laid
+   * out — it sits 22px down from the top of a 24px control, which is below the
+   * number's own line box, so giving it a place in the flow would push the
+   * number off centre.
+   */
+  .usecase-page-number {
+    position: relative;
+    padding: 0.25rem;
+  }
+
+  .usecase-selector {
+    position: absolute;
+    top: 1.375rem; /* 22px */
+    left: 50%;
+    width: 1rem; /* 16px */
+    height: 3px;
+    border-radius: 999px;
+    background-color: var(--color-selector);
+    transform: translateX(-50%) scaleX(0);
+    transform-origin: center;
+    transition: transform 240ms var(--ease-out-quint);
+  }
+
+  .usecase-page-number[aria-current] .usecase-selector {
+    transform: translateX(-50%) scaleX(1);
+  }
+
+  /*
+   * The frame's controls are 24px square, which is the right size for them on
+   * the page and too small for a thumb. Where the pointer is a thumb the
+   * target is grown to 44px around them without any of them moving or changing
+   * size — the hit area is a transparent overlay on the control, not padding.
+   */
+  @media (pointer: coarse) {
+    .usecase-arrow::after,
+    .usecase-page-number::after {
+      content: '';
+      position: absolute;
+      inset: 50% 50%;
+      margin: -1.375rem;
+    }
+
+    .usecase-arrow {
+      position: relative;
+    }
+  }
+
+  /*
+   * Two up below `lg` and one up below `md`. Three 315px cards need about
+   * 1000px to hold their copy at the frame's sizes; under that the third card's
+   * body starts running to five and six lines while the first runs to three,
+   * and the row stops reading as a set.
+   */
+  @media (width < 64rem) {
+    .usecase-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (width < 48rem) {
+    .usecase-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .usecase-deck,
+  .usecase-grid,
+  .usecase,
+  .usecase-selector {
+    transition: none;
+  }
+}
+
+@layer components {
+  /* --- Book a Demo -------------------------------------------------------
+   *
+   * The page's closing action, and the only split on it.
+   *
+   * Every section above this one is a centred header over a figure, so the
+   * rhythm needed breaking before the footer rather than repeating a fifth
+   * time. It is a split and not a centred stack because the right column has
+   * something to hold: 5/6 rather than an even half, so the form is the wider
+   * of the two and the copy beside it stays a column of reading rather than a
+   * paragraph stretched across the page.
+   */
+
+  .demo-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    /*
+     * Wide. The gutter is doing the work a rule would otherwise do: there is
+     * no line between the two halves, so the space between them is the only
+     * thing saying they are two things.
+     */
+    gap: clamp(2.5rem, 6vw, 5.5rem);
+    align-items: start;
+  }
+
+  /*
+   * The copy column, held to a measure of its own rather than to the column's
+   * full width. Its top aligns with the panel's first label and not with the
+   * panel's own top edge, which is what the padding below buys.
+   */
+  /*
+   * The column fills its cell. The measure cap that used to be here held the
+   * addresses to 28rem and broke each of them across three and four lines; it
+   * belongs on the two lines of reading copy, which is what a measure is for,
+   * and not on a block of addresses that only wants the room.
+   */
+  .demo-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: clamp(0rem, 1vw, 0.75rem);
+  }
+
+  /*
+   * A measure on the line of body, and on nothing else. The heading is short
+   * enough to set itself, and the addresses under it want the whole column.
+   */
+  .demo-copy > p {
+    max-width: 46ch;
+  }
+
+  /*
+   * The three ways to reach us, set off from the two lines above them by a
+   * rule rather than by space alone: they are a different kind of content, not
+   * a third paragraph, and the gap that would say so on its own would have to
+   * be big enough to unbalance the column.
+   */
+  .demo-contact {
+    display: grid;
+    gap: 1.125rem;
+    margin-top: 0.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-hairline);
+    /* The browser italicises `<address>`; the page does not. */
+    font-style: normal;
+  }
+
+  /*
+   * A row is an icon and a labelled value. `align-items: start` rather than
+   * centre because the offices row runs to six lines and its tile belongs
+   * beside the label, not floating in the middle of the addresses.
+   */
+  .demo-row {
+    display: flex;
+    align-items: start;
+    gap: 0.875rem;
+  }
+
+  /*
+   * The same tile the Dive capabilities use, a size down. The page already has
+   * one way of setting an icon on this ground and there is no reason for it to
+   * grow a second.
+   */
+  .demo-row-tile {
+    display: grid;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    border-radius: 0.75rem;
+    background-color: rgba(255, 255, 255, 0.04);
+    place-items: center;
+  }
+
+  .demo-row-tile img {
+    display: block;
+    width: 1.25rem;
+    height: 1.25rem;
+    /* The glyphs carry their own proportions; a square box would distort them. */
+    object-fit: contain;
+  }
+
+  .demo-row-body {
+    display: flex;
+    flex-direction: column;
+    /*
+     * Tight. The label is that value's caption, not a heading over it, and the
+     * gap has to read as smaller than the one between two rows for the pair to
+     * hold together.
+     */
+    gap: 0.125rem;
+    min-width: 0;
+    /* Optically centres the two-line pair against a 44px tile. */
+    padding-top: 0.125rem;
+  }
+
+  /*
+   * The value carries the weight and the label does not, which is the whole
+   * hierarchy of the row: the label is known before it is read.
+   */
+  .demo-value {
+    color: var(--color-ink);
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  .demo-office {
+    display: block;
+  }
+
+  /* Two addresses under one label, held apart so they read as two places. */
+  .demo-office + .demo-office {
+    margin-top: 0.5rem;
+  }
+
+  .demo-link,
+  .demo-mail {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--color-hairline-strong);
+    transition: text-decoration-color 200ms var(--ease-out-quint);
+  }
+
+  .demo-mail {
+    color: var(--color-ink);
+  }
+
+  .demo-link:hover,
+  .demo-mail:hover {
+    text-decoration-color: var(--color-ink);
+  }
+
+  /*
+   * A 14px line of text is a 20px target, which is fine for a cursor and not
+   * for a thumb — and these are the two links most likely to be tapped on a
+   * phone. The target grows to 44px around each without either of them moving:
+   * the hit area is a transparent overlay on the link, not padding, so the
+   * row's rhythm is untouched.
+   */
+  @media (pointer: coarse) {
+    .demo-link {
+      position: relative;
+    }
+
+    .demo-link::after {
+      content: '';
+      position: absolute;
+      inset: 50% 0;
+      margin-block: -1.375rem;
+    }
+  }
+
+  /*
+   * The panel. Same stroke and radius as a Use cases card, because they are
+   * the same kind of object on the same page and there is no reason for the
+   * page to own two card languages.
+   */
+  .demo-panel {
+    border: 1px solid #242424;
+    border-radius: 1rem; /* 16px */
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
+    background-color: var(--color-canvas-raised);
+  }
+
+  .demo-form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  /*
+   * Two columns, and a field takes both unless it is marked `half`. The pairs
+   * are the ones read as one thing — a first and last name, and the two ways
+   * to be reached — so splitting them costs nothing and saves two rows of
+   * panel height.
+   */
+  .demo-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .demo-field {
+    grid-column: span 2;
+  }
+
+  .demo-field[data-half] {
+    grid-column: span 1;
+  }
+
+  /*
+   * Label, control, message: one stack, and the message only ever appears
+   * under the control it belongs to. `<p>` rather than a div so the three
+   * still read as one thing with styles off.
+   */
+  .demo-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    min-width: 0;
+  }
+
+  .demo-label {
+    color: var(--color-ink);
+  }
+
+  /*
+   * Decorative, and hidden from assistive tech: the control's own `required`
+   * is what announces the state. Set in the page's own muted ink rather than
+   * in the danger colour — nothing has gone wrong yet.
+   */
+  .demo-required {
+    margin-left: 0.125rem;
+    color: var(--color-ink-muted);
+  }
+
+  /*
+   * A hint, never the label. Held clear of the value it sits behind — faint
+   * enough that a filled field reads as filled at a glance, and still at 6.3:1
+   * over the control's ground so it can actually be read.
+   *
+   * A step under the value it stands in for, which is the other half of that
+   * distinction: what you have typed should be the larger thing in the field.
+   * This is the placeholder's own size and not the control's, so it does not
+   * take the input under 16px, which is where iOS starts zooming the page on
+   * focus.
+   */
+  .demo-input::placeholder {
+    color: var(--color-ink-faint);
+    font-size: var(--text-usecase-note);
+    opacity: 1;
+  }
+
+  /*
+   * 44px, which is a thumb rather than the 40px the page's buttons use: a
+   * field is aimed at, and a button on this page is aimed at with a cursor at
+   * the top of the screen. Darker than the panel it sits in, so the control
+   * reads as a well rather than as a card on a card.
+   */
+  .demo-input {
+    min-height: 2.75rem;
+    border: 1px solid var(--color-hairline);
+    border-radius: 0.5rem; /* 8px, as the Use cases tiles */
+    padding: 0.625rem 0.75rem;
+    background-color: #060606;
+    color: var(--color-ink);
+    transition:
+      border-color 200ms var(--ease-out-quint),
+      background-color 200ms var(--ease-out-quint);
+  }
+
+  .demo-input:hover {
+    border-color: var(--color-hairline-strong);
+  }
+
+  /*
+   * The page's own focus ring does the work here — one treatment for every
+   * interactive element, set in `base`. This only takes the hairline off the
+   * ring's way so the two do not read as two rings.
+   */
+  .demo-input:focus-visible {
+    border-color: var(--color-hairline-strong);
+  }
+
+  textarea.demo-input {
+    min-height: 5.5rem;
+    resize: vertical;
+  }
+
+  /*
+   * The invalid state is carried by the message under the field as well as by
+   * the stroke. The stroke alone would be the only signal for a reader who
+   * cannot separate it from the hairline it replaces.
+   */
+  .demo-input[aria-invalid='true'] {
+    border-color: var(--color-danger);
+  }
+
+  .demo-error,
+  .demo-failure {
+    color: var(--color-danger);
+  }
+
+  .demo-failure {
+    margin: 0;
+  }
+
+  /*
+   * Full width, and the only button in the panel. A secondary action beside it
+   * would be a second thing to decide at the exact point the reader has
+   * finished deciding.
+   */
+  .demo-submit {
+    width: 100%;
+  }
+
+  .demo-submit:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  /*
+   * The confirmation, holding the panel at roughly the height the form left so
+   * the page does not jump up under a reader who has just pressed the button.
+   */
+  .demo-done {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.375rem;
+    /*
+     * `--panel-h` is the height the form was, captured on the way out. The
+     * 12rem is the floor for the case where it was never measured.
+     */
+    min-height: max(12rem, var(--panel-h, 0px) - 2 * clamp(1.25rem, 2.5vw, 1.75rem));
+  }
+
+  /* The ring belongs on a control; this is a message that focus was moved to. */
+  .demo-done:focus-visible {
+    outline: none;
+  }
+
+  /*
+   * One column below `lg`. The form is the section, so it goes first on a
+   * narrow screen only after the two lines that say what it is for — which is
+   * the order the source is already in.
+   */
+  @media (width < 64rem) {
+    .demo-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2rem;
+    }
+
+    .demo-copy {
+      padding-top: 0;
+    }
+  }
+
+  /*
+   * One field per row below `sm`. Two 44px controls side by side in a 300px
+   * panel leaves each of them too narrow to show what has been typed into it.
+   */
+  @media (width < 30rem) {
+    .demo-fields {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .demo-field[data-half] {
+      grid-column: span 2;
+    }
+  }
+}
+
+@layer components {
+  /* --- Terms of Service ---------------------------------------------------
+   *
+   * A reading surface. Every rule here is in service of one thing: a long
+   * legal document being findable and legible, on a page that still belongs to
+   * this site.
+   *
+   * It borrows the site's canvas, type and column and almost nothing else. The
+   * landing page's asymmetry, its reveals and its artwork are all devices for
+   * a reader who has not decided anything yet; a reader here has been sent to
+   * find a clause, and every one of them is in the way.
+   */
+
+  .terms-page {
+    /* Clears the navbar, which is fixed and bare over the top of this page. */
+    padding: clamp(7rem, 10vw, 9.5rem) 1.5rem clamp(4rem, 6vw, 6rem);
+  }
+
+  .terms-masthead {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-bottom: clamp(2rem, 4vw, 3rem);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  /*
+   * Contents beside the document, not above it. The list column is fixed and
+   * narrow; the document takes a measure of its own rather than the rest of
+   * the row, which is what keeps a line of legal text at a readable length on
+   * a wide screen.
+   */
+  .terms-body {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: clamp(2.5rem, 5vw, 4.5rem);
+    align-items: start;
+    padding-top: clamp(2.5rem, 4vw, 3.5rem);
+  }
+
+  /*
+   * The list rides along with the reader. `align-self: start` plus a sticky
+   * offset that clears the navbar, and its own scroll for the case where 23
+   * entries are taller than the screen.
+   */
+  .terms-toc {
+    position: sticky;
+    top: 6.5rem;
+    max-height: calc(100dvh - 9rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /*
+   * A real disclosure at every size, open beside the document and closed above
+   * it. `<details>` hides its own content when closed, so nothing here does:
+   * the earlier version had a `display: none` fighting the element and losing
+   * on the wide screen, where the list simply never appeared.
+   */
+  .terms-toc-summary {
+    color: color-mix(in srgb, var(--color-ink) 80%, transparent);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .terms-toc-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  /*
+   * The caret. Drawn from two borders rather than pulled from an icon file: it
+   * is a disclosure triangle, not a glyph carrying meaning of its own.
+   */
+  .terms-toc-summary::after {
+    content: '';
+    display: inline-block;
+    width: 0.4rem;
+    height: 0.4rem;
+    margin-left: 0.5rem;
+    border-right: 1px solid currentColor;
+    border-bottom: 1px solid currentColor;
+    transform: translateY(-0.1rem) rotate(45deg);
+    transition: transform 200ms var(--ease-out-quint);
+  }
+
+  .terms-toc-shell[open] > .terms-toc-summary::after {
+    transform: translateY(0.05rem) rotate(-135deg);
+  }
+
+  .terms-toc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    margin: 1rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /*
+   * Every entry carries the padding the current one needs, including the room
+   * on the left the rail sits in. Adding it only to the current entry would
+   * shift the label sideways as the reader scrolls from section to section,
+   * which is a list that fidgets.
+   */
+  .terms-toc-link {
+    position: relative;
+    display: flex;
+    gap: 0.625rem;
+    padding: 0.4375rem 0.625rem 0.4375rem 0.875rem;
+    border-radius: 0.5rem;
+    color: var(--color-ink-muted);
+    line-height: 1.45;
+    transition:
+      color 200ms var(--ease-out-quint),
+      background-color 200ms var(--ease-out-quint);
+  }
+
+  .terms-toc-link:hover {
+    color: var(--color-ink);
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  /*
+   * Where the reader is: a tinted panel with a rail down its left edge.
+   *
+   * Two signals, not one. The tint alone is a wash of colour that anyone who
+   * cannot separate it from the ground would miss, and the label going from
+   * muted to white is a difference of grey; the rail is the part that reads as
+   * a position at a glance and without colour vision.
+   *
+   * The tint is mixed from the selector rather than stated as a hex, so the
+   * panel and the rail cannot drift apart, and it is the same blue the use
+   * cases pagination marks its current page with. One colour, one job.
+   */
+  .terms-toc-link[aria-current] {
+    color: var(--color-ink);
+    background-color: color-mix(in srgb, var(--color-selector) 14%, transparent);
+  }
+
+  .terms-toc-link[aria-current]:hover {
+    background-color: color-mix(in srgb, var(--color-selector) 18%, transparent);
+  }
+
+  /*
+   * The rail. Inset from the panel on all three sides rather than run to its
+   * edges, so it reads as a marker sitting in the panel and not as a border
+   * the panel happens to have.
+   */
+  .terms-toc-link[aria-current]::before {
+    content: '';
+    position: absolute;
+    top: 0.3125rem;
+    bottom: 0.3125rem;
+    left: 0.25rem;
+    width: 3px;
+    border-radius: 999px;
+    background-color: var(--color-selector);
+  }
+
+  .terms-toc-n {
+    flex-shrink: 0;
+    min-width: 1.25rem;
+    color: var(--color-ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /*
+   * The measure. 68 characters is the long end of comfortable for continuous
+   * reading, and legal prose is the case that needs the ceiling most: its
+   * sentences run to forty words and a full-width line loses the reader
+   * between one line's end and the next one's start.
+   */
+  .terms-doc {
+    max-width: 68ch;
+  }
+
+  /*
+   * The anchor lands the section's heading under the navbar rather than behind
+   * it. It is on the section because the id is: see the note in `Terms`.
+   */
+  .terms-section {
+    scroll-margin-top: 7rem;
+  }
+
+  .terms-section + .terms-section {
+    margin-top: clamp(2.5rem, 4vw, 3.25rem);
+  }
+
+  /*
+   * The anchor lands the heading under the navbar rather than behind it. The
+   * heading carries this and not the section, because the heading is what a
+   * link into the document points at.
+   */
+  .terms-h2 {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    font-weight: 500;
+  }
+
+  /* The document's own numbering, which is how these sections are cited. */
+  .terms-n {
+    flex-shrink: 0;
+    min-width: 1.75rem;
+    padding-top: 0.3125rem;
+    color: var(--color-ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .terms-h3 {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+  }
+
+  /*
+   * 1.7 rather than the site's 1.55. Continuous reading at 16px wants the
+   * extra leading, and this is the only page that has any.
+   */
+  .terms-p,
+  .terms-li,
+  .terms-dd,
+  .terms-contact {
+    color: var(--color-ink-muted);
+    line-height: 1.7;
+  }
+
+  .terms-p + .terms-p {
+    margin-top: 1rem;
+  }
+
+  .terms-contact + .terms-contact {
+    margin-top: 0.5rem;
+  }
+
+  /*
+   * The standfirst and the lede: the document's own subtitle under the title,
+   * and its opening paragraph above the first section. Both set a step up from
+   * the body they introduce, which is the only hierarchy either needs.
+   */
+  .terms-standfirst {
+    max-width: 52ch;
+  }
+
+  .terms-dates {
+    margin-top: 0.25rem;
+  }
+
+  .terms-lede {
+    margin-bottom: clamp(2rem, 3.5vw, 2.75rem);
+    padding-bottom: clamp(2rem, 3.5vw, 2.75rem);
+    border-bottom: 1px solid var(--color-hairline);
+    line-height: 1.7;
+  }
+
+  /*
+   * "Term: what it means", which is most of the privacy policy. The term takes
+   * the weight and the definition sits under it rather than beside it: a
+   * two-column list would put a 40-word definition in half a measure, and the
+   * terms are short enough that the pairing reads without the alignment.
+   */
+  .terms-dl {
+    display: flex;
+    flex-direction: column;
+    gap: 1.125rem;
+    margin: 1.25rem 0 0;
+  }
+
+  .terms-dl-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1875rem;
+  }
+
+  .terms-dt {
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  .terms-dd {
+    margin: 0;
+  }
+
+  .terms-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /*
+   * A hanging marker rather than a `list-style` bullet, so a clause that wraps
+   * to three lines keeps its left edge under the first word and not under the
+   * dot.
+   */
+  .terms-li {
+    position: relative;
+    padding-left: 1.25rem;
+  }
+
+  .terms-li::before {
+    content: '';
+    position: absolute;
+    top: 0.75em;
+    left: 0.125rem;
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    background-color: var(--color-hairline-strong);
+  }
+
+  .terms-link {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--color-hairline-strong);
+    transition: text-decoration-color 200ms var(--ease-out-quint);
+  }
+
+  .terms-link:hover {
+    text-decoration-color: var(--color-ink);
+  }
+
+  /*
+   * Below `lg` the contents collapse into a real disclosure at the top of the
+   * document: closed by default, because 23 entries ahead of the first clause
+   * makes the page read as a list rather than as the document it is.
+   */
+  @media (width < 64rem) {
+    .terms-body {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2rem;
+    }
+
+    .terms-toc {
+      position: static;
+      max-height: none;
+      overflow: visible;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--color-hairline);
+    }
+
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .terms-toc-summary::after {
+      transition: none;
+    }
+  }
+}
+
 /* --- The page's foot (Figma node 11112:111077) -------------------------- */
 
 @layer components {
@@ -2329,7 +3581,12 @@
    */
   .footer-top {
     display: grid;
-    grid-template-columns: 3fr repeat(3, minmax(0, 1fr));
+    /*
+     * The contact block takes the half of the band the statement used to, and
+     * the two link columns share the rest — the frame's own proportion, one
+     * column lighter.
+     */
+    grid-template-columns: 3fr repeat(2, minmax(0, 1fr));
     gap: 2.5rem 2rem;
   }
 
@@ -2339,6 +3596,12 @@
     flex-direction: column;
     /* The frame's 24px between a label and what it heads. */
     gap: 1.5rem;
+  }
+
+  /* Wider under the statement than the frame's 24px: the rows are a block of
+   * their own under a 64px line, not the second half of it. */
+  .footer-brand {
+    gap: 2rem;
   }
 
   /*
@@ -2361,6 +3624,65 @@
     align-items: flex-start;
     font-size: 4rem;
     gap: 0.5rem;
+  }
+
+  /*
+   * The contact rows. Wider gaps than the link columns beside them, because a
+   * row here can wrap to two lines and the rows have to stay separable when
+   * two of them do.
+   */
+  .footer-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    /* The browser italicises `<address>`; the page does not. */
+    font-style: normal;
+    /* Held short of the columns so a long address wraps on its own terms. */
+    max-width: 34rem;
+  }
+
+  /*
+   * Icon and value on one line, and the icon stays on the value's first line
+   * when it wraps — `align-items: start` plus the nudge that optically centres
+   * a 20px glyph against a 24px line box.
+   */
+  .footer-contact-row {
+    display: flex;
+    align-items: start;
+    gap: 0.875rem;
+    margin: 0;
+  }
+
+  /*
+   * A row's values. Stacked by default, because an address is long; side by
+   * side where the row says so, which is the two office lines.
+   */
+  .footer-contact-values {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .footer-contact-values[data-inline] {
+    flex-direction: row;
+    flex-wrap: wrap;
+    /* Wide enough that the two numbers cannot be read as one. */
+    gap: 0.25rem 1.75rem;
+  }
+
+  .footer-contact-icon {
+    display: block;
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+    /*
+     * The icons are set at the same weight as the muted text beside them
+     * rather than at full white: they are markers for the rows, and a white
+     * glyph next to a dimmed address reads as the icon being the content.
+     */
+    opacity: 0.7;
   }
 
   .footer-links {
@@ -2652,17 +3974,21 @@
   }
 
   /*
-   * One column below `lg`. Four columns across a tablet puts "Documentation"
-   * on two lines in a 140px column, so the statement takes the full width and
-   * the three lists share the row under it.
+   * Below `lg` the contact block takes the full width and the two lists share
+   * the row under it: an address is a long string, and squeezing it into three
+   * eighths of a tablet wraps every one of the five rows.
    */
   @media (width < 64rem) {
     .footer-top {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .footer-brand {
       grid-column: 1 / -1;
+    }
+
+    .footer-contact {
+      max-width: none;
     }
   }
 
@@ -2670,6 +3996,15 @@
     .footer-band {
       min-height: 0;
       gap: 3.5rem;
+    }
+
+    /*
+     * 64px is a desktop size. "Put it to work." at 4rem runs past a 327px
+     * column, and the line is the one thing in this band that must not break
+     * mid-phrase.
+     */
+    .footer-statement {
+      font-size: 2.5rem;
     }
 
     .footer-top {

@@ -45,8 +45,19 @@ function prefersReducedMotion() {
   )
 }
 
+/**
+ * Whether this mount plays the intro at all.
+ *
+ * Not on a deep link. A URL with a fragment is a request for a specific place
+ * on the page, usually made from somewhere else on the site: the legal pages
+ * send every one of their nav links back here as `/#platform` and the like. An
+ * intro in front of that is a delay before an answer the reader already asked
+ * for, and it is also what was swallowing the jump, because the splash locks
+ * the page's scroll while it runs.
+ */
 function shouldPlay() {
   if (typeof window === 'undefined') return false
+  if (window.location.hash.length > 1) return false
   try {
     return sessionStorage.getItem(SEEN_KEY) !== '1'
   } catch {
