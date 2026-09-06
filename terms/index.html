@@ -25,12 +25,27 @@
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#030303" />
 
-    <!-- Satoshi (Fontshare), the same three weights the site loads. -->
-    <link rel="preconnect" href="https://api.fontshare.com" />
-    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
+    <!-- Satoshi self-hosted — same three weights as the landing page. -->
     <link
-      href="https://api.fontshare.com/v2/css?f%5B%5D=satoshi@300,400,500&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      href="/fonts/Satoshi-Light.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/Satoshi-Regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/Satoshi-Medium.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
   </head>
   <body>
