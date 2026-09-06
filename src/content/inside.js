@@ -62,11 +62,13 @@ export const inside = {
       },
       {
         /*
-         * The frame gives Operate the same glyph as Connect. Kept as drawn
-         * rather than substituted — this is the one place in the section where
-         * the design and the page would part company on a guess.
+         * The frame gives Operate the same glyph as Connect, which left the
+         * card carrying one icon twice. This one was supplied for it: an
+         * activity trace in a frame, which is what "test, observe, version"
+         * looks like as a mark. It is the one glyph in the section that is not
+         * the frame's own export.
          */
-        icon: '/inside/icons/hierarchy-square-04.svg',
+        icon: '/inside/icons/activity-03.svg',
         label: 'Operate',
         body: 'Test, observe, version, deploy, and continuously improve what you build.',
       },

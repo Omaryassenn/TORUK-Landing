@@ -6,23 +6,37 @@
  * anchor the navbar and the footer's Product column both pointed at and nothing
  * answered. Replace it with the frame when there is one.
  *
- * The contact details under the copy come from `site`, not from here: they
- * are facts about the company rather than this section's copy, and the footer
- * will want the same ones.
- *
  * It is a form rather than a button because the navbar already carries the
  * button, and a closing section that repeats the navbar is a section that adds
  * nothing. What it adds is the one question a demo actually turns on: what the
  * team does by hand today.
  *
- * There is no eyebrow. The page has four already and this is its last word, so
- * it reads better as a conclusion than as another labelled chapter.
+ * The composition is a supplied reference, ported into this page's own dark
+ * palette and type rather than copied off it: a centred header, then the form
+ * on the left and every way to reach us that is not the form in the column
+ * beside it.
+ *
+ * The eyebrow is back for it. The four sections above all carry one, and a
+ * closing section set without one read as a different kind of block rather
+ * than as the page's last chapter.
+ *
+ * The offices and the two links repeat the footer one screen below. That is
+ * the reference's shape and it is a deliberate cost: a reader who has just
+ * decided to get in touch should not have to scroll past the form to find
+ * another way to do it.
  *
  * Copy is authored, not ported, and it is deliberately free of claims that
  * cannot be checked — no length of session, no number of teams, no metric. It
  * says what the demo is and asks one thing.
  */
 export const demo = {
+  /*
+   * Set in the same gradient caps as every other section's, because it is the
+   * same mark doing the same job. It names the section rather than selling it:
+   * the headline under it is what makes the case.
+   */
+  eyebrow: 'Request a demo',
+
   headline: 'See it run on your own work.',
   /*
    * One line, and it is a question rather than a pitch: everything the form
@@ -30,19 +44,55 @@ export const demo = {
    */
   body: 'Tell us what your team does by hand today, and we will show you the AI Employee that takes it on.',
 
-  /* The three ways to reach us, above the form. Values come from `site`. */
-  contact: [
-    { id: 'email', label: 'Email', icon: '/contact/icons/mail.svg' },
-    { id: 'phone', label: 'Phone', icon: '/contact/icons/phone.svg' },
-    { id: 'offices', label: 'Offices', icon: '/contact/icons/location.svg' },
-  ],
+  /*
+   * The left column: every way to reach us that is not the form.
+   *
+   * Three rows, each an icon tile beside a label and the value under it, as a
+   * supplied reference sets them. The label is what makes a bare string
+   * readable — a number on its own says nothing about whether it is a switch-
+   * board or a mobile — and it is also what the icon would otherwise have to
+   * carry on its own, which an icon cannot.
+   *
+   * The values come from `site`, because they are facts about the company
+   * rather than this section's copy. Only the labels and the glyphs are here.
+   *
+   * `offices` is one row and not two. Both addresses are Riyadh and neither
+   * has a public name, so they sit under one label as two places rather than
+   * being given invented ones. See the note on `site.offices`.
+   */
+  aside: {
+    /*
+     * The column's own heading. It names the column as the alternative to the
+     * form beside it rather than repeating "Contact", which is what the
+     * section's eyebrow already says: what these three rows are is the way
+     * through that does not involve filling anything in.
+     */
+    title: 'Reach us directly',
+
+    rows: [
+      { id: 'email', label: 'Email:', icon: '/contact/icons/mail.svg' },
+      { id: 'phone', label: 'Phone:', icon: '/contact/icons/phone.svg' },
+      { id: 'offices', label: 'Location:', icon: '/contact/icons/location.svg' },
+    ],
+  },
 
   /*
    * The fields, in the order they are asked.
    *
+   * Identity first and the open question last, which is the order the
+   * reference sets and the order a form is read in: who is writing, then what
+   * they want. The question is the long one and the only one with an area, so
+   * it also has to be last or it pushes every short field below the fold.
+   *
+   * Five, in two pairs over a message. Organisation was asked here and removed
+   * — a work email already says the organisation, and asking for both is
+   * asking twice — and the first and last name are one field for the reason on
+   * it below.
+   *
    * `half` pairs a field with the one after it on a two-up row; everything
-   * else runs the width of the panel. The pairs are the ones that are read as
-   * one thing — a name, and the two ways to be reached.
+   * else runs the width of the form. Two pairs and a message: who is writing
+   * and how to call them, then where to write back and what it is about, then
+   * the thing itself.
    *
    * `autoComplete` is on every one that has a standard token: a demo form is
    * the kind of thing a browser should be able to fill in one gesture, and the
@@ -53,32 +103,40 @@ export const demo = {
    * a format matters the hint is an example of it; where it does not, it just
    * says what to do.
    *
-   * Two fields are optional on purpose. The phone number is a second way to
-   * reach someone who has already given a first one, and the last field is the
-   * one this section exists to collect — requiring it would cost more
-   * submissions than the answer is worth, and someone who leaves it blank is
-   * still worth talking to.
+   * Three of the five are optional on purpose. Two of them are ways to be
+   * reached or routed by someone who has already given a first one, and the
+   * last field is the one this section exists to collect — requiring it would
+   * cost more submissions than the answer is worth, and someone who leaves it
+   * blank is still worth talking to. What is left required is the two things
+   * needed to reply at all: a name and an address.
    */
   fields: [
     {
-      id: 'firstName',
-      label: 'First name',
+      id: 'name',
+      /*
+       * One field, not a first and a last. Splitting a name assumes it comes
+       * in two parts in that order, which is not true of every name this page
+       * is read by, and nothing downstream of this form needs the two halves
+       * apart. `autoComplete: 'name'` is what still lets a browser fill it in
+       * one gesture.
+       */
+      label: 'Full name',
       type: 'text',
-      autoComplete: 'given-name',
-      placeholder: 'Enter first name',
+      autoComplete: 'name',
+      placeholder: 'Enter your full name',
       half: true,
       required: true,
-      missing: 'Enter your first name.',
+      missing: 'Enter your name.',
     },
     {
-      id: 'lastName',
-      label: 'Last name',
-      type: 'text',
-      autoComplete: 'family-name',
-      placeholder: 'Enter last name',
+      id: 'phone',
+      label: 'Phone number',
+      type: 'tel',
+      autoComplete: 'tel',
+      /* Likewise, and it is also what says an international number is fine. */
+      placeholder: '+966 5X XXX XXXX',
       half: true,
-      required: true,
-      missing: 'Enter your last name.',
+      required: false,
     },
     {
       id: 'email',
@@ -93,23 +151,17 @@ export const demo = {
       invalid: 'That does not look like an email address.',
     },
     {
-      id: 'phone',
-      label: 'Phone number',
-      type: 'tel',
-      autoComplete: 'tel',
-      /* Likewise, and it is also what says an international number is fine. */
-      placeholder: '+966 5X XXX XXXX',
+      id: 'subject',
+      label: 'Subject',
+      type: 'text',
+      /*
+       * Optional, like the message under it. A subject is how a request is
+       * routed rather than something only the sender knows, so it is worth
+       * asking for and not worth turning anyone away over.
+       */
+      placeholder: 'What this is about',
       half: true,
       required: false,
-    },
-    {
-      id: 'organisation',
-      label: 'Organisation',
-      type: 'text',
-      autoComplete: 'organization',
-      placeholder: 'Enter organisation',
-      required: true,
-      missing: 'Enter your organisation.',
     },
     {
       id: 'work',

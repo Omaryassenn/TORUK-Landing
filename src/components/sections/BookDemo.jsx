@@ -7,16 +7,21 @@ import { useReveal } from '@/hooks/useReveal'
 /**
  * "Book a Demo" — the page's closing action, and the section behind `#demo`.
  *
- * The four sections above it are all a centred header over a figure. This one
- * is a split, which is the only new layout family the page needed: the right
- * column carries a form rather than a second paragraph, and that is the one
- * compositional reason a split header earns itself.
+ * The composition is a supplied reference, ported into this page's own palette
+ * and type rather than copied off it. The reference is a light page; this one
+ * is not, and a section that flipped to white halfway down would read as a
+ * different site rather than as its last chapter. So the structure is the
+ * reference's and every colour, stroke and step is this page's:
  *
- * The form is deliberately plain. Everything else on this page has artwork
- * under it — a reel, a diagram, a mark being broken open — and the temptation
- * here is to put something behind the fields too. A demo form is the one place
- * on a page where the reader has already decided; what it owes them is a short
- * question and a clear button, not another composition to read past.
+ *   a centred header,
+ *   every way to reach us that is not the form on the left,
+ *   and the form itself on the right.
+ *
+ * The fields are drawn by their own strokes on the canvas rather than sitting
+ * in a panel. The panel that used to be here put a raised card on the page and
+ * then a darker well inside it for every control, which is three surfaces of
+ * near-black stacked on each other and the murkiest object on the page. The
+ * reference has no panel either.
  *
  * The submit target is `VITE_DEMO_ENDPOINT`. There is no backend in this repo,
  * so until that is set the form says so and hands the reader the address
@@ -25,7 +30,7 @@ import { useReveal } from '@/hooks/useReveal'
  * reports "thanks, we'll be in touch" into nothing is worse than no form.
  *
  * Swapping this for a scheduler (Cal, HubSpot, Calendly) is a change to
- * `send()` and nothing else — or, if the whole form goes, to the panel.
+ * `send()` and nothing else.
  */
 
 /*
@@ -56,8 +61,12 @@ function Field({ field, value, error, onChange }) {
         * Label above the control, always, and never a placeholder standing in
         * for one: a placeholder disappears the moment someone starts typing,
         * which is exactly when they need to know what they are filling in.
+        *
+        * Set in caps at the smallest step, as the reference sets them. It is
+        * the one place on the page where a label is not sentence case, and it
+        * is what keeps a six-field form from reading as six more paragraphs.
         */}
-      <label htmlFor={id} className="demo-label font-display text-usecase-note leading-[1.43]">
+      <label htmlFor={id} className="demo-label font-display text-micro leading-[1.4]">
         {field.label}
         {field.required && (
           <span className="demo-required" aria-hidden="true">
@@ -100,8 +109,8 @@ function Field({ field, value, error, onChange }) {
 }
 
 export function BookDemo() {
-  const { ref: copyRef, revealed: copyShown } = useReveal({ threshold: 0.2 })
-  const { ref: revealPanelRef, revealed: panelShown } = useReveal({ threshold: 0.15 })
+  const { ref: headerRef, revealed: headerShown } = useReveal({ threshold: 0.2 })
+  const { ref: bodyRef, revealed: bodyShown } = useReveal({ threshold: 0.1 })
 
   const [values, setValues] = useState(EMPTY)
   const [errors, setErrors] = useState({})
@@ -111,7 +120,7 @@ export function BookDemo() {
 
   const formRef = useRef(null)
   const doneRef = useRef(null)
-  const panelRef = useRef(null)
+  const columnRef = useRef(null)
 
   /*
    * The button the reader just pressed no longer exists, so their focus is on
@@ -145,7 +154,6 @@ export function BookDemo() {
       const message = validate(field, values[field.id])
       if (message) found[field.id] = message
     }
-
     if (Object.keys(found).length) {
       setErrors(found)
       /*
@@ -177,13 +185,12 @@ export function BookDemo() {
       if (!response.ok) throw new Error(String(response.status))
 
       /*
-       * The confirmation is a good deal shorter than the form it replaces, and
-       * the footer is directly under this panel — so without this the page
-       * jumps up half a panel at the exact moment the reader is looking for
-       * the word that says it worked. The panel holds the height the form
-       * left it at.
+       * The confirmation is a good deal shorter than the form it replaces, so
+       * without this the column collapses and the whole section jumps at the
+       * exact moment the reader is looking for the word that says it worked.
+       * The column holds the height the form left it at.
        */
-      panelRef.current?.style.setProperty('--panel-h', `${panelRef.current.offsetHeight}px`)
+      columnRef.current?.style.setProperty('--form-h', `${columnRef.current.offsetHeight}px`)
       setStatus('sent')
     } catch {
       setStatus('failed')
@@ -197,51 +204,81 @@ export function BookDemo() {
     <section
       id="demo"
       aria-labelledby="demo-title"
-      className="relative z-10 bg-canvas px-6 py-[clamp(3rem,4.5vw,4.5rem)]"
+      className="relative z-10 bg-canvas px-6 py-[clamp(3.5rem,5.5vw,5.5rem)]"
     >
-      <div className="page-column demo-grid">
-        <div ref={copyRef} className="demo-copy">
+      <div className="page-column">
+        {/*
+          * Centred on the page's measure, as every other section header is,
+          * and carrying the eyebrow they all carry. The split below it is what
+          * makes this section different; the way the page introduces a section
+          * is not.
+          */}
+        <header
+          ref={headerRef}
+          className="mx-auto flex max-w-measure flex-col items-center gap-[0.25rem] text-center"
+        >
+          <p
+            className="reveal text-gradient-eyebrow font-display w-fit text-section-eyebrow leading-[1.333] font-light uppercase"
+            data-revealed={headerShown}
+          >
+            {demo.eyebrow}
+          </p>
+
           <h2
             id="demo-title"
             className="reveal font-display text-section leading-[1.2] font-normal text-ink text-balance"
-            data-revealed={copyShown}
+            data-revealed={headerShown}
+            style={{ '--reveal-delay': '90ms' }}
           >
             {demo.headline}
           </h2>
 
           <p
             className="reveal font-display text-body leading-[1.55] font-light text-ink-muted text-pretty"
-            data-revealed={copyShown}
-            style={{ '--reveal-delay': '90ms' }}
+            data-revealed={headerShown}
+            style={{ '--reveal-delay': '180ms' }}
           >
             {demo.body}
           </p>
+        </header>
 
+        <div ref={bodyRef} className="demo-grid">
           {/*
-            * The three ways to reach us, as labelled rows under an icon each.
+            * Left of the form: every way to reach us that is not the form. It
+            * answers the reader who has decided to get in touch but not to
+            * fill anything in, which is why it is beside the fields rather
+            * than under them.
+            *
+            * First in the source as well as on the left, so the tab order and
+            * the reading order are the same one. That also puts it above the
+            * form on a phone, which is the cost of the two agreeing: three
+            * rows to scroll past, and no reader ever landing on a form field
+            * before the block they can see above it.
             *
             * `<address>` rather than a styled list: it is what tells a screen
             * reader these are the page's contact details rather than prose.
             * The browser italicises it, which the stylesheet undoes.
             *
-            * They are here and not in the page's foot because this is the
-            * section a reader is in when they want them. The footer is a screen
-            * of its own at the end of the page and its composition is a
-            * frame's; this column had the room, and a form is improved by
-            * having the other ways to reach someone sitting beside it.
-            *
             * The icons are decorative: every row is labelled in text directly
             * beside them, so announcing them would only repeat the label.
             */}
           <address
-            className="reveal demo-contact"
-            data-revealed={copyShown}
-            style={{ '--reveal-delay': '180ms' }}
+            className="reveal demo-aside"
+            data-revealed={bodyShown}
           >
-            {demo.contact.map((row) => (
+            {/*
+              * `<h3>`, under the section's own `<h2>`. It is a heading over a
+              * group and not a label on a row, which is the whole difference
+              * between it and the three lines under it.
+              */}
+            <h3 className="demo-aside-title font-display text-usecase-title leading-[1.556] font-medium text-ink">
+              {demo.aside.title}
+            </h3>
+
+            {demo.aside.rows.map((row) => (
               <div key={row.id} className="demo-row">
                 <span className="demo-row-tile" aria-hidden="true">
-                  <img src={row.icon} alt="" width="21" height="21" decoding="async" />
+                  <img src={row.icon} alt="" width="20" height="20" decoding="async" />
                 </span>
 
                 <div className="demo-row-body">
@@ -265,12 +302,11 @@ export function BookDemo() {
                   )}
 
                   {/*
-                    * One string per office, wrapping where the column runs
-                    * out, rather than a span per line forcing a break after
-                    * every one. The lines are stored separately because an
-                    * address has parts; where they break is the column's
-                    * business, not the data's. Joined the same way the foot
-                    * joins them.
+                    * Both offices under the one label, each on two lines with
+                    * the break stated: the building and the district run
+                    * together, and the city and country go under. It is the
+                    * one break an address has that is worth stating, which is
+                    * why the parts above it are joined rather than stacked.
                     */}
                   {row.id === 'offices' &&
                     site.offices.map((lines) => (
@@ -278,77 +314,77 @@ export function BookDemo() {
                         key={lines.join()}
                         className="demo-value demo-office font-display text-usecase-note"
                       >
-                        {lines.join(', ')}
+                        {lines.slice(0, -1).join(', ')}
+                        <br />
+                        {lines.at(-1)}
                       </span>
                     ))}
                 </div>
               </div>
             ))}
           </address>
-        </div>
 
-        <div
-          ref={(node) => {
-            revealPanelRef.current = node
-            panelRef.current = node
-          }}
-          className="reveal demo-panel"
-          data-revealed={panelShown}
-          style={{ '--reveal-delay': '120ms' }}
-        >
-          {status === 'sent' ? (
-            /*
-             * The confirmation takes the panel rather than sitting above a
-             * form that has already been sent. `tabIndex={-1}` is what lets
-             * focus land here; `role="status"` is what announces it.
-             */
-            <div ref={doneRef} tabIndex={-1} role="status" className="demo-done">
-              <p className="font-display text-usecase-title leading-[1.556] text-ink">
-                {demo.success.title}
-              </p>
-              <p className="font-display text-usecase-note leading-[1.43] text-ink-muted">
-                {demo.success.body}
-              </p>
-            </div>
-          ) : (
-            <form ref={formRef} onSubmit={send} noValidate className="demo-form">
-              <div className="demo-fields">
-                {demo.fields.map((field) => (
-                  <Field
-                    key={field.id}
-                    field={field}
-                    value={values[field.id]}
-                    error={errors[field.id]}
-                    onChange={change}
-                  />
-                ))}
-              </div>
-
-              {/*
-                * The failure sits above the button rather than below it, where
-                * it would be off the bottom of a panel the reader has just
-                * scrolled the button into view of.
-                */}
-              {failure && (
-                <p role="alert" className="demo-failure font-display text-usecase-note leading-[1.43]">
-                  {failure}{' '}
-                  <a href={mail} className="demo-mail">
-                    {site.email}
-                  </a>
+          <div
+            ref={columnRef}
+            className="reveal demo-column"
+            data-revealed={bodyShown}
+            /* The cascade follows the reading order: left column, then this. */
+            style={{ '--reveal-delay': '120ms' }}
+          >
+            {status === 'sent' ? (
+              /*
+               * The confirmation takes the column rather than sitting above a
+               * form that has already been sent. `tabIndex={-1}` is what lets
+               * focus land here; `role="status"` is what announces it.
+               */
+              <div ref={doneRef} tabIndex={-1} role="status" className="demo-done">
+                <p className="font-display text-usecase-title leading-[1.556] text-ink">
+                  {demo.success.title}
                 </p>
-              )}
+                <p className="font-display text-usecase-note leading-[1.43] text-ink-muted">
+                  {demo.success.body}
+                </p>
+              </div>
+            ) : (
+              <form ref={formRef} onSubmit={send} noValidate className="demo-form">
+                <div className="demo-fields">
+                  {demo.fields.map((field) => (
+                    <Field
+                      key={field.id}
+                      field={field}
+                      value={values[field.id]}
+                      error={errors[field.id]}
+                      onChange={change}
+                    />
+                  ))}
+                </div>
 
-              <Button
-                as="button"
-                type="submit"
-                className="demo-submit"
-                disabled={status === 'sending'}
-                aria-busy={status === 'sending' || undefined}
-              >
-                {status === 'sending' ? demo.submitting : demo.submit}
-              </Button>
-            </form>
-          )}
+                {/*
+                  * The failure sits above the button rather than below it,
+                  * where it would be off the bottom of a form the reader has
+                  * just scrolled the button into view of.
+                  */}
+                {failure && (
+                  <p role="alert" className="demo-failure font-display text-usecase-note leading-[1.43]">
+                    {failure}{' '}
+                    <a href={mail} className="demo-mail">
+                      {site.email}
+                    </a>
+                  </p>
+                )}
+
+                <Button
+                  as="button"
+                  type="submit"
+                  className="demo-submit"
+                  disabled={status === 'sending'}
+                  aria-busy={status === 'sending' || undefined}
+                >
+                  {status === 'sending' ? demo.submitting : demo.submit}
+                </Button>
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </section>

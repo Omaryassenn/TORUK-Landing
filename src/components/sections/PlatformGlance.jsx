@@ -285,11 +285,21 @@ export function PlatformGlance() {
   })
 
   return (
-    <section
-      id="platform"
-      aria-labelledby="glance-title"
-      className="relative z-10 bg-canvas px-6 py-[clamp(3rem,4.5vw,4.5rem)]"
-    >
+    /*
+     * The track, not the stage. `#platform` has to name a box that does not
+     * move, because the stage inside it is sticky for the length of the track
+     * and a nav link aimed at a stuck element scrolls to wherever the reader
+     * already is. This is the same split the reel used, and the reason its id
+     * sat on `.showcase-track`.
+     */
+    <section id="platform" aria-labelledby="glance-title" className="glance-track relative z-10">
+      {/*
+        * The stage is the opaque layer that rises over the pinned hero. It is
+        * one viewport tall while the pin is on and an ordinary block when it
+        * is not, so everything inside it is written for the unpinned case and
+        * simply centres itself in the taller box.
+        */}
+      <div className="glance-stage bg-canvas px-6 py-[clamp(3rem,4.5vw,4.5rem)]">
       {/*
         * One centred column for the whole section. The heading used to sit on
         * the page gutter while the figure was capped and centred below it, so
@@ -429,6 +439,7 @@ export function PlatformGlance() {
             </ul>
           </div>
         </div>
+      </div>
       </div>
     </section>
   )

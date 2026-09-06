@@ -1,7 +1,8 @@
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { Hero } from '@/components/sections/Hero'
-import { VideoShowcase } from '@/components/sections/VideoShowcase'
+// Hidden for now — see the note in the showcase scope below.
+// import { VideoShowcase } from '@/components/sections/VideoShowcase'
 import { TorukMindset } from '@/components/sections/TorukMindset'
 import { PlatformGlance } from '@/components/sections/PlatformGlance'
 import { DiveIntoToruk } from '@/components/sections/DiveIntoToruk'
@@ -35,10 +36,11 @@ export default function App() {
       <Header activeHref="#hero" />
       <main>
         {/*
-          * Hero and reel share one pin scope: the hero sticks to the top of it
-          * while the reel's track scrolls the reel up over the hero, and
-          * releases the moment the scope ends. Both halves of that are in the
-          * `.showcase-*` rules in `styles/index.css`.
+          * Hero and glance share one pin scope: the hero sticks to the top of
+          * it while the glance's track scrolls the glance up over the hero,
+          * and releases the moment the scope ends. The hero's half is the
+          * `.hero-pin` rule in `styles/index.css`; the glance's is `.glance-*`
+          * beside it. The reel used to be the section doing the rising.
           */}
         {/*
           * `#hero` is on the scope and not on the hero inside it. The hero is
@@ -52,7 +54,28 @@ export default function App() {
           <div className="hero-pin">
             <Hero />
           </div>
-          <VideoShowcase />
+          {/*
+            * The reel is hidden for now, on request.
+            *
+            * The glance below took over the rise, so putting the reel back is
+            * a decision about which of the two rides up over the hero, not one
+            * line: two tracks in the scope would pin the hero for 300svh and
+            * stack the reel under the glance.
+            *
+            * `#reel` leaves the page with it. Nothing points at it: the nav
+            * never listed it, and the bar's scroll-spy and pose both look
+            * their targets up in the document and skip what is not there.
+            */}
+          {/* <VideoShowcase /> */}
+
+          {/*
+            * The glance takes the reel's place in the pin. It is the section
+            * that rises over the hero now, which is why it is inside the scope
+            * and not below it: the scope's length is what the hero is sticky
+            * for, and with nothing after the hero in it there was nothing to
+            * hold still for.
+            */}
+          <PlatformGlance />
         </div>
 
         {/*
@@ -64,7 +87,6 @@ export default function App() {
           */}
         
 
-        <PlatformGlance />
         <TorukMindset />
         {/*
           * The glance says everything is connected in one place; this says

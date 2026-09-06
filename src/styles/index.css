@@ -514,6 +514,23 @@
     outline: 1px solid var(--color-ink);
     outline-offset: 0.1875rem;
   }
+
+  /*
+   * And one cursor for everything that can be pressed.
+   *
+   * Only an anchor gets the hand from the platform; a `<button>` gets the
+   * arrow, which on a page whose primary actions are buttons reads as though
+   * they are not actions at all. The submit in the demo form is the one this
+   * was noticed on, but it was true of every button on the page.
+   *
+   * `:not(:disabled)` is what leaves the arrow on the one state that cannot be
+   * pressed — the submit while it is sending — so the cursor keeps saying
+   * something rather than saying "press me" throughout.
+   */
+  button:not(:disabled),
+  [role='button'] {
+    cursor: pointer;
+  }
 }
 
 @layer components {
@@ -877,13 +894,62 @@
    * was pointless in a browser that could not run one. Sticky positioning is
    * all that is left, and that needs no feature query.
    */
+  /* --- Platform glance, pinned over the hero ------------------------------
+   *
+   * The hero used to hold still while the reel rode up over it. The reel is
+   * off the page, so the glance takes that job: same two parts, a track that
+   * is scroll length and an opaque stage stuck to its top.
+   *
+   * The stage is `min-height` rather than a fixed height, because unlike the
+   * reel this content is type and a diagram — it has a natural height, and
+   * pinning must never be the thing that decides how much of it is readable.
+   * Where it would not fit, the pin is simply off; see the query below.
+   */
+  .glance-track {
+    position: relative;
+  }
+
+  /*
+   * Only where there is room for it.
+   *
+   * A sticky box taller than the viewport pins its top and puts its own foot
+   * out of reach, which on a short screen would be the diagram. The width term
+   * keeps the pin off the phone tier, where the glance switches to the
+   * portrait diagram and is the taller of the two layouts; the height term is
+   * the one that actually guarantees the fit.
+   *
+   * Both fall away under reduced motion with the hero's own pin, below.
+   */
+  @media (width >= 48rem) and (height >= 40rem) {
+    .glance-track {
+      /* One viewport of rise, half a viewport of hold. The reel's ratio. */
+      height: 150svh;
+    }
+
+    .glance-stage {
+      position: sticky;
+      top: 0;
+      display: flex;
+      min-height: 100svh;
+      flex-direction: column;
+      justify-content: center;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .showcase-track {
+    .showcase-track,
+    .glance-track {
       height: auto;
     }
 
     .showcase-stage {
       position: relative;
+    }
+
+    .glance-stage {
+      position: static;
+      display: block;
+      min-height: 0;
     }
 
     .hero-pin {
@@ -2817,73 +2883,241 @@
 @layer components {
   /* --- Book a Demo -------------------------------------------------------
    *
-   * The page's closing action, and the only split on it.
+   * The page's closing action, ported from a supplied reference.
    *
-   * Every section above this one is a centred header over a figure, so the
-   * rhythm needed breaking before the footer rather than repeating a fifth
-   * time. It is a split and not a centred stack because the right column has
-   * something to hold: 5/6 rather than an even half, so the form is the wider
-   * of the two and the copy beside it stays a column of reading rather than a
-   * paragraph stretched across the page.
+   * The reference is a light page and this one is not, so what is taken from
+   * it is the composition and nothing else: a centred header, a form beside a
+   * column that says what the session is and where we are, and a strip of the
+   * two direct ways to reach us under both. Every colour, stroke, radius and
+   * step below is this page's own.
+   *
+   * There is no panel behind the fields. There used to be: a raised card with
+   * a darker well for every control inside it, which is three surfaces of
+   * near-black stacked on each other and the murkiest object on the page. The
+   * reference has none either, and the fields are drawn by their own strokes.
    */
 
   .demo-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     /*
-     * Wide. The gutter is doing the work a rule would otherwise do: there is
-     * no line between the two halves, so the space between them is the only
-     * thing saying they are two things.
+     * Contact on the left, form on the right, and the left is the wider of the
+     * two. It carries two addresses whose first line runs to 56 characters
+     * before its stated break, and an address is the one kind of content on
+     * this page that cannot be argued with. The form's fields are the half
+     * that can afford to give the room up, because the only pairs on it are
+     * short values.
      */
-    gap: clamp(2.5rem, 6vw, 5.5rem);
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    /*
+     * The gutter is doing the work a rule would otherwise do: there is no line
+     * between the two halves, so the space between them is the only thing
+     * saying they are two things. Tighter than it was, which is the other half
+     * of the room the addresses needed.
+     */
+    gap: clamp(2rem, 4vw, 3.5rem);
     align-items: start;
+    margin-top: clamp(2.5rem, 4vw, 3.5rem);
+  }
+
+  .demo-form {
+    display: grid;
+    gap: 1.25rem;
   }
 
   /*
-   * The copy column, held to a measure of its own rather than to the column's
-   * full width. Its top aligns with the panel's first label and not with the
-   * panel's own top edge, which is what the padding below buys.
+   * Two columns, and a field takes both unless it is marked `half`. The pairs
+   * are the ones read as one thing — a first and last name, and the two ways
+   * to be reached — so splitting them costs nothing and saves two rows.
    */
+  .demo-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /*
+     * Down the page rather than across it. Without a panel's ground to hold
+     * them together the rows need the vertical gap to be the larger of the
+     * two, or the grid reads as a block of controls rather than as a sequence
+     * of questions.
+     */
+    gap: 1.375rem 1rem;
+  }
+
+  .demo-field {
+    grid-column: span 2;
+  }
+
+  .demo-field[data-half] {
+    grid-column: span 1;
+  }
+
   /*
-   * The column fills its cell. The measure cap that used to be here held the
-   * addresses to 28rem and broke each of them across three and four lines; it
-   * belongs on the two lines of reading copy, which is what a measure is for,
-   * and not on a block of addresses that only wants the room.
+   * Label, control, message: one stack, and the message only ever appears
+   * under the control it belongs to. `<p>` rather than a div so the three
+   * still read as one thing with styles off.
    */
-  .demo-copy {
+  .demo-field {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    padding-top: clamp(0rem, 1vw, 0.75rem);
+    gap: 0.5rem;
+    margin: 0;
+    min-width: 0;
   }
 
   /*
-   * A measure on the line of body, and on nothing else. The heading is short
-   * enough to set itself, and the addresses under it want the whole column.
+   * Caps at the smallest step, tracked out, as the reference sets them. It is
+   * the one place on the page where a label is not sentence case: six labels
+   * in sentence case above six controls read as six more paragraphs, and this
+   * is what tells the eye they are the form's furniture rather than its copy.
    */
-  .demo-copy > p {
-    max-width: 46ch;
+  .demo-label {
+    color: var(--color-ink-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   /*
-   * The three ways to reach us, set off from the two lines above them by a
-   * rule rather than by space alone: they are a different kind of content, not
-   * a third paragraph, and the gap that would say so on its own would have to
-   * be big enough to unbalance the column.
+   * Decorative, and hidden from assistive tech: the control's own `required`
+   * is what announces the state. Set in the page's own muted ink rather than
+   * in the danger colour — nothing has gone wrong yet.
    */
-  .demo-contact {
-    display: grid;
-    gap: 1.125rem;
+  .demo-required {
+    margin-left: 0.125rem;
+    color: var(--color-ink-faint);
+  }
+
+  /*
+   * The stroke that draws a control.
+   *
+   * Stronger than `--color-hairline`, and deliberately so: the page's hairline
+   * separates things, and WCAG asks 3:1 of a boundary that is the only thing
+   * telling a reader where a control is. 0.14 over this canvas measures 2.3:1
+   * and was already under the line while the fields sat in a panel; with the
+   * panel gone the stroke IS the field, so it is set at 0.38, which measures
+   * 3.5:1. Hover and focus take it to full ink.
+   */
+  .demo-form {
+    --field-stroke: rgba(255, 255, 255, 0.38);
+  }
+
+  .demo-input {
+    /*
+     * 40px, which is the height of the page's own buttons — the form and the
+     * thing it submits are the same height now, which is what the reference
+     * sets and what the page's `--spacing-button` already says.
+     *
+     * It is 4px under the 44px a thumb wants and the elsewhere on this page
+     * grows a hit area for. A control cannot: a pseudo-element does not render
+     * on an `<input>`, and padding it out to 44 is just a 44px control with a
+     * smaller stroke. 40 clears WCAG's own 24px minimum with room, so this is
+     * the height as asked rather than a quiet 44 on touch.
+     */
+    min-height: 2.5rem;
+    border: 1px solid var(--field-stroke);
+    /* 8px, as the Use cases tiles. One radius on the page, not two. */
+    border-radius: 0.5rem;
+    /* Trimmed with the height, so the 16px value still sits on the centre. */
+    padding: 0.4375rem 0.875rem;
+    /*
+     * Transparent, not filled. A filled well would be a second surface on a
+     * page that has just lost the card it used to sit in, and the stroke is
+     * already doing the whole job of saying where the control is.
+     */
+    background-color: transparent;
+    color: var(--color-ink);
+    transition: border-color 200ms var(--ease-out-quint);
+  }
+
+  textarea.demo-input {
+    min-height: 6.5rem;
+    padding-top: 0.75rem;
+    resize: vertical;
+  }
+
+  .demo-input:hover,
+  .demo-input:focus-visible {
+    border-color: var(--color-ink);
+  }
+
+  /*
+   * A hint, never the label. Faint enough that a filled field reads as filled
+   * at a glance, and still at 4.9:1 over the canvas so it can actually be read.
+   *
+   * A step under the value it stands in for, which is the other half of that
+   * distinction: what you have typed should be the larger thing in the field.
+   * This is the placeholder's own size and not the control's, so it does not
+   * take the input under 16px, which is where iOS starts zooming the page on
+   * focus.
+   */
+  .demo-input::placeholder {
+    color: var(--color-ink-faint);
+    font-size: var(--text-usecase-note);
+    opacity: 1;
+  }
+
+  /*
+   * The invalid state is carried by the message under the field as well as by
+   * the stroke. The stroke alone would be the only signal for a reader who
+   * cannot separate it from the one it replaces.
+   */
+  .demo-input[aria-invalid='true'] {
+    border-color: var(--color-danger);
+  }
+
+  .demo-error,
+  .demo-failure {
+    color: var(--color-danger);
+  }
+
+  .demo-failure {
+    margin: 0;
+  }
+
+  /*
+   * Full width, and the only button in the column. A secondary action beside
+   * it would be a second thing to decide at the exact point the reader has
+   * finished deciding.
+   */
+  .demo-submit {
+    width: 100%;
+    /*
+     * The seam between answering and sending. The fields are 1.375rem apart,
+     * so the button has to sit further from the last of them than they sit
+     * from each other or it reads as a sixth field.
+     */
     margin-top: 0.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--color-hairline);
+  }
+
+  .demo-submit:disabled {
+    opacity: 0.6;
+  }
+
+  /*
+   * The left column: the contact details, and nothing else.
+   *
+   * Three rows, each an icon tile beside a label with the value under it, as
+   * a supplied reference sets them. It replaced a pair of headed blocks — two
+   * addresses under one heading, two links under another — which needed two
+   * headings to say what three labels now say beside the things they name.
+   */
+  .demo-aside {
+    display: grid;
+    gap: 1.375rem;
+    padding-top: clamp(0rem, 1vw, 0.75rem);
     /* The browser italicises `<address>`; the page does not. */
     font-style: normal;
   }
 
   /*
+   * A shade more room under the heading than the rows leave between each
+   * other, which is what keeps it reading as a heading over the group rather
+   * than as a fourth row that happens to have no icon.
+   */
+  .demo-aside-title {
+    margin-bottom: 0.25rem;
+  }
+
+  /*
    * A row is an icon and a labelled value. `align-items: start` rather than
-   * centre because the offices row runs to six lines and its tile belongs
+   * centre because the location row runs to four lines and its tile belongs
    * beside the label, not floating in the middle of the addresses.
    */
   .demo-row {
@@ -2893,9 +3127,9 @@
   }
 
   /*
-   * The same tile the Dive capabilities use, a size down. The page already has
-   * one way of setting an icon on this ground and there is no reason for it to
-   * grow a second.
+   * The same tile the Dive capabilities use. The page already has one way of
+   * setting an icon on this ground and there is no reason for it to grow a
+   * second.
    */
   .demo-row-tile {
     display: grid;
@@ -2950,15 +3184,12 @@
 
   .demo-link,
   .demo-mail {
+    color: var(--color-ink);
     text-decoration: underline;
     text-underline-offset: 0.25em;
     text-decoration-thickness: 1px;
     text-decoration-color: var(--color-hairline-strong);
     transition: text-decoration-color 200ms var(--ease-out-quint);
-  }
-
-  .demo-mail {
-    color: var(--color-ink);
   }
 
   .demo-link:hover,
@@ -2968,17 +3199,17 @@
 
   /*
    * A 14px line of text is a 20px target, which is fine for a cursor and not
-   * for a thumb — and these are the two links most likely to be tapped on a
-   * phone. The target grows to 44px around each without either of them moving:
-   * the hit area is a transparent overlay on the link, not padding, so the
-   * row's rhythm is untouched.
+   * for a thumb — and these are the links most likely to be tapped on a phone.
+   * The target grows to 44px around each without any of them moving: the hit
+   * area is a transparent overlay on the link, not padding, so the rhythm of
+   * the row is untouched.
    */
   @media (pointer: coarse) {
-    .demo-link {
+    .demo-row .demo-link {
       position: relative;
     }
 
-    .demo-link::after {
+    .demo-row .demo-link::after {
       content: '';
       position: absolute;
       inset: 50% 0;
@@ -2987,168 +3218,17 @@
   }
 
   /*
-   * The panel. Same stroke and radius as a Use cases card, because they are
-   * the same kind of object on the same page and there is no reason for the
-   * page to own two card languages.
-   */
-  .demo-panel {
-    border: 1px solid #242424;
-    border-radius: 1rem; /* 16px */
-    padding: clamp(1.25rem, 2.5vw, 1.75rem);
-    background-color: var(--color-canvas-raised);
-  }
-
-  .demo-form {
-    display: grid;
-    gap: 1rem;
-  }
-
-  /*
-   * Two columns, and a field takes both unless it is marked `half`. The pairs
-   * are the ones read as one thing — a first and last name, and the two ways
-   * to be reached — so splitting them costs nothing and saves two rows of
-   * panel height.
-   */
-  .demo-fields {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-  }
-
-  .demo-field {
-    grid-column: span 2;
-  }
-
-  .demo-field[data-half] {
-    grid-column: span 1;
-  }
-
-  /*
-   * Label, control, message: one stack, and the message only ever appears
-   * under the control it belongs to. `<p>` rather than a div so the three
-   * still read as one thing with styles off.
-   */
-  .demo-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin: 0;
-    min-width: 0;
-  }
-
-  .demo-label {
-    color: var(--color-ink);
-  }
-
-  /*
-   * Decorative, and hidden from assistive tech: the control's own `required`
-   * is what announces the state. Set in the page's own muted ink rather than
-   * in the danger colour — nothing has gone wrong yet.
-   */
-  .demo-required {
-    margin-left: 0.125rem;
-    color: var(--color-ink-muted);
-  }
-
-  /*
-   * A hint, never the label. Held clear of the value it sits behind — faint
-   * enough that a filled field reads as filled at a glance, and still at 6.3:1
-   * over the control's ground so it can actually be read.
-   *
-   * A step under the value it stands in for, which is the other half of that
-   * distinction: what you have typed should be the larger thing in the field.
-   * This is the placeholder's own size and not the control's, so it does not
-   * take the input under 16px, which is where iOS starts zooming the page on
-   * focus.
-   */
-  .demo-input::placeholder {
-    color: var(--color-ink-faint);
-    font-size: var(--text-usecase-note);
-    opacity: 1;
-  }
-
-  /*
-   * 44px, which is a thumb rather than the 40px the page's buttons use: a
-   * field is aimed at, and a button on this page is aimed at with a cursor at
-   * the top of the screen. Darker than the panel it sits in, so the control
-   * reads as a well rather than as a card on a card.
-   */
-  .demo-input {
-    min-height: 2.75rem;
-    border: 1px solid var(--color-hairline);
-    border-radius: 0.5rem; /* 8px, as the Use cases tiles */
-    padding: 0.625rem 0.75rem;
-    background-color: #060606;
-    color: var(--color-ink);
-    transition:
-      border-color 200ms var(--ease-out-quint),
-      background-color 200ms var(--ease-out-quint);
-  }
-
-  .demo-input:hover {
-    border-color: var(--color-hairline-strong);
-  }
-
-  /*
-   * The page's own focus ring does the work here — one treatment for every
-   * interactive element, set in `base`. This only takes the hairline off the
-   * ring's way so the two do not read as two rings.
-   */
-  .demo-input:focus-visible {
-    border-color: var(--color-hairline-strong);
-  }
-
-  textarea.demo-input {
-    min-height: 5.5rem;
-    resize: vertical;
-  }
-
-  /*
-   * The invalid state is carried by the message under the field as well as by
-   * the stroke. The stroke alone would be the only signal for a reader who
-   * cannot separate it from the hairline it replaces.
-   */
-  .demo-input[aria-invalid='true'] {
-    border-color: var(--color-danger);
-  }
-
-  .demo-error,
-  .demo-failure {
-    color: var(--color-danger);
-  }
-
-  .demo-failure {
-    margin: 0;
-  }
-
-  /*
-   * Full width, and the only button in the panel. A secondary action beside it
-   * would be a second thing to decide at the exact point the reader has
-   * finished deciding.
-   */
-  .demo-submit {
-    width: 100%;
-  }
-
-  .demo-submit:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-
-  /*
-   * The confirmation, holding the panel at roughly the height the form left so
-   * the page does not jump up under a reader who has just pressed the button.
+   * The confirmation, holding the column at roughly the height the form left
+   * so the section does not collapse under a reader who has just pressed the
+   * button.
    */
   .demo-done {
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 0.375rem;
-    /*
-     * `--panel-h` is the height the form was, captured on the way out. The
-     * 12rem is the floor for the case where it was never measured.
-     */
-    min-height: max(12rem, var(--panel-h, 0px) - 2 * clamp(1.25rem, 2.5vw, 1.75rem));
+    /* `--form-h` is the height the form was, captured on the way out. */
+    min-height: max(12rem, var(--form-h, 0px));
   }
 
   /* The ring belongs on a control; this is a message that focus was moved to. */
@@ -3157,32 +3237,40 @@
   }
 
   /*
-   * One column below `lg`. The form is the section, so it goes first on a
-   * narrow screen only after the two lines that say what it is for — which is
-   * the order the source is already in.
+   * One column below `lg`, in source order: the contact details and then the
+   * form. Reversing them here would put the visual order and the tab order at
+   * odds on the one tier where a reader is most likely to be using neither a
+   * mouse nor a full-size screen.
    */
   @media (width < 64rem) {
     .demo-grid {
       grid-template-columns: minmax(0, 1fr);
-      gap: 2rem;
+      gap: 2.5rem;
     }
 
-    .demo-copy {
+    .demo-aside {
       padding-top: 0;
     }
   }
 
   /*
-   * One field per row below `sm`. Two 44px controls side by side in a 300px
-   * panel leaves each of them too narrow to show what has been typed into it.
+   * One field per row below `sm`, and one address under the other. Two 44px
+   * controls side by side in a 300px column leaves each of them too narrow to
+   * show what has been typed into it.
    */
   @media (width < 30rem) {
     .demo-fields {
       grid-template-columns: minmax(0, 1fr);
     }
 
+    /*
+     * Both, not just the halves. The base rule spans every field across two
+     * columns, and against a single explicit track that spills into an
+     * implicit second one and pulls the column gap into every row.
+     */
+    .demo-field,
     .demo-field[data-half] {
-      grid-column: span 2;
+      grid-column: span 1;
     }
   }
 }

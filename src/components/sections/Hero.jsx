@@ -6,6 +6,16 @@ import { ChainBackdrop } from '@/components/sections/ChainBackdrop'
 import { ClientsMarquee } from '@/components/sections/ClientsMarquee'
 
 
+/*
+ * The client logo strip is off the hero for now, on request.
+ *
+ * A flag rather than a deletion or a commented-out block: the strip is a
+ * caption and a marquee that only work as a pair, and both carry notes that
+ * would be lost. This also keeps it compiling — the import stays used, so
+ * putting the strip back is one word here and nothing else.
+ */
+const SHOW_CLIENT_STRIP = false
+
 export function Hero() {
   const { ref, revealed } = useReveal()
   const { active: splashActive, contentReady } = useSplash()
@@ -101,36 +111,38 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="reveal mt-auto pt-10" {...step(4)}>
-          {/*
-            * Names the strip on the page rather than only to assistive tech,
-            * so the group below takes its accessible name from this line
-            * instead of carrying a second, different one of its own.
-            *
-            * It sits inside the gutter while the strip stays full-bleed: the
-            * marks run off both edges by design, but a caption that did the
-            * same would read as clipped rather than as continuing.
-            *
-            * Centred on the strip's own axis, not the copy's. The gutter is
-            * symmetric, so centring inside it centres on the viewport, which
-            * is where the marks are centred too.
-            *
-            * One treatment across the whole line. Splitting it on colour to
-            * lean on the copy's own case read as two labels rather than one
-            * sentence at this size, so the caption takes a single weight and
-            * colour throughout.
-            */}
-          <p
-            id="clients-label"
-            className="font-display text-micro leading-[1.4] font-light tracking-[0.08em] text-ink-muted text-center"
-          >
-            Engaged with Leading Organizations
-          </p>
+        {SHOW_CLIENT_STRIP && (
+          <div className="reveal mt-auto pt-10" {...step(4)}>
+            {/*
+              * Names the strip on the page rather than only to assistive tech,
+              * so the group below takes its accessible name from this line
+              * instead of carrying a second, different one of its own.
+              *
+              * It sits inside the gutter while the strip stays full-bleed: the
+              * marks run off both edges by design, but a caption that did the
+              * same would read as clipped rather than as continuing.
+              *
+              * Centred on the strip's own axis, not the copy's. The gutter is
+              * symmetric, so centring inside it centres on the viewport, which
+              * is where the marks are centred too.
+              *
+              * One treatment across the whole line. Splitting it on colour to
+              * lean on the copy's own case read as two labels rather than one
+              * sentence at this size, so the caption takes a single weight and
+              * colour throughout.
+              */}
+            <p
+              id="clients-label"
+              className="font-display text-micro leading-[1.4] font-light tracking-[0.08em] text-ink-muted text-center"
+            >
+              Engaged with Leading Organizations
+            </p>
 
-          <div className="-mx-6 pt-7">
-            <ClientsMarquee labelledBy="clients-label" />
+            <div className="-mx-6 pt-7">
+              <ClientsMarquee labelledBy="clients-label" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* <ul
           className="reveal font-display mt-auto list-disc ps-[1.875rem] pt-12 text-capability leading-[1.4] font-light text-ink uppercase lg:self-end lg:pt-0"
