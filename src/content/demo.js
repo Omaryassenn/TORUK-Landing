@@ -103,12 +103,14 @@ export const demo = {
    * a format matters the hint is an example of it; where it does not, it just
    * says what to do.
    *
-   * Three of the five are optional on purpose. Two of them are ways to be
-   * reached or routed by someone who has already given a first one, and the
-   * last field is the one this section exists to collect — requiring it would
-   * cost more submissions than the answer is worth, and someone who leaves it
-   * blank is still worth talking to. What is left required is the two things
-   * needed to reply at all: a name and an address.
+   * Every field is required. Three of them were not: a phone number and a
+   * subject are ways to be reached or routed by someone who has already given
+   * a first one, and the last field is the one this section exists to collect,
+   * so leaving it optional cost nothing and caught the reader who would not
+   * have written it. Asking for all five is a decision about which requests
+   * are worth having rather than about the form, and it is stated here in one
+   * place: every entry below carries `required` and a message to say what is
+   * missing, and `validate` in `BookDemo` needs no cases of its own.
    */
   fields: [
     {
@@ -136,7 +138,8 @@ export const demo = {
       /* Likewise, and it is also what says an international number is fine. */
       placeholder: '+966 5X XXX XXXX',
       half: true,
-      required: false,
+      required: true,
+      missing: 'Enter a phone number.',
     },
     {
       id: 'email',
@@ -155,20 +158,22 @@ export const demo = {
       label: 'Subject',
       type: 'text',
       /*
-       * Optional, like the message under it. A subject is how a request is
-       * routed rather than something only the sender knows, so it is worth
-       * asking for and not worth turning anyone away over.
+       * It is also the subject line of the email this form sends, which is the
+       * one field whose answer a reader can see the use of: `send` composes
+       * "Demo request: <this>" from it. See the note in `BookDemo`.
        */
       placeholder: 'What this is about',
       half: true,
-      required: false,
+      required: true,
+      missing: 'Say what this is about.',
     },
     {
       id: 'work',
       label: 'What would you like an AI Employee to take on?',
       type: 'textarea',
       placeholder: 'A process you run by hand, a question your team keeps asking, or anything you would like to see.',
-      required: false,
+      required: true,
+      missing: 'Tell us what you would like to see.',
     },
   ],
 
@@ -177,6 +182,12 @@ export const demo = {
    * decorative and hidden from assistive tech, which gets the state from the
    * control's own `required` instead — an asterisk read out as "star" in the
    * middle of a label is noise.
+   *
+   * Every field carries one now that every field is required, which is five
+   * marks all saying the same thing. It is kept because the reference sets it
+   * and because a label with no mark on a form where everything is compulsory
+   * reads as the one field that is not. One line above the form saying so, and
+   * no marks at all, is the other way to set this.
    */
   requiredMark: '*',
 

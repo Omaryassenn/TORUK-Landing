@@ -23,15 +23,39 @@ import { useReveal } from '@/hooks/useReveal'
  * near-black stacked on each other and the murkiest object on the page. The
  * reference has no panel either.
  *
- * The submit target is `VITE_DEMO_ENDPOINT`. There is no backend in this repo,
- * so until that is set the form says so and hands the reader the address
- * instead of pretending the request went somewhere. That is the whole reason
- * it is written as an endpoint rather than as a simulated success: a form that
+ * Where it sends
+ * ---------------
+ * There is no backend in this repo, so the form posts to a form-to-email
+ * service and the answers arrive in the inbox at `site.email`. Two variables
+ * decide that, both read at build time:
+ *
+ *   VITE_DEMO_ACCESS_KEY  the Web3Forms key issued for that inbox. Setting
+ *                         this alone is enough; the endpoint below defaults.
+ *   VITE_DEMO_ENDPOINT    any other URL that accepts a JSON POST, for a
+ *                         Formspree form or an API of your own later.
+ *
+ * With neither set the form says so and hands the reader the address instead
+ * of pretending the request went somewhere. That is the whole reason it is
+ * written as an endpoint rather than as a simulated success: a form that
  * reports "thanks, we'll be in touch" into nothing is worse than no form.
+ *
+ * The body is keyed by each field's own label rather than by its id, because
+ * the destination is a person reading an email and not an API — "What would
+ * you like an AI Employee to take on?" is the question that was asked, and
+ * `work` is not. Nothing reaches this point empty now that every field is
+ * required; the guard that drops blanks is left in so that making one of them
+ * optional again is a change to `content/demo` and nothing else.
  *
  * Swapping this for a scheduler (Cal, HubSpot, Calendly) is a change to
  * `send()` and nothing else.
  */
+
+/*
+ * Where a Web3Forms key posts to. Stated here rather than asked for in the
+ * environment: it is the same URL for every key, so making it a second
+ * variable is a second thing to get wrong for no choice gained.
+ */
+const WEB3FORMS = 'https://api.web3forms.com/submit'
 
 /*
  * Permissive on purpose. The only thing worth catching here is a typo that
@@ -121,6 +145,11 @@ export function BookDemo() {
   const formRef = useRef(null)
   const doneRef = useRef(null)
   const columnRef = useRef(null)
+  /*
+   * The honeypot. It is `display: none`, so nobody filling this form in ever
+   * sees it; a bot walking the DOM and filling every input does.
+   */
+  const trapRef = useRef(null)
 
   /*
    * The button the reader just pressed no longer exists, so their focus is on
@@ -166,7 +195,17 @@ export function BookDemo() {
       return
     }
 
-    const endpoint = import.meta.env.VITE_DEMO_ENDPOINT
+    /*
+     * A bot filled the field nobody can see. Reported as sent rather than as
+     * rejected, because telling one it was caught is telling it what to change.
+     */
+    if (trapRef.current?.checked) {
+      setStatus('sent')
+      return
+    }
+
+    const accessKey = import.meta.env.VITE_DEMO_ACCESS_KEY
+    const endpoint = import.meta.env.VITE_DEMO_ENDPOINT || (accessKey ? WEB3FORMS : null)
     if (!endpoint) {
       setStatus('failed')
       setFailure(demo.errors.unconfigured)
@@ -176,11 +215,42 @@ export function BookDemo() {
     setStatus('sending')
     setFailure(null)
 
+    const name = values.name.trim()
+    const subject = values.subject.trim()
+
+    /*
+     * Keyed by the question, not by the field id, and without the ones nobody
+     * answered. `subject` is left out because it becomes the email's own
+     * subject line below rather than a line in its body.
+     */
+    const answers = {}
+    for (const field of demo.fields) {
+      const value = values[field.id].trim()
+      if (value && field.id !== 'subject') answers[field.label] = value
+    }
+
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        headers: {
+          'Content-Type': 'application/json',
+          /* Formspree returns a redirect without this; the rest ignore it. */
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          ...answers,
+          /*
+           * The routing fields. A service that does not know them treats them
+           * as three more lines of the body, which is still readable.
+           *
+           * `replyto` is what makes answering the email answer the person: hit
+           * reply and it goes to them rather than to the form.
+           */
+          ...(accessKey ? { access_key: accessKey } : null),
+          subject: subject ? `Demo request: ${subject}` : `Demo request from ${name}`,
+          from_name: name,
+          replyto: values.email.trim(),
+        }),
       })
       if (!response.ok) throw new Error(String(response.status))
 
@@ -347,6 +417,21 @@ export function BookDemo() {
               </div>
             ) : (
               <form ref={formRef} onSubmit={send} noValidate className="demo-form">
+                {/*
+                  * The honeypot, first in the form and invisible in it. Out of
+                  * the tab order and out of the accessibility tree, so the only
+                  * thing that can reach it is something reading the markup.
+                  */}
+                <input
+                  ref={trapRef}
+                  type="checkbox"
+                  name="botcheck"
+                  className="hidden"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                />
+
                 <div className="demo-fields">
                   {demo.fields.map((field) => (
                     <Field

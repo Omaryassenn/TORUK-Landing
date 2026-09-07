@@ -49,7 +49,7 @@ function UseCase({ item, index }) {
       </div>
 
       <div className="usecase-copy">
-        <p className="font-display text-usecase-title leading-[1.556] font-normal text-ink text-pretty">
+        <p id='om' className="font-display text-usecase-title leading-[1.556] text-ink text-pretty">
           {item.title}
         </p>
         <p className="font-display text-usecase-note leading-[1.43] font-normal text-usecase-body text-pretty">

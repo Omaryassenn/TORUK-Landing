@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { useActiveSection } from '@/hooks/useActiveSection'
+import { useHashAnchors } from '@/hooks/useHashAnchors'
 
 /**
  * The shell every legal document on this site is set in.
@@ -121,6 +122,15 @@ function Block({ block }) {
  */
 export function LegalDocument({ meta, sections, anchors }) {
   const current = useActiveSection(anchors, anchors[0], READING_BAND)
+
+  /*
+   * The contents list is the reason this hook exists. Twenty-odd entries, all
+   * of them in-page, and every click was a history entry — so back from a
+   * document went to the clause read before it rather than to the page the
+   * reader arrived from. No argument, so the jump is the platform's own smooth
+   * scroll: there is no Lenis here, deliberately. See the note in `terms.jsx`.
+   */
+  useHashAnchors()
 
   /*
    * The contents start open beside the document and closed above it.

@@ -14,13 +14,22 @@
 
     <!-- Open Graph -->
     <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="TORUK" />
+    <meta property="og:locale" content="en" />
     <meta property="og:url" content="https://toruk.studio/terms/" />
     <meta property="og:title" content="Terms of Service — TORUK" />
     <meta
       property="og:description"
       content="The terms of use governing access to and use of the TORUK site, operated by YOUXEL Technology."
     />
-    <meta property="og:image" content="https://toruk.studio/og-image.png" />
+    <meta property="og:image" content="https://toruk.studio/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="675" />
+    <meta
+      property="og:image:alt"
+      content="TORUK: AI Employees Management system. Build, deploy, and govern enterprise AI from one platform."
+    />
 
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#030303" />
@@ -47,6 +56,48 @@
       type="font/woff2"
       crossorigin
     />
+    <!--
+      A document, its place in the site, and who published it. The breadcrumb
+      is what lets a result show "toruk.studio > Terms of Service" rather than a bare
+      URL, and it is the whole hierarchy this site has: one page above, this
+      page. `dateModified` is the effective date the document itself states.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebPage",
+            "@id": "https://toruk.studio/terms/#webpage",
+            "url": "https://toruk.studio/terms/",
+            "name": "Terms of Service — TORUK",
+            "description": "The terms of use governing access to and use of the TORUK site, operated by YOUXEL Technology.",
+            "dateModified": "2023-09-01",
+            "inLanguage": "en",
+            "isPartOf": { "@id": "https://toruk.studio/#website" },
+            "publisher": { "@id": "https://toruk.studio/#organization" },
+            "breadcrumb": { "@id": "https://toruk.studio/terms/#breadcrumb" }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://toruk.studio/terms/#breadcrumb",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "TORUK",
+                "item": "https://toruk.studio/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Terms of Service"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

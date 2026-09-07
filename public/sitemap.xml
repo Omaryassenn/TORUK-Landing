@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Three pages, which is the whole site: the landing page and the two legal
+  documents. Each is its own Vite entry, so each has a real URL a crawler can
+  reach without a rewrite rule.
+
+  `lastmod` on the legal pages is the effective date the documents themselves
+  state, which is the last time their content actually changed. The landing
+  page's is the date its copy was last revised, and it is the one value here
+  that has to be bumped by hand when that copy changes again; a stale lastmod
+  is worse than none, so drop the element rather than leave it wrong.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://toruk.studio/</loc>
+    <lastmod>2026-09-07</lastmod>
+  </url>
+  <url>
+    <loc>https://toruk.studio/terms/</loc>
+    <lastmod>2023-09-01</lastmod>
+  </url>
+  <url>
+    <loc>https://toruk.studio/privacy/</loc>
+    <lastmod>2023-09-01</lastmod>
+  </url>
+</urlset>

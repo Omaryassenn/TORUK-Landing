@@ -1,4 +1,6 @@
+# Everything here is public marketing and two legal documents. Nothing is
+# behind a login and there is nothing to keep out of an index.
 User-agent: *
 Allow: /
 
-Sitemap: https://example.com/sitemap.xml
+Sitemap: https://toruk.studio/sitemap.xml

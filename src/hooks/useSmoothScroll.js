@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import Lenis from 'lenis'
+import { useHashAnchors } from '@/hooks/useHashAnchors'
 
 /**
  * Inertial scrolling for the whole page.
@@ -46,8 +47,15 @@ export function useSmoothScroll(locked = false) {
        * a second one on top of it fights the first.
        */
       syncTouch: false,
-      /* Takes over in-page jumps, which is what the stylesheet used to do. */
-      anchors: true,
+      /*
+       * In-page jumps are handled by `useHashAnchors` below instead.
+       *
+       * Lenis' own anchor handling eases the jump but still lets the hash be
+       * pushed, so every nav click left a history entry and back walked the
+       * reader up the page one section at a time rather than off it. The hook
+       * eases the same jump and writes the hash with `replaceState`.
+       */
+      anchors: false,
       /* Lenis owns its own rAF loop, so there is none to clean up here. */
       autoRaf: true,
     })
@@ -58,6 +66,22 @@ export function useSmoothScroll(locked = false) {
       lenis.current = null
     }
   }, [])
+
+  /*
+   * How the hook below moves the page: through Lenis where there is one, so the
+   * jump is eased on the same scroller the wheel is, and instantly where there
+   * is not. Reduced motion is the case with no Lenis, and the platform's own
+   * instant scroll is the correct behaviour there.
+   *
+   * `force` because the scroller is stopped while the splash is up, and a jump
+   * a reader has just asked for should still land.
+   */
+  const scrollTo = useCallback((top) => {
+    if (lenis.current) lenis.current.scrollTo(top, { force: true })
+    else window.scrollTo({ top, behavior: 'auto' })
+  }, [])
+
+  useHashAnchors(scrollTo)
 
   /*
    * Kept apart from the setup effect so the splash can lock and release the

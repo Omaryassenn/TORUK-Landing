@@ -658,7 +658,9 @@
     );
   
   }
-
+  #om{
+    font-weight: 500;
+  }
   .clients-track {
     display: flex;
     width: max-content;
@@ -1029,6 +1031,18 @@
    */
   main section[id] {
     scroll-margin-top: 6rem;
+  }
+
+  /*
+   * A jumped-to section takes focus so the keyboard follows the page, which is
+   * what a real anchor navigation does and what `useHashAnchors` has to do by
+   * hand once it prevents one. The ring is for controls: a rule drawn around a
+   * whole section says something has gone wrong rather than saying where you
+   * are, and the section is only focusable for as long as focus is on it.
+   */
+  main section[id]:focus,
+  main section[id]:focus-visible {
+    outline: none;
   }
 
   /*

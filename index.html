@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <title>TORUK — The adaptive AI ecosystem</title>
+    <title>TORUK — The AI Employees Management system</title>
     <meta
       name="description"
       content="Build, orchestrate, deploy, and govern enterprise AI agents from one platform — from isolated experiments to secure, production-ready systems."
@@ -14,22 +14,35 @@
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TORUK" />
+    <meta property="og:locale" content="en" />
     <meta property="og:url" content="https://toruk.studio/" />
-    <meta property="og:title" content="TORUK — The adaptive AI ecosystem" />
+    <meta property="og:title" content="TORUK — The AI Employees Management system" />
     <meta
       property="og:description"
       content="Build, orchestrate, deploy, and govern enterprise AI agents from one platform."
     />
-    <meta property="og:image" content="https://toruk.studio/og-image.png" />
+    <meta property="og:image" content="https://toruk.studio/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="675" />
+    <meta
+      property="og:image:alt"
+      content="TORUK: AI Employees Management system. Build, deploy, and govern enterprise AI from one platform."
+    />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="TORUK — The adaptive AI ecosystem" />
+    <meta name="twitter:title" content="TORUK — The AI Employees Management system" />
     <meta
       name="twitter:description"
       content="Build, orchestrate, deploy, and govern enterprise AI agents from one platform."
     />
-    <meta name="twitter:image" content="https://toruk.studio/og-image.png" />
+    <meta name="twitter:image" content="https://toruk.studio/og-image.jpg" />
+    <meta
+      name="twitter:image:alt"
+      content="TORUK: AI Employees Management system. Build, deploy, and govern enterprise AI from one platform."
+    />
 
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#030303" />
@@ -60,6 +73,86 @@
       type="font/woff2"
       crossorigin
     />
+    <!--
+      Structured data, as one graph rather than three blocks, so the nodes can
+      reference each other by `@id` instead of restating the company under
+      every type that needs it.
+
+      Every value here is a fact the site already states somewhere a reader can
+      check: the addresses and numbers are the footer's, the operator's name is
+      the one the Terms name, and the socials are the only real off-site links
+      on the page. Nothing is asserted that could not be verified from the page
+      itself — no founding date, no headcount, no rating.
+
+      The company is YOUXEL Technology and the product is TORUK. Modelled that
+      way rather than as one node: the Terms are an agreement with the company,
+      and the thing being marketed is the platform.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://toruk.studio/#organization",
+            "name": "YOUXEL Technology",
+            "url": "https://toruk.studio/",
+            "logo": "https://toruk.studio/favicon.svg",
+            "email": "info@youxel.com",
+            "telephone": "+966544620993",
+            "address": [
+              {
+                "@type": "PostalAddress",
+                "streetAddress": "Level 7, Building 4.07, King Abdullah Financial District",
+                "addressLocality": "Riyadh",
+                "addressCountry": "SA"
+              },
+              {
+                "@type": "PostalAddress",
+                "streetAddress": "Level 13, Al Faisaliah Tower",
+                "addressLocality": "Riyadh",
+                "postalCode": "11524",
+                "addressCountry": "SA"
+              }
+            ],
+            "sameAs": [
+              "https://www.linkedin.com/company/youxel/",
+              "https://www.facebook.com/youxel",
+              "https://x.com/youxel"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://toruk.studio/#website",
+            "url": "https://toruk.studio/",
+            "name": "TORUK",
+            "description": "Build, orchestrate, deploy, and govern enterprise AI agents from one platform.",
+            "publisher": { "@id": "https://toruk.studio/#organization" },
+            "inLanguage": "en"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://toruk.studio/#platform",
+            "name": "TORUK",
+            "url": "https://toruk.studio/",
+            "description": "An enterprise AI platform for building AI apps and AI Employees, connecting knowledge and systems, extending them with skills and functions, automating workflows, and deploying everything under one governance model.",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "image": "https://toruk.studio/og-image.jpg",
+            "publisher": { "@id": "https://toruk.studio/#organization" },
+            "featureList": [
+              "AI Employees",
+              "AI Squads",
+              "Knowledge bases",
+              "Integrations",
+              "Skills and functions",
+              "Workflow automation",
+              "Governed deployments"
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
