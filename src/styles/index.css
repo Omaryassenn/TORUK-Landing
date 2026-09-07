@@ -102,7 +102,7 @@
    * the comments are what actually renders.
    */
   --text-eyebrow: 1.25rem; /* 20px */
-  --text-headline: 1.875rem; /* 30px */
+  --text-headline: 2.4rem; /* 38.4px */
   --text-cta: 1.25rem; /* 20px */
   --text-capability: 1.25rem; /* 20px */
   /*
@@ -462,7 +462,7 @@
   @media (width < 48rem) {
     :root {
       --text-eyebrow: 0.875rem; /* 14px */
-      --text-headline: 1.375rem; /* 22px */
+      --text-headline: 1.6rem; /* 25.6px */
       --text-cta: 1rem; /* 16px */
       --text-capability: 1rem; /* 16px */
       --text-section: 1.375rem; /* 22px */
@@ -498,7 +498,7 @@
     /* 1900px */
     :root {
       --text-eyebrow: 1.5rem; /* 24px */
-      --text-headline: 2.25rem; /* 36px */
+      --text-headline: 2.5rem; /* 40px */
       --text-cta: 1.375rem; /* 22px */
       --text-capability: 1.5rem; /* 24px */
       --text-section: 2.25rem; /* 36px */
@@ -660,7 +660,8 @@
   }
   #om{
     font-weight: 500;
-  }
+  } 
+
   .clients-track {
     display: flex;
     width: max-content;
