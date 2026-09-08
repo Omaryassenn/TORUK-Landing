@@ -2308,7 +2308,7 @@
      */
     .dive-card-rule,
     .dive-caps {
-      display: none;
+      gap: 1rem;
     }
   }
 
