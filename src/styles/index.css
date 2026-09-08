@@ -2289,8 +2289,26 @@
       border-width: 0.1875rem;
     }
 
+    /*
+     * And the capabilities go, for the same reason they go on a short window:
+     * the stage cannot scroll, so something has to give, and this is the part
+     * that reads as an expansion of the panel rather than as the panel itself.
+     * The rule above them goes with them — it is the seam between the copy and
+     * a list that is no longer there.
+     *
+     * Width is what runs the panel out of stage here, not height, which is why
+     * neither gate below catches it. Above this tier the capture sits BESIDE
+     * the copy; below it the card is one column and the capture moves on top,
+     * so its 168px and the gap under it are added to a stack that already
+     * filled the stage. At 390x844 that stack measured 900 against an 844
+     * stage — and on a real phone it is worse than the 56px that sounds like,
+     * because `100svh` is the viewport with the browser's own bars showing,
+     * about 700 on a 844-tall device. The panel was losing its last row and a
+     * half to the clip.
+     */
+    .dive-card-rule,
     .dive-caps {
-      gap: 1rem;
+      display: none;
     }
   }
 
