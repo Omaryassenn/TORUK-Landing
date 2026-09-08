@@ -2266,15 +2266,37 @@
    * first because a picture under a list of capabilities is an orphan, and a
    * picture above a title is a card.
    */
+  /*
+   * The phone tier, and the one place on the page where a layout is fitted
+   * rather than composed.
+   *
+   * The stage is one `100svh` box with `overflow: hidden` and nothing to
+   * scroll inside it, and below this width the panel turns over from two
+   * columns to one: the capture leaves the copy's side and stacks on top of
+   * it, adding its own height and a gap to a stack that already filled the
+   * stage. At 390 wide the card measured 603 against a budget of 445 — the
+   * stage's 700 (which is what `100svh` is on an 844-tall phone, the viewport
+   * with the browser's own bars showing) less 223 of clearance and heading and
+   * 32 of foot. The last capability was losing a line and a half to the clip.
+   *
+   * Every value below is that 158px, taken from the things that can give it
+   * without any of the panel's content going: the capture, which at this width
+   * is texture rather than a readable screenshot; the tiles behind the glyphs,
+   * which were 56px boxes around 21px marks; and the gaps. Not one line of
+   * copy is smaller here than it is on a desktop, and nothing is hidden.
+   */
   @media (width < 48rem) {
     .dive-stage {
-      --dive-top: 5rem;
-      --dive-foot: 2rem;
-      --dive-pad: 1rem;
+      /* 16px off the clearance and 8 off the foot: 24 of the 158. */
+      --dive-top: 4rem;
+      --dive-foot: 1.5rem;
+      --dive-pad: 0.875rem;
     }
 
     .dive-card {
       grid-template-columns: minmax(0, 1fr);
+      /* The frame's 17px gap, closed to 12 now that it is a row gap. */
+      gap: 0.75rem;
     }
 
     .dive-shot {
@@ -2283,32 +2305,33 @@
        * `svh` rather than `%`: the card is a grid item in a stage whose own
        * height is `svh`, and a percentage here would resolve against a row that
        * is itself sized by this element.
+       *
+       * 6rem, down from 10.5. It is the largest single saving available and
+       * the cheapest: at 390 wide the capture is a 350px-wide screenshot of a
+       * workflow canvas, which is unreadable at either height. It reads as the
+       * panel's texture, and 96px of it reads the same as 168.
        */
-      max-height: min(24svh, 10.5rem);
+      max-height: min(14svh, 6rem);
       /* Thinner than the 4px frame the wide panel carries, at this size. */
       border-width: 0.1875rem;
     }
 
     /*
-     * And the capabilities go, for the same reason they go on a short window:
-     * the stage cannot scroll, so something has to give, and this is the part
-     * that reads as an expansion of the panel rather than as the panel itself.
-     * The rule above them goes with them — it is the seam between the copy and
-     * a list that is no longer there.
-     *
-     * Width is what runs the panel out of stage here, not height, which is why
-     * neither gate below catches it. Above this tier the capture sits BESIDE
-     * the copy; below it the card is one column and the capture moves on top,
-     * so its 168px and the gap under it are added to a stack that already
-     * filled the stage. At 390x844 that stack measured 900 against an 844
-     * stage — and on a real phone it is worse than the 56px that sounds like,
-     * because `100svh` is the viewport with the browser's own bars showing,
-     * about 700 on a 844-tall device. The panel was losing its last row and a
-     * half to the clip.
+     * The capabilities stay, all three of them, with their labels and their
+     * lines. What goes is the box around each glyph: a 56px tile holding a
+     * 21px mark set the row's height on its own, while the label beside it
+     * needs 40. At 2.5rem the text is what sets the row and the mark still has
+     * its ground.
      */
-    .dive-card-rule,
+    .dive-cap-tile {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.5rem;
+    }
+
     .dive-caps {
-      gap: 1rem;
+      margin-top: 0.875rem;
+      gap: 0.75rem;
     }
   }
 
