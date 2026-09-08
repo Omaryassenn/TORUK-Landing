@@ -2287,16 +2287,20 @@
    */
   @media (width < 48rem) {
     .dive-stage {
-      /* 16px off the clearance and 8 off the foot: 24 of the 158. */
-      --dive-top: 4rem;
-      --dive-foot: 1.5rem;
-      --dive-pad: 0.875rem;
+      /*
+       * The clearance stays at 5rem. It is not spare space: the navbar is
+       * 72px and never hides, so 4rem put the eyebrow and the heading behind
+       * the glass for the whole pin. The 8px off the foot is real, though.
+       */
+      --dive-top: 5rem;
+      --dive-foot: 2rem;
+      --dive-pad: 0.75rem;
     }
 
     .dive-card {
       grid-template-columns: minmax(0, 1fr);
       /* The frame's 17px gap, closed to 12 now that it is a row gap. */
-      gap: 0.75rem;
+      gap: 1rem;
     }
 
     .dive-shot {
@@ -2311,7 +2315,7 @@
        * workflow canvas, which is unreadable at either height. It reads as the
        * panel's texture, and 96px of it reads the same as 168.
        */
-      max-height: min(14svh, 6rem);
+      max-height: min(15svh, 7rem);
       /* Thinner than the 4px frame the wide panel carries, at this size. */
       border-width: 0.1875rem;
     }
@@ -2324,14 +2328,37 @@
      * its ground.
      */
     .dive-cap-tile {
-      width: 2.5rem;
-      height: 2.5rem;
+      width: 3rem;
+      height: 3rem;
       border-radius: 0.5rem;
     }
 
     .dive-caps {
-      margin-top: 0.875rem;
-      gap: 0.75rem;
+      margin-top: 0.75rem;
+      gap: 1rem;
+      /*
+       * The full column, not the frame's 22rem. That cap is a proportion of
+       * the wide panel — a list set against its own margin beside a paragraph
+       * of the same measure — and there is no paragraph beside it here. Held
+       * to 22rem the labels wrapped to three lines each; given the card's own
+       * width they take two, which is 16px a row back.
+       */
+      width: 100%;
+    }
+  }
+
+  /*
+   * And a small phone takes one more notch out of the capture.
+   *
+   * 360x640 is 60px shorter than the tier above was fitted against and the
+   * card is taller there, not shorter: a narrower column wraps two of the
+   * three labels onto a fourth line. The capture is the only thing left that
+   * can give without a word going, and by this size it is a 330px-wide
+   * screenshot doing the work of a texture.
+   */
+  @media (width < 48rem) and (height < 44rem) {
+    .dive-shot {
+      max-height: min(10svh, 3.75rem);
     }
   }
 
@@ -2344,8 +2371,15 @@
    * that give: a 48px tile and 14px between the rows, which is 38px off the
    * stack, plus the 24 the clearance and the foot give up. Measured at
    * 1280x620, where the panel ran 8px past the foot before this.
+   *
+   * `width >= 48rem` because that measurement is a desktop window's. Both of
+   * these blocks sit after the phone tier and would otherwise win on a phone,
+   * where the panel is one column and the fit has already been solved with
+   * different numbers — a 390x700 phone was taking this block's 5rem clearance
+   * back over the 4rem the phone tier sets, and the block below it was hiding
+   * the capabilities outright on a 360x640 one.
    */
-  @media (height < 44rem) {
+  @media (height < 44rem) and (width >= 48rem) {
     .dive-stage {
       --dive-top: 5rem;
       --dive-foot: 2rem;
@@ -2368,10 +2402,15 @@
    *
    * The stage cannot scroll, so something has to give, and this is the part
    * that reads as an expansion of the panel rather than as the panel itself.
-   * 40rem is where the tightening above has spent everything it has: a 640-tall
-   * window is 100 short of the stack even at the smallest the rows get.
+   * 41rem is where the tightening above has spent everything it has.
+   *
+   * It was `< 40rem`, which is 640 exactly — and a 360x640 phone is the one
+   * device that lands on the boundary and falls the wrong side of it. Measured
+   * there: the panel ran 16px past the foot and pushed its own heading 32px up
+   * behind the navbar, because there was no room for the stack at all. One rem
+   * higher catches it.
    */
-  @media (height < 40rem) {
+  @media (height < 41rem) {
     .dive-card-rule,
     .dive-caps {
       display: none;
