@@ -1168,8 +1168,19 @@
      * black already and there is little for `saturate` to lift.
      */
     background-color: rgba(3, 3, 3, 0.335);
+    /*
+     * Unprefixed only, and deliberately. Lightning CSS (which Tailwind runs on
+     * build) understands `-webkit-backdrop-filter` as the same property as this
+     * one, so a hand-written prefix beside it is not a fallback, it is a
+     * duplicate: the two get deduped to whichever was written last, and with
+     * the prefix last the build shipped ONLY `-webkit-backdrop-filter`. Chrome
+     * does not implement that alias — it is Safari's — so the blur was dropped
+     * on every Chrome, in the build but never in dev, which is what made it
+     * look like a deployment problem.
+     *
+     * Left alone, the build emits both. Do not add the prefix back.
+     */
     backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
     /*
      * The ring, and then the one-pixel highlight along the top edge that stops
      * it looking like a flat grey panel. Both inset, so both follow the radius,
@@ -1360,8 +1371,8 @@
   @media (prefers-reduced-transparency: reduce) {
     .chrome-frame--compact .chrome-bar::before {
       background-color: var(--color-canvas);
+      /* Unprefixed only, for the reason the compact rule above states. */
       backdrop-filter: none;
-      -webkit-backdrop-filter: none;
     }
   }
 
