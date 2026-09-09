@@ -237,8 +237,14 @@ export function Header({ activeHref = nav[0]?.href, pose, base = '' }) {
 
           <nav
             aria-label="Primary"
+            /*
+             * The gap is in `.chrome-nav` rather than here: it is spent out of
+             * the row's own width, which the pill sets from the viewport's
+             * height, so a width breakpoint cannot know it. A utility would
+             * also outrank that rule whatever it said.
+             */
             className={cn(
-              'hidden shrink-0 items-center justify-center gap-8 lg:flex xl:gap-12 min-[90rem]:gap-15',
+              'chrome-nav hidden shrink-0 items-center justify-center lg:flex',
               chrome,
             )}
           >

@@ -1352,6 +1352,62 @@
     align-items: center;
     padding: var(--chrome-lead) var(--chrome-pad);
     transition: padding 520ms var(--ease-out-quint);
+    /*
+     * The query container the nav's own air is measured against. It is this box
+     * and not the pill because this is the box the three columns actually
+     * share: the pill's padding is already off it, so `100cqi` is the room
+     * there is and nothing has to subtract the lead again. See `.chrome-nav`.
+     *
+     * Safe on this element: its inline size comes from the pill above it and
+     * never from its contents, which is the one thing `inline-size`
+     * containment takes away.
+     */
+    container-type: inline-size;
+  }
+
+  /*
+   * The links' own air, spent out of the room the row has rather than read off
+   * the window's width.
+   *
+   * These gaps used to step 32/48/60px on `lg`/`xl`/`90rem`, which are widths,
+   * while the pill they sit in is on `--grid-width`, which falls out of the
+   * viewport's HEIGHT. The two disagree on any window that is wide and short:
+   * at 1440x700 the pill was 805 and the row wanted 870, so the CTA hung 65px
+   * past the pill's right edge and the links stopped being centred on it —
+   * both `flex-1` columns were already at their min-content by then and had
+   * nothing left to give, so the row simply overflowed to the right. 1600x660
+   * was 101px out. Even 1280x720 cleared it by 6.
+   *
+   * 41.125rem of the row is the lockup, the four labels and the CTA at zero
+   * gap, and 1.25rem more is the amount the CTA is wider than the lockup: the
+   * nav is centred on the pill, so that difference comes off the CTA's side of
+   * it and has to be held back or it is the gap that disappears.
+   *
+   * What is left is divided by FIVE and not three, because the row has five
+   * gaps in it — three between the links, and one either side of the nav that
+   * the `flex-1` columns make out of whatever the nav did not take. Dividing by
+   * three spent the lot on the links and left the last of them 6px off the CTA
+   * at a 903px pill and touching it at 768: 60px of air between the labels and
+   * none at all where the eye actually reads a boundary. By five, the gap the
+   * links get is the gap the CTA gets.
+   *
+   * It still reaches the design's own 60px at a 1035px pill and holds it above
+   * — 1440x1024 and 1920x1080 are untouched.
+   *
+   * The floor is 10px and deliberately below anything the formula asks for. It
+   * is a guard against a label nobody has written yet, not a minimum: at the
+   * narrowest pill there is — `--grid-width`'s own 48rem floor, which is what a
+   * window under about 680px tall bottoms out on — the row has 79px of air to
+   * spend and the formula wants 11.6 of it per gap. A 1rem floor took that back
+   * for the links and left 5px against the CTA, which is the thing this rule
+   * exists to prevent.
+   *
+   * It also means the morph carries the gap with it: the container's width is
+   * what transitions, so the links breathe out as the bar goes full-bleed
+   * instead of snapping at a breakpoint.
+   */
+  .chrome-nav {
+    column-gap: clamp(0.625rem, calc((100cqi - 42.375rem) / 5), 3.75rem);
   }
 
   /*
