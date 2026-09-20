@@ -11,6 +11,12 @@
  *   2. "[info@youxel.com]" in Contact Us was bracketed the same way. The
  *      brackets are dropped and the address is a link.
  *
+ * Separately, and later: that address was changed from info@ to
+ * toruk@youxel.com at the client's instruction. It is recorded apart from
+ * the two above because it is an edit to the document's own text rather
+ * than a blank being filled, and the same change was made to the Terms of
+ * Service and to the address the rest of the site publishes.
+ *
  * Zero-width joiners between the sections were stripped. Nothing else is
  * touched.
  *
@@ -209,7 +215,7 @@ export const privacy = [
         type: 'p',
         text: 'If you have any questions or concerns about this Privacy Policy or our data practices, please contact us at:',
       },
-      { type: 'contact', label: 'Email', value: 'info@youxel.com', kind: 'email' },
+      { type: 'contact', label: 'Email', value: 'toruk@youxel.com', kind: 'email' },
       {
         type: 'p',
         text: 'By using our website or services, you agree to the terms of this Privacy Policy. Please read this policy carefully and check back periodically for updates.',

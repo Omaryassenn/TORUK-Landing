@@ -23,7 +23,7 @@ export const inside = {
     eyebrow: 'Inside TORUK',
     headline: 'Dive Into TORUK',
     body:
-      'Step inside the platform and explore the two environments at its core — Studio, where AI is built, and Everyday, where it gets used.',
+      'Step inside the platform and explore the two environments at its core - Studio, where AI is built, and Everyday, where it gets used.',
     /*
      * "Scroll to enter", not "scroll to explore". The section's whole promise
      * is that scrolling moves you THROUGH the mark rather than past it, and
@@ -47,7 +47,7 @@ export const inside = {
     label: 'TORUK Studio',
     headline: 'Where AI is built',
     body:
-      'Studio is where teams create and control the intelligence behind TORUK — from AI apps and workflows to knowledge, functions, and integrations.',
+      'Studio is where teams create and control the intelligence behind TORUK - from AI apps and workflows to knowledge, functions, and integrations.',
     shot: '/inside/studio.webp',
     capabilities: [
       {
@@ -80,7 +80,7 @@ export const inside = {
     label: 'TORUK Everyday',
     headline: 'Where AI gets to work',
     body:
-      'Everyday is where people interact with AI in their flow of work — through conversations, dynamic interfaces, tasks, and generated outputs.',
+      'Everyday is where people interact with AI in their flow of work - through conversations, dynamic interfaces, tasks, and generated outputs.',
     shot: '/inside/everyday.webp',
     capabilities: [
       {

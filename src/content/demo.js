@@ -199,9 +199,16 @@ export const demo = {
   submit: 'Book a Demo',
   submitting: 'Sending',
 
+  /*
+   * What the toast says once the request has gone. It is a toast and not a
+   * panel in place of the form, because the form is not finished with: the
+   * fields empty and stay, so a second request costs nothing.
+   */
   success: {
     title: 'Request received.',
     body: 'We will be in touch to arrange a time.',
+    /* The close button's accessible name; the glyph itself is decorative. */
+    dismiss: 'Dismiss',
   },
 
   /*

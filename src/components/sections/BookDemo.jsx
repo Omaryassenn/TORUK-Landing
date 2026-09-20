@@ -48,6 +48,25 @@ import { useReveal } from '@/hooks/useReveal'
  *
  * Swapping this for a scheduler (Cal, HubSpot, Calendly) is a change to
  * `send()` and nothing else.
+ *
+ * What happens after the button
+ * ------------------------------
+ * Three states, in order: the button takes a spinner and says so while the
+ * request is in flight; a toast says it landed; the form empties and stays.
+ *
+ * The form staying is the point. This used to swap the whole column for a
+ * confirmation panel, which read as finished — and left a column of empty
+ * canvas beside the contact details, because the confirmation is three lines
+ * and the form it replaced is six fields. It also made a second request an
+ * impossibility without a reload, which is wrong for a page whose form is the
+ * one thing it asks for. Emptying the fields says the same thing the panel
+ * said, in the place the reader is already looking.
+ *
+ * The toast carries the words the panel carried, is announced rather than
+ * merely drawn (`role="status"`), dismisses itself, and can be dismissed. It
+ * is not where a failure goes: a failure belongs against the form that failed
+ * and has to stay on screen with the address beside it, so that is still the
+ * line above the button.
  */
 
 /*
@@ -63,6 +82,14 @@ const WEB3FORMS = 'https://api.web3forms.com/submit'
  * addresses, and the endpoint is what actually decides.
  */
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/*
+ * How long the toast stays. Long enough to be read twice at a glance and short
+ * enough that it is gone before the reader has decided it is in the way; it is
+ * dismissible either way, and nothing is lost by missing it because the empty
+ * form says the same thing.
+ */
+const TOAST_MS = 6000
 
 const EMPTY = Object.fromEntries(demo.fields.map((field) => [field.id, '']))
 
@@ -138,13 +165,20 @@ export function BookDemo() {
 
   const [values, setValues] = useState(EMPTY)
   const [errors, setErrors] = useState({})
-  /* 'idle' | 'sending' | 'sent' | 'failed' */
+  /* 'idle' | 'sending' | 'failed'. There is no 'sent': a sent form is idle. */
   const [status, setStatus] = useState('idle')
   const [failure, setFailure] = useState(null)
+  /*
+   * The toast, as the timestamp of the send that raised it, or 0 for none.
+   *
+   * A token rather than a boolean so that sending twice re-arms it: setting a
+   * boolean that is already `true` changes nothing, and the second request
+   * would inherit whatever was left of the first one's dismissal timer.
+   */
+  const [toast, setToast] = useState(0)
 
   const formRef = useRef(null)
-  const doneRef = useRef(null)
-  const columnRef = useRef(null)
+  const submitRef = useRef(null)
   /*
    * The honeypot. It is `display: none`, so nobody filling this form in ever
    * sees it; a bot walking the DOM and filling every input does.
@@ -152,17 +186,26 @@ export function BookDemo() {
   const trapRef = useRef(null)
 
   /*
-   * The button the reader just pressed no longer exists, so their focus is on
-   * nothing. Moving it to the confirmation is what makes the outcome reachable
-   * to someone who is not looking at the screen.
+   * The toast's life, and the focus that has to survive it.
+   *
+   * Focus first: the button was `disabled` while the request was in flight,
+   * and a browser drops focus to the document when the element holding it is
+   * disabled. Putting it back on the button is what keeps a reader who is not
+   * looking at the screen somewhere real — the form is still there, still
+   * theirs, and the toast is announced to them by `role="status"` rather than
+   * by being focused. Moving focus to a thing that removes itself after six
+   * seconds would strand them a second time.
    *
    * An effect rather than a frame callback: `requestAnimationFrame` does not
    * run while the tab is in the background, and a reader who submits and
    * switches away would come back to focus lost on the document.
    */
   useEffect(() => {
-    if (status === 'sent') doneRef.current?.focus()
-  }, [status])
+    if (!toast) return
+    submitRef.current?.focus()
+    const timer = setTimeout(() => setToast(0), TOAST_MS)
+    return () => clearTimeout(timer)
+  }, [toast])
 
   const change = (id, value) => {
     setValues((current) => ({ ...current, [id]: value }))
@@ -172,6 +215,22 @@ export function BookDemo() {
      * them their half-written address is wrong, which is true and useless.
      */
     setErrors((current) => (current[id] ? { ...current, [id]: null } : current))
+  }
+
+  /*
+   * What a sent form does: empty, stay, and say so.
+   *
+   * The values go back to `EMPTY` rather than the form being remounted with a
+   * key, so the fields keep their identity — a reader who was tabbed into one
+   * is still in it, and the browser does not treat six controls as six new
+   * ones and re-run autofill over them.
+   */
+  const landed = () => {
+    setValues(EMPTY)
+    setErrors({})
+    setFailure(null)
+    setStatus('idle')
+    setToast(Date.now())
   }
 
   const send = async (event) => {
@@ -196,11 +255,12 @@ export function BookDemo() {
     }
 
     /*
-     * A bot filled the field nobody can see. Reported as sent rather than as
-     * rejected, because telling one it was caught is telling it what to change.
+     * A bot filled the field nobody can see. Given the same outcome a person
+     * gets rather than a rejection, because telling one it was caught is
+     * telling it what to change.
      */
     if (trapRef.current?.checked) {
-      setStatus('sent')
+      landed()
       return
     }
 
@@ -254,14 +314,7 @@ export function BookDemo() {
       })
       if (!response.ok) throw new Error(String(response.status))
 
-      /*
-       * The confirmation is a good deal shorter than the form it replaces, so
-       * without this the column collapses and the whole section jumps at the
-       * exact moment the reader is looking for the word that says it worked.
-       * The column holds the height the form left it at.
-       */
-      columnRef.current?.style.setProperty('--form-h', `${columnRef.current.offsetHeight}px`)
-      setStatus('sent')
+      landed()
     } catch {
       setStatus('failed')
       setFailure(demo.errors.failed)
@@ -395,83 +448,138 @@ export function BookDemo() {
           </address>
 
           <div
-            ref={columnRef}
             className="reveal demo-column"
             data-revealed={bodyShown}
             /* The cascade follows the reading order: left column, then this. */
             style={{ '--reveal-delay': '120ms' }}
           >
-            {status === 'sent' ? (
-              /*
-               * The confirmation takes the column rather than sitting above a
-               * form that has already been sent. `tabIndex={-1}` is what lets
-               * focus land here; `role="status"` is what announces it.
-               */
-              <div ref={doneRef} tabIndex={-1} role="status" className="demo-done">
-                <p className="font-display text-usecase-title leading-[1.556] text-ink">
-                  {demo.success.title}
-                </p>
-                <p className="font-display text-usecase-note leading-[1.43] text-ink-muted">
-                  {demo.success.body}
-                </p>
+            <form ref={formRef} onSubmit={send} noValidate className="demo-form">
+              {/*
+                * The honeypot, first in the form and invisible in it. Out of
+                * the tab order and out of the accessibility tree, so the only
+                * thing that can reach it is something reading the markup.
+                */}
+              <input
+                ref={trapRef}
+                type="checkbox"
+                name="botcheck"
+                className="hidden"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+              />
+
+              <div className="demo-fields">
+                {demo.fields.map((field) => (
+                  <Field
+                    key={field.id}
+                    field={field}
+                    value={values[field.id]}
+                    error={errors[field.id]}
+                    onChange={change}
+                  />
+                ))}
               </div>
-            ) : (
-              <form ref={formRef} onSubmit={send} noValidate className="demo-form">
+
+              {/*
+                * The failure sits above the button rather than below it,
+                * where it would be off the bottom of a form the reader has
+                * just scrolled the button into view of.
+                */}
+              {failure && (
+                <p role="alert" className="demo-failure font-display text-usecase-note leading-[1.43]">
+                  {failure}{' '}
+                  <a href={mail} className="demo-mail">
+                    {site.email}
+                  </a>
+                </p>
+              )}
+
+              <Button
+                ref={submitRef}
+                as="button"
+                type="submit"
+                className="demo-submit"
+                disabled={status === 'sending'}
+                aria-busy={status === 'sending' || undefined}
+              >
                 {/*
-                  * The honeypot, first in the form and invisible in it. Out of
-                  * the tab order and out of the accessibility tree, so the only
-                  * thing that can reach it is something reading the markup.
+                  * The spinner is decorative and the label is not. A reader
+                  * on a screen reader is told the button is busy by
+                  * `aria-busy` and told what it is doing by the label
+                  * changing to "Sending"; the ring is for the reader who can
+                  * see that the page has not frozen. Announcing it as well
+                  * would be the same fact three times.
                   */}
-                <input
-                  ref={trapRef}
-                  type="checkbox"
-                  name="botcheck"
-                  className="hidden"
-                  tabIndex={-1}
-                  autoComplete="off"
-                  aria-hidden="true"
-                />
-
-                <div className="demo-fields">
-                  {demo.fields.map((field) => (
-                    <Field
-                      key={field.id}
-                      field={field}
-                      value={values[field.id]}
-                      error={errors[field.id]}
-                      onChange={change}
-                    />
-                  ))}
-                </div>
-
-                {/*
-                  * The failure sits above the button rather than below it,
-                  * where it would be off the bottom of a form the reader has
-                  * just scrolled the button into view of.
-                  */}
-                {failure && (
-                  <p role="alert" className="demo-failure font-display text-usecase-note leading-[1.43]">
-                    {failure}{' '}
-                    <a href={mail} className="demo-mail">
-                      {site.email}
-                    </a>
-                  </p>
-                )}
-
-                <Button
-                  as="button"
-                  type="submit"
-                  className="demo-submit"
-                  disabled={status === 'sending'}
-                  aria-busy={status === 'sending' || undefined}
-                >
-                  {status === 'sending' ? demo.submitting : demo.submit}
-                </Button>
-              </form>
-            )}
+                {status === 'sending' && <span className="demo-spinner" aria-hidden="true" />}
+                {status === 'sending' ? demo.submitting : demo.submit}
+              </Button>
+            </form>
           </div>
         </div>
       </div>
+
+      {/*
+        * The toast. Last in the section and fixed to the viewport, so it is
+        * last in the reading order too: it is the outcome of the form above
+        * it, and a reader tabbing on from the button reaches its close button
+        * rather than having it spliced in somewhere behind them.
+        *
+        * `role="status"` is an implicit polite live region, and the node is
+        * only ever mounted when there is something to say — so the whole of it
+        * is announced when it appears, rather than a permanent empty region
+        * having to be watched for changes.
+        */}
+      {toast > 0 && (
+        <div role="status" className="demo-toast">
+          <span className="demo-toast-mark" aria-hidden="true">
+            {/*
+              * A tick, drawn rather than set as a character: the page's
+              * typeface has no dependable one, and an emoji would be read out
+              * by a screen reader that is already being given the words.
+              */}
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+              <path
+                d="M3 8.5 6.5 12 13 4.5"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+
+          <span className="demo-toast-body">
+            <span className="demo-toast-title font-display text-usecase-title leading-[1.4]">
+              {demo.success.title}
+            </span>
+            <span className="demo-toast-note font-display text-usecase-note leading-[1.43]">
+              {demo.success.body}
+            </span>
+          </span>
+
+          {/*
+            * It dismisses itself after `TOAST_MS`, so this is the way out for
+            * a reader who wants it gone now — and the reason the toast is not
+            * placed over anything it would be the only way to uncover.
+            */}
+          <button
+            type="button"
+            className="demo-toast-close"
+            onClick={() => setToast(0)}
+            aria-label={demo.success.dismiss}
+          >
+            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true">
+              <path
+                d="m4 4 8 8M12 4l-8 8"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
     </section>
   )
 }

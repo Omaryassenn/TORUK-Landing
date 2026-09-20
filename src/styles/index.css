@@ -3096,14 +3096,24 @@
   .demo-grid {
     display: grid;
     /*
-     * Contact on the left, form on the right, and the left is the wider of the
-     * two. It carries two addresses whose first line runs to 56 characters
-     * before its stated break, and an address is the one kind of content on
-     * this page that cannot be argued with. The form's fields are the half
-     * that can afford to give the room up, because the only pairs on it are
-     * short values.
+     * Contact on the left, form on the right, and the form is the wider of the
+     * two.
+     *
+     * It used to be the other way round, on the reasoning that the left column
+     * carries two addresses whose first line runs to 56 characters before its
+     * stated break. That line is real, but it does not need the column it was
+     * given: `.demo-row-body` shrink-wraps to its content, so the address sets
+     * its own width and stops — 336px, plus the tile and its gap, is the whole
+     * of what the left column asks for. Everything past about 25rem of it was
+     * empty ground, held against a form being squeezed into what was left.
+     *
+     * So the ratio is mirrored rather than merely loosened. At the narrowest
+     * width this layout is used at — 64rem, where it collapses to one column
+     * directly below — the left column still lands above what the address
+     * needs and both addresses hold their two stated lines. Widen the address
+     * copy and that is the number to re-check.
      */
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
     /*
      * The gutter is doing the work a rule would otherwise do: there is no line
      * between the two halves, so the space between them is the only thing
@@ -3287,6 +3297,167 @@
   }
 
   /*
+   * The ring in the button while the request is in flight.
+   *
+   * `currentColor` at a third alpha for the track and full for the head, so
+   * the one rule works on the solid fill it sits on now and would still work
+   * if the button ever became the outline variant.
+   *
+   * `em` rather than `rem`: it is a mark inside a label and it should scale
+   * with that label, not with the root.
+   */
+  .demo-spinner {
+    width: 0.875em;
+    height: 0.875em;
+    flex-shrink: 0;
+    /* The gap to the label, kept on the mark so the button's box is untouched. */
+    margin-right: 0.5em;
+    border: 1.5px solid color-mix(in srgb, currentColor 30%, transparent);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: demo-spin 700ms linear infinite;
+  }
+
+  @keyframes demo-spin {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+
+  /*
+   * Reduced motion does not mean no feedback. A spinner is the one moving
+   * thing on this page that is load-bearing — it is the answer to "is this
+   * doing anything" — so it is slowed and turned into a pulse rather than
+   * stopped. The label beside it already says "Sending"; this is what says it
+   * is still true.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    .demo-spinner {
+      animation: demo-pulse 1.4s ease-in-out infinite;
+    }
+  }
+
+  @keyframes demo-pulse {
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  /* --- The toast ----------------------------------------------------------
+   *
+   * What says the request landed, now that the form no longer gives up its
+   * column to say it.
+   *
+   * Fixed to the bottom of the viewport rather than placed in the section: the
+   * button that raises it is at the bottom of a long column, and a message
+   * rendered in flow above or below it is as likely as not to be off-screen at
+   * the moment it appears. Nothing on this page transforms an ancestor of the
+   * section, so `fixed` means the viewport here and not a containing block.
+   *
+   * Right-hand side on a wide screen, where it is clear of the form. It spans
+   * the width on a phone, where a 20rem panel pinned to one edge is most of
+   * the width anyway and reads as having slipped.
+   */
+  .demo-toast {
+    position: fixed;
+    z-index: 60;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    display: flex;
+    align-items: start;
+    gap: 0.75rem;
+    width: min(22rem, calc(100vw - 3rem));
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--color-hairline-strong);
+    border-radius: 0.75rem;
+    /*
+     * Raised, not the canvas. This is the one element on the page that sits
+     * over arbitrary content, so it needs a ground of its own to stay legible
+     * over whatever it happens to cover.
+     */
+    background-color: var(--color-canvas-raised);
+    /*
+     * The shadow is what separates it from the section behind it on a page
+     * where both are near-black — the border alone reads as a seam rather than
+     * as a thing in front.
+     */
+    box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.6);
+    animation: demo-toast-in 320ms var(--ease-out-quint) both;
+  }
+
+  @keyframes demo-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem);
+    }
+  }
+
+  /* The arrival is decoration; the message is not. Only the movement goes. */
+  @media (prefers-reduced-motion: reduce) {
+    .demo-toast {
+      animation: none;
+    }
+  }
+
+  /*
+   * The tick, on the page's own edge green rather than on a colour introduced
+   * for this one mark.
+   */
+  .demo-toast-mark {
+    display: grid;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: color-mix(in srgb, var(--color-edge-start) 16%, transparent);
+    color: var(--color-edge-start);
+    place-items: center;
+  }
+
+  .demo-toast-body {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .demo-toast-title {
+    color: var(--color-ink);
+    font-weight: 500;
+  }
+
+  .demo-toast-note {
+    color: var(--color-ink-muted);
+  }
+
+  /*
+   * A 44px target around a 12px glyph — the size the contact links on this
+   * section already grow to, so the two smallest things in it are hit the same
+   * way. The size is bought with padding and taken back with a negative
+   * margin, so the panel's own padding is still what sets its edges.
+   */
+  .demo-toast-close {
+    display: grid;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    padding: 0;
+    border-radius: 0.5rem;
+    margin: -0.625rem -0.5rem -0.75rem 0;
+    color: var(--color-ink-faint);
+    cursor: pointer;
+    place-items: center;
+    transition:
+      color 200ms var(--ease-out-quint),
+      background-color 200ms var(--ease-out-quint);
+  }
+
+  .demo-toast-close:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: var(--color-ink);
+  }
+
+  /*
    * The left column: the contact details, and nothing else.
    *
    * Three rows, each an icon tile beside a label with the value under it, as
@@ -3411,25 +3582,6 @@
       inset: 50% 0;
       margin-block: -1.375rem;
     }
-  }
-
-  /*
-   * The confirmation, holding the column at roughly the height the form left
-   * so the section does not collapse under a reader who has just pressed the
-   * button.
-   */
-  .demo-done {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 0.375rem;
-    /* `--form-h` is the height the form was, captured on the way out. */
-    min-height: max(12rem, var(--form-h, 0px));
-  }
-
-  /* The ring belongs on a control; this is a message that focus was moved to. */
-  .demo-done:focus-visible {
-    outline: none;
   }
 
   /*

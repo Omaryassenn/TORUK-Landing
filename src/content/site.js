@@ -9,8 +9,8 @@ export const site = {
   description:
     'Build, orchestrate, deploy, and govern enterprise AI agents from one platform.',
   url: 'https://toruk.studio',
-  /* The real address, replacing the template's `hello@` placeholder. */
-  email: 'info@youxel.com',
+  /* The real address, replacing the template’s `hello@` placeholder. */
+  email: 'toruk@youxel.com',
 
   /*
    * Split, because the two are read by different things. `href` is the number

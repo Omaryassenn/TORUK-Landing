@@ -12,6 +12,12 @@
  *   2. "info @youxel.com" in section 5 had a space inside the address.
  *   3. "Asa user of the Site" in section 6 was missing its space.
  *
+ * Separately, and later: the contact address in section 5 and in the
+ * closing contact block was changed from info@ to toruk@youxel.com at the
+ * client's instruction. It is recorded apart from the three above because
+ * it is an edit to a term rather than the repair of a paste, and the same
+ * change was made to the Privacy Policy and to the rest of the site.
+ *
  * Zero-width joiners between the sections were stripped. Nothing else is
  * touched: citations, jurisdictions and clause numbering are the document's
  * own, including the ones flagged back to the client.
@@ -128,7 +134,7 @@ export const terms = [
       },
       {
         type: 'p',
-        text: 'If you are unsatisfied with our services, please email us at info@youxel.com or call us at +966 11 490 3824.',
+        text: 'If you are unsatisfied with our services, please email us at toruk@youxel.com or call us at +966 11 490 3824.',
       },
     ],
   },
@@ -418,7 +424,7 @@ export const terms = [
        * silently relabelled: a contact line in a contract is not ours to edit.
        */
       { type: 'contact', label: 'United States Phone', value: '+966 11 490 3824', kind: 'tel' },
-      { type: 'contact', label: 'Email', value: 'info@youxel.com', kind: 'email' },
+      { type: 'contact', label: 'Email', value: 'toruk@youxel.com', kind: 'email' },
     ],
   },
 ]

@@ -15,7 +15,7 @@ export const faq = [
     id: 'q3',
     question: 'Can I use Tailwind or a component library instead?',
     answer:
-      'Yes. The structure is styling-agnostic — the CSS Modules are per-component, so you can migrate one section at a time.',
+      'Yes. The structure is styling-agnostic - the CSS Modules are per-component, so you can migrate one section at a time.',
   },
   {
     id: 'q4',

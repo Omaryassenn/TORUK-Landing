@@ -18,7 +18,7 @@ export const features = [
     icon: 'edit',
     title: 'Content, not markup',
     description:
-      'Copy lives in src/content as plain data — swap in a CMS later without rewriting components.',
+      'Copy lives in src/content as plain data - swap in a CMS later without rewriting components.',
   },
   {
     id: 'a11y',
