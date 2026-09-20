@@ -77,44 +77,51 @@ export const demo = {
   },
 
   /*
-   * The fields, in the order they are asked.
+   * The short fields, in the order they are asked. The long one is `message`
+   * below, on its own, because a textarea is not a variation on an input — it
+   * takes a row count, a resize behaviour and the full width of the form, and
+   * folding it into this list would mean a config entry whose every key is a
+   * special case.
+   *
+   * `name` is the form control's name and nothing else is: there is no state
+   * keyed by it and no id derived from it beyond the label's `for`. It is what
+   * the request is keyed by, which is why it is also what arrives as the row
+   * label in the email FormSubmit sends — see the note in `BookDemo`. `email`
+   * is spelled exactly that way on purpose: it is the field FormSubmit reads to
+   * set the reply-to, so answering the notification answers the person.
    *
    * Identity first and the open question last, which is the order the
    * reference sets and the order a form is read in: who is writing, then what
    * they want. The question is the long one and the only one with an area, so
    * it also has to be last or it pushes every short field below the fold.
    *
-   * Five, in two pairs over a message. Organisation was asked here and removed
-   * — a work email already says the organisation, and asking for both is
-   * asking twice — and the first and last name are one field for the reason on
-   * it below.
+   * Four, in two pairs, over the message. Organisation was asked here and
+   * removed — a work email already says the organisation, and asking for both
+   * is asking twice — and the first and last name are one field for the reason
+   * on it below.
    *
-   * `half` pairs a field with the one after it on a two-up row; everything
-   * else runs the width of the form. Two pairs and a message: who is writing
-   * and how to call them, then where to write back and what it is about, then
-   * the thing itself.
+   * `half` pairs a field with the one after it on a two-up row; the message
+   * runs the width of the form. Two pairs and a message: who is writing and
+   * how to call them, then where to write back and what it is about, then the
+   * thing itself.
    *
    * `autoComplete` is on every one that has a standard token: a demo form is
    * the kind of thing a browser should be able to fill in one gesture, and the
    * tokens are also what tells a password manager this is not a sign-up.
    *
-   * `placeholder` is a hint and never the label — the label is always above the
-   * control, because a placeholder disappears at the moment it is needed. Where
-   * a format matters the hint is an example of it; where it does not, it just
-   * says what to do.
+   * `placeholder` is an example, never the label restated. The label is always
+   * above the control, so a placeholder that repeats it is a line that costs a
+   * reader a glance and tells them nothing; an example of the answer is the
+   * one thing it can say that the label cannot.
    *
-   * Every field is required. Three of them were not: a phone number and a
-   * subject are ways to be reached or routed by someone who has already given
-   * a first one, and the last field is the one this section exists to collect,
-   * so leaving it optional cost nothing and caught the reader who would not
-   * have written it. Asking for all five is a decision about which requests
-   * are worth having rather than about the form, and it is stated here in one
-   * place: every entry below carries `required` and a message to say what is
-   * missing, and `validate` in `BookDemo` needs no cases of its own.
+   * Every field is required, and required is the native attribute — the
+   * browser decides, and it does it before the submit handler runs. There are
+   * no per-field messages here any more for the same reason: the messages the
+   * browser already has are translated into the reader's own language, and a
+   * hand-written English string would replace that with something worse.
    */
   fields: [
     {
-      id: 'name',
       /*
        * One field, not a first and a last. Splitting a name assumes it comes
        * in two parts in that order, which is not true of every name this page
@@ -122,60 +129,56 @@ export const demo = {
        * apart. `autoComplete: 'name'` is what still lets a browser fill it in
        * one gesture.
        */
+      name: 'name',
       label: 'Full name',
       type: 'text',
       autoComplete: 'name',
-      placeholder: 'Enter your full name',
+      placeholder: 'Sara Al-Otaibi',
       half: true,
-      required: true,
-      missing: 'Enter your name.',
     },
     {
-      id: 'phone',
+      name: 'phone',
       label: 'Phone number',
       type: 'tel',
       autoComplete: 'tel',
-      /* Likewise, and it is also what says an international number is fine. */
+      /* Likewise an example, and it is also what says an international number
+       * is fine. */
       placeholder: '+966 5X XXX XXXX',
       half: true,
-      required: true,
-      missing: 'Enter a phone number.',
     },
     {
-      id: 'email',
+      name: 'email',
       label: 'Work email',
+      /*
+       * `type="email"` is half the validation on this form: the browser checks
+       * the shape and says so in its own words, which is the whole reason
+       * there is no pattern of ours anywhere near this field.
+       */
       type: 'email',
       autoComplete: 'email',
-      /* An example rather than an instruction: the shape is the useful part. */
-      placeholder: 'name@organisation.com',
+      placeholder: 'sara@yourcompany.com',
       half: true,
-      required: true,
-      missing: 'Enter your work email.',
-      invalid: 'That does not look like an email address.',
     },
     {
-      id: 'subject',
+      name: 'subject',
       label: 'Subject',
       type: 'text',
-      /*
-       * It is also the subject line of the email this form sends, which is the
-       * one field whose answer a reader can see the use of: `send` composes
-       * "Demo request: <this>" from it. See the note in `BookDemo`.
-       */
-      placeholder: 'What this is about',
+      placeholder: 'Automating our monthly close',
       half: true,
-      required: true,
-      missing: 'Say what this is about.',
-    },
-    {
-      id: 'work',
-      label: 'What would you like an AI Employee to take on?',
-      type: 'textarea',
-      placeholder: 'A process you run by hand, a question your team keeps asking, or anything you would like to see.',
-      required: true,
-      missing: 'Tell us what you would like to see.',
     },
   ],
+
+  /*
+   * The long field, written on its own in the markup for the reason above.
+   * `rows` is a starting height and not a limit — the control is resizable and
+   * scrolls past it.
+   */
+  message: {
+    name: 'message',
+    label: 'What would you like an AI Employee to take on?',
+    placeholder: 'We reconcile three systems by hand every month and it takes a week.',
+    rows: 4,
+  },
 
   /*
    * Required fields carry an asterisk, as the reference sets them. It is
@@ -192,34 +195,33 @@ export const demo = {
   requiredMark: '*',
 
   /*
+   * The subject line of the email this form sends, fixed rather than composed
+   * from the reader's own `subject` field: it is what the inbox sorts on, and
+   * a rule that files these is worth more than a line that repeats something
+   * already in the body two rows down.
+   */
+  mailSubject: 'New demo request — toruk.studio',
+
+  /*
    * The button carries the same label as the navbar's and the footer's, because
    * all three are the same intent. Three names for one action is three actions
    * as far as a reader is concerned.
    */
   submit: 'Book a Demo',
-  submitting: 'Sending',
+  submitting: 'Sending…',
 
   /*
-   * What the toast says once the request has gone. It is a toast and not a
-   * panel in place of the form, because the form is not finished with: the
-   * fields empty and stay, so a second request costs nothing.
+   * What the toasts say. All three states are toasts now, including the two
+   * failures: the form empties only on success, so a failed request leaves
+   * every answer in place to be sent again, and there is nothing left for a
+   * message pinned under the button to be attached to.
    */
-  success: {
-    title: 'Request received.',
-    body: 'We will be in touch to arrange a time.',
-    /* The close button's accessible name; the glyph itself is decorative. */
-    dismiss: 'Dismiss',
-  },
-
-  /*
-   * What the form says when the request cannot be sent.
-   *
-   * `unconfigured` is the honest state for a page whose form has no endpoint
-   * yet: it says so and hands the reader the address instead. It is not a
-   * fake success. See the note in `BookDemo`.
-   */
-  errors: {
-    unconfigured: 'This form is not connected yet. Please email us instead.',
-    failed: 'Something went wrong sending that. Please try again, or email us.',
+  toasts: {
+    success: 'Request received. We will be in touch to arrange a time.',
+    /* The server answered and refused. Worth distinguishing from the one
+     * below, because retrying immediately is unlikely to help. */
+    failed: 'Something went wrong sending that. Please email us instead.',
+    /* `fetch` never reached anyone: offline, a blocked request, DNS. */
+    offline: 'Could not reach the server. Check your connection and try again.',
   },
 }

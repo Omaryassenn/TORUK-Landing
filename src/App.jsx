@@ -1,3 +1,4 @@
+import { ToastContainer } from 'react-toastify/unstyled'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { Hero } from '@/components/sections/Hero'
@@ -112,6 +113,35 @@ export default function App() {
       </main>
       <Footer />
       <Splash />
+
+      {/*
+        * The toasts, mounted here and not in the section that raises them.
+        *
+        * `#demo` is `relative z-10`, which is a stacking context — so anything
+        * rendered inside it is stacked within that section however high its own
+        * `z-index`, and the whole of it still paints under the navbar, which is
+        * a sibling at `z-60`. Mounted at the root the container is in the page's
+        * own stacking context, where its 9999 means what it says.
+        *
+        * It is also the one mount for the whole app: a container per section is
+        * a queue per section, and two of them can put two panels in the same
+        * corner.
+        *
+        * `dark` because this page is; bottom-right because that is the corner
+        * furthest from the form, so a toast never covers the button that raised
+        * it. `closeOnClick` is off — the panel says nothing the reader has to
+        * act on, and a stray click dismissing it means the one line confirming
+        * their request can be lost before it is read. The close button and the
+        * timer are the two ways out.
+        */}
+      <ToastContainer
+        position="bottom-right"
+        theme="dark"
+        autoClose={6000}
+        closeOnClick={false}
+        pauseOnFocusLoss={false}
+        newestOnTop
+      />
     </SplashProvider>
   )
 }

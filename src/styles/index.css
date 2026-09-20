@@ -3260,21 +3260,17 @@
   }
 
   /*
-   * The invalid state is carried by the message under the field as well as by
-   * the stroke. The stroke alone would be the only signal for a reader who
-   * cannot separate it from the one it replaces.
+   * `:user-invalid`, not `:invalid`. Every field on this form is required, so
+   * `:invalid` matches all five of them on first paint and greets a reader who
+   * has typed nothing with a wall of red. `:user-invalid` waits until they have
+   * either filled the field in or tried to submit past it.
+   *
+   * The stroke is not the only signal: the browser's own bubble says what is
+   * wrong in words, and in the reader's own language. This is what tells them
+   * which field it is talking about.
    */
-  .demo-input[aria-invalid='true'] {
+  .demo-input:user-invalid {
     border-color: var(--color-danger);
-  }
-
-  .demo-error,
-  .demo-failure {
-    color: var(--color-danger);
-  }
-
-  .demo-failure {
-    margin: 0;
   }
 
   /*
@@ -3341,120 +3337,6 @@
     50% {
       opacity: 0.35;
     }
-  }
-
-  /* --- The toast ----------------------------------------------------------
-   *
-   * What says the request landed, now that the form no longer gives up its
-   * column to say it.
-   *
-   * Fixed to the bottom of the viewport rather than placed in the section: the
-   * button that raises it is at the bottom of a long column, and a message
-   * rendered in flow above or below it is as likely as not to be off-screen at
-   * the moment it appears. Nothing on this page transforms an ancestor of the
-   * section, so `fixed` means the viewport here and not a containing block.
-   *
-   * Right-hand side on a wide screen, where it is clear of the form. It spans
-   * the width on a phone, where a 20rem panel pinned to one edge is most of
-   * the width anyway and reads as having slipped.
-   */
-  .demo-toast {
-    position: fixed;
-    z-index: 60;
-    right: 1.5rem;
-    bottom: 1.5rem;
-    display: flex;
-    align-items: start;
-    gap: 0.75rem;
-    width: min(22rem, calc(100vw - 3rem));
-    padding: 0.875rem 1rem;
-    border: 1px solid var(--color-hairline-strong);
-    border-radius: 0.75rem;
-    /*
-     * Raised, not the canvas. This is the one element on the page that sits
-     * over arbitrary content, so it needs a ground of its own to stay legible
-     * over whatever it happens to cover.
-     */
-    background-color: var(--color-canvas-raised);
-    /*
-     * The shadow is what separates it from the section behind it on a page
-     * where both are near-black — the border alone reads as a seam rather than
-     * as a thing in front.
-     */
-    box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.6);
-    animation: demo-toast-in 320ms var(--ease-out-quint) both;
-  }
-
-  @keyframes demo-toast-in {
-    from {
-      opacity: 0;
-      transform: translateY(0.75rem);
-    }
-  }
-
-  /* The arrival is decoration; the message is not. Only the movement goes. */
-  @media (prefers-reduced-motion: reduce) {
-    .demo-toast {
-      animation: none;
-    }
-  }
-
-  /*
-   * The tick, on the page's own edge green rather than on a colour introduced
-   * for this one mark.
-   */
-  .demo-toast-mark {
-    display: grid;
-    width: 1.5rem;
-    height: 1.5rem;
-    flex-shrink: 0;
-    border-radius: 50%;
-    background-color: color-mix(in srgb, var(--color-edge-start) 16%, transparent);
-    color: var(--color-edge-start);
-    place-items: center;
-  }
-
-  .demo-toast-body {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 0.125rem;
-  }
-
-  .demo-toast-title {
-    color: var(--color-ink);
-    font-weight: 500;
-  }
-
-  .demo-toast-note {
-    color: var(--color-ink-muted);
-  }
-
-  /*
-   * A 44px target around a 12px glyph — the size the contact links on this
-   * section already grow to, so the two smallest things in it are hit the same
-   * way. The size is bought with padding and taken back with a negative
-   * margin, so the panel's own padding is still what sets its edges.
-   */
-  .demo-toast-close {
-    display: grid;
-    width: 2.75rem;
-    height: 2.75rem;
-    flex-shrink: 0;
-    padding: 0;
-    border-radius: 0.5rem;
-    margin: -0.625rem -0.5rem -0.75rem 0;
-    color: var(--color-ink-faint);
-    cursor: pointer;
-    place-items: center;
-    transition:
-      color 200ms var(--ease-out-quint),
-      background-color 200ms var(--ease-out-quint);
-  }
-
-  .demo-toast-close:hover {
-    background-color: rgba(255, 255, 255, 0.06);
-    color: var(--color-ink);
   }
 
   /*
@@ -4468,4 +4350,84 @@
   .footer-lettering-shine {
     display: none;
   }
+}
+
+/* --- Toasts ---------------------------------------------------------------
+ *
+ * react-toastify, put on this page's palette.
+ *
+ * Unlayered on purpose. The library's own stylesheet is unlayered, and an
+ * unlayered rule beats anything in a cascade layer however specific — so
+ * overrides written inside `@layer components`, where the rest of this file
+ * lives, would lose to it. What makes these win instead is order: `main.jsx`
+ * imports the vendor sheet immediately before this file, so this one is the
+ * later of the two. See the note there for why it is imported by hand.
+ *
+ * Most of it is the library's own variables rather than rules of ours: its
+ * markup consumes them, so setting them reaches the panel, the progress bar
+ * and the close button at once and cannot fall out of step with a class name
+ * we do not own.
+ */
+:root {
+  /* The dark theme's ground and ink. The container asks for `theme="dark"`;
+   * these are the two values that theme resolves to. */
+  --toastify-color-dark: var(--color-canvas-raised);
+  --toastify-text-color-dark: var(--color-ink);
+
+  /* The page's own edge green and its danger ink, rather than the library's
+   * stock green and red, which are the two most saturated things it would put
+   * on a near-black page. */
+  --toastify-color-success: var(--color-edge-start);
+  --toastify-color-error: var(--color-danger);
+  --toastify-color-progress-dark: var(--color-edge-start);
+
+  /* Matched to the panel it replaced: the section's own radius, its shadow,
+   * and the page's typeface rather than the browser's sans-serif. */
+  --toastify-toast-bd-radius: 0.75rem;
+  --toastify-toast-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.6);
+  --toastify-toast-padding: 0.875rem 1rem;
+  --toastify-toast-min-height: 0;
+  --toastify-toast-width: 22rem;
+  --toastify-font-family: var(--font-display);
+
+  /*
+   * Over the fixed navbar, which sits at `z-20` and lifts to `z-60`. The
+   * library's own 9999 already clears both; it is restated here so that a
+   * change to the bar's stacking is checked against this number rather than
+   * discovered by a toast appearing behind it.
+   */
+  --toastify-z-index: 9999;
+}
+
+/*
+ * The border the library does not draw. On a near-black page the shadow alone
+ * is not enough to separate a near-black panel from the section behind it —
+ * this is the same hairline the raised surfaces elsewhere on the page carry.
+ */
+.Toastify__toast {
+  border: 1px solid var(--color-hairline-strong);
+  /* The body text is a step down from the page's, as a note is; the library
+   * sets neither, so both are set here. */
+  font-size: var(--text-usecase-note);
+  line-height: 1.43;
+}
+
+.Toastify__toast-body {
+  color: var(--color-ink);
+}
+
+/*
+ * The close button is the one control in the panel, and the library gives it
+ * `opacity: 0.7` and full opacity on hover — which on this palette reads as
+ * two greys. It takes the page's own faint-to-full ink instead.
+ */
+.Toastify__close-button {
+  color: var(--color-ink-faint);
+  opacity: 1;
+  transition: color 200ms var(--ease-out-quint);
+}
+
+.Toastify__close-button:hover,
+.Toastify__close-button:focus-visible {
+  color: var(--color-ink);
 }

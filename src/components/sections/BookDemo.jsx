@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
+import { toast } from 'react-toastify/unstyled'
 import { demo } from '@/content/demo'
 import { site } from '@/content/site'
 import { Button } from '@/components/ui/Button'
@@ -25,29 +26,33 @@ import { useReveal } from '@/hooks/useReveal'
  *
  * Where it sends
  * ---------------
- * There is no backend in this repo, so the form posts to a form-to-email
- * service and the answers arrive in the inbox at `site.email`. Two variables
- * decide that, both read at build time:
+ * There is no backend in this repo, so the form posts straight to FormSubmit's
+ * AJAX endpoint and the answers arrive in the inbox at `RECIPIENT` below.
+ * Nothing is configured and nothing is kept secret: the endpoint is the
+ * address, in the URL, and the only credential involved is the one-time
+ * confirmation link FormSubmit emails that inbox the first time this form is
+ * submitted. Until someone clicks it nothing is delivered.
  *
- *   VITE_DEMO_ACCESS_KEY  the Web3Forms key issued for that inbox. Setting
- *                         this alone is enough; the endpoint below defaults.
- *   VITE_DEMO_ENDPOINT    any other URL that accepts a JSON POST, for a
- *                         Formspree form or an API of your own later.
+ * That address is deliberately not `site.email`. The column beside this form
+ * publishes `site.email` as the way to write to us by hand, and where the form
+ * happens to deliver is a separate question from which address the page puts
+ * its name to — so the two are separate values, and moving the delivery to
+ * another inbox does not change a word on the page.
  *
- * With neither set the form says so and hands the reader the address instead
- * of pretending the request went somewhere. That is the whole reason it is
- * written as an endpoint rather than as a simulated success: a form that
- * reports "thanks, we'll be in touch" into nothing is worse than no form.
+ * The email's rows are keyed by each control's `name`, because that is what a
+ * `FormData` carries — so the names in `content/demo` are chosen to read in an
+ * inbox, and `email` is spelled exactly that way because FormSubmit reads it to
+ * set the reply-to.
  *
- * The body is keyed by each field's own label rather than by its id, because
- * the destination is a person reading an email and not an API — "What would
- * you like an AI Employee to take on?" is the question that was asked, and
- * `work` is not. Nothing reaches this point empty now that every field is
- * required; the guard that drops blanks is left in so that making one of them
- * optional again is a change to `content/demo` and nothing else.
- *
- * Swapping this for a scheduler (Cal, HubSpot, Calendly) is a change to
- * `send()` and nothing else.
+ * How the fields are held
+ * ------------------------
+ * They are not. There is no state per field and no form library: the browser
+ * owns the values, `required` and `type="email"` own the validation, and the
+ * handler reads everything in one gesture with `new FormData(form)` at the
+ * moment of submit. The version before this one kept six controlled values, a
+ * parallel object of error strings and a validator of our own, all to arrive
+ * at what the platform does — and its error messages were English on a page
+ * whose browser may well be set to Arabic.
  *
  * What happens after the button
  * ------------------------------
@@ -57,54 +62,45 @@ import { useReveal } from '@/hooks/useReveal'
  * The form staying is the point. This used to swap the whole column for a
  * confirmation panel, which read as finished — and left a column of empty
  * canvas beside the contact details, because the confirmation is three lines
- * and the form it replaced is six fields. It also made a second request an
+ * and the form it replaced is five fields. It also made a second request an
  * impossibility without a reload, which is wrong for a page whose form is the
  * one thing it asks for. Emptying the fields says the same thing the panel
  * said, in the place the reader is already looking.
  *
- * The toast carries the words the panel carried, is announced rather than
- * merely drawn (`role="status"`), dismisses itself, and can be dismissed. It
- * is not where a failure goes: a failure belongs against the form that failed
- * and has to stay on screen with the address beside it, so that is still the
- * line above the button.
+ * A failure does not empty it. Every answer stays exactly where it was typed,
+ * so trying again costs a click, and what changes is only the toast.
  */
 
 /*
- * Where a Web3Forms key posts to. Stated here rather than asked for in the
- * environment: it is the same URL for every key, so making it a second
- * variable is a second thing to get wrong for no choice gained.
+ * Where the answers land. It is the inbox that has clicked FormSubmit's
+ * confirmation link, and changing it means the new address has to click a new
+ * one before anything is delivered again.
+ *
+ * It ships in the built JavaScript, because the browser is what posts to it —
+ * so it is an address that can stand being read by anyone who opens the page
+ * source, not a private one.
  */
-const WEB3FORMS = 'https://api.web3forms.com/submit'
+const RECIPIENT = 'toruk.ai.dev@gmail.com'
 
 /*
- * Permissive on purpose. The only thing worth catching here is a typo that
- * could not possibly be deliverable; anything stricter starts rejecting real
- * addresses, and the endpoint is what actually decides.
+ * FormSubmit's AJAX endpoint, which is its ordinary one with `/ajax/` in it:
+ * the plain endpoint answers a form post with a redirect to a thank-you page
+ * of theirs, and this one answers with JSON and leaves the reader on this
+ * page, which is the only reason `fetch` is worth using here at all.
+ *
+ * The recipient is in the URL because that is how the service is addressed.
  */
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const ENDPOINT = `https://formsubmit.co/ajax/${RECIPIENT}`
 
-/*
- * How long the toast stays. Long enough to be read twice at a glance and short
- * enough that it is gone before the reader has decided it is in the way; it is
- * dismissible either way, and nothing is lost by missing it because the empty
- * form says the same thing.
+/**
+ * One short control: label above, input below, no state of its own.
+ *
+ * Everything it needs is the config entry — `name` is what the value arrives
+ * under, and `id` is derived from it only so the label has something to point
+ * at.
  */
-const TOAST_MS = 6000
-
-const EMPTY = Object.fromEntries(demo.fields.map((field) => [field.id, '']))
-
-/** First message a field fails on, or null when it is fine. */
-function validate(field, value) {
-  const trimmed = value.trim()
-  if (field.required && !trimmed) return field.missing
-  if (field.type === 'email' && trimmed && !EMAIL.test(trimmed)) return field.invalid
-  return null
-}
-
-function Field({ field, value, error, onChange }) {
-  const id = `demo-${field.id}`
-  const errorId = `${id}-error`
-  const Tag = field.type === 'textarea' ? 'textarea' : 'input'
+function Field({ field }) {
+  const id = `demo-${field.name}`
 
   return (
     <p className="demo-field" data-half={field.half || undefined}>
@@ -115,46 +111,29 @@ function Field({ field, value, error, onChange }) {
         *
         * Set in caps at the smallest step, as the reference sets them. It is
         * the one place on the page where a label is not sentence case, and it
-        * is what keeps a six-field form from reading as six more paragraphs.
+        * is what keeps a five-field form from reading as five more paragraphs.
         */}
       <label htmlFor={id} className="demo-label font-display text-micro leading-[1.4]">
         {field.label}
-        {field.required && (
-          <span className="demo-required" aria-hidden="true">
-            {demo.requiredMark}
-          </span>
-        )}
+        <span className="demo-required" aria-hidden="true">
+          {demo.requiredMark}
+        </span>
       </label>
 
-      <Tag
+      <input
         id={id}
-        name={field.id}
+        name={field.name}
+        type={field.type}
         className="demo-input font-display text-body leading-[1.5]"
-        {...(field.type === 'textarea' ? { rows: 4 } : { type: field.type })}
         autoComplete={field.autoComplete}
         placeholder={field.placeholder}
         /*
-         * The state, not the asterisk, is what a screen reader announces. The
-         * form is `noValidate`, so this never triggers the browser's own
-         * bubble — it is here purely as the accessible name of "required".
+         * The browser validates, blocks the submit and writes the message, in
+         * the reader's own language. The asterisk above is decoration; this is
+         * what actually announces the field as required.
          */
-        required={field.required || undefined}
-        value={value}
-        onChange={(event) => onChange(field.id, event.target.value)}
-        aria-invalid={error ? 'true' : undefined}
-        aria-describedby={error ? errorId : undefined}
+        required
       />
-
-      {/*
-        * Under the control it belongs to, and announced when it appears. It is
-        * only ever rendered for a field that has actually failed, so the live
-        * region is the message itself rather than an empty node waiting.
-        */}
-      {error && (
-        <span id={errorId} role="alert" className="demo-error font-display text-usecase-note">
-          {error}
-        </span>
-      )}
     </p>
   )
 }
@@ -163,161 +142,61 @@ export function BookDemo() {
   const { ref: headerRef, revealed: headerShown } = useReveal({ threshold: 0.2 })
   const { ref: bodyRef, revealed: bodyShown } = useReveal({ threshold: 0.1 })
 
-  const [values, setValues] = useState(EMPTY)
-  const [errors, setErrors] = useState({})
-  /* 'idle' | 'sending' | 'failed'. There is no 'sent': a sent form is idle. */
-  const [status, setStatus] = useState('idle')
-  const [failure, setFailure] = useState(null)
-  /*
-   * The toast, as the timestamp of the send that raised it, or 0 for none.
-   *
-   * A token rather than a boolean so that sending twice re-arms it: setting a
-   * boolean that is already `true` changes nothing, and the second request
-   * would inherit whatever was left of the first one's dismissal timer.
-   */
-  const [toast, setToast] = useState(0)
+  /* The only state on this form: whether a request is in flight. */
+  const [sending, setSending] = useState(false)
 
-  const formRef = useRef(null)
-  const submitRef = useRef(null)
-  /*
-   * The honeypot. It is `display: none`, so nobody filling this form in ever
-   * sees it; a bot walking the DOM and filling every input does.
-   */
-  const trapRef = useRef(null)
-
-  /*
-   * The toast's life, and the focus that has to survive it.
-   *
-   * Focus first: the button was `disabled` while the request was in flight,
-   * and a browser drops focus to the document when the element holding it is
-   * disabled. Putting it back on the button is what keeps a reader who is not
-   * looking at the screen somewhere real — the form is still there, still
-   * theirs, and the toast is announced to them by `role="status"` rather than
-   * by being focused. Moving focus to a thing that removes itself after six
-   * seconds would strand them a second time.
-   *
-   * An effect rather than a frame callback: `requestAnimationFrame` does not
-   * run while the tab is in the background, and a reader who submits and
-   * switches away would come back to focus lost on the document.
-   */
-  useEffect(() => {
-    if (!toast) return
-    submitRef.current?.focus()
-    const timer = setTimeout(() => setToast(0), TOAST_MS)
-    return () => clearTimeout(timer)
-  }, [toast])
-
-  const change = (id, value) => {
-    setValues((current) => ({ ...current, [id]: value }))
+  const handleSubmit = async (e) => {
+    e.preventDefault()
     /*
-     * A field's error clears as soon as it is touched, rather than being
-     * re-checked on every keystroke. Re-validating while someone types tells
-     * them their half-written address is wrong, which is true and useless.
+     * Not just the disabled button. Pressing Enter inside a field submits the
+     * form directly, and that path never touches the button's disabled state —
+     * without this, a reader leaning on Enter sends the form twice.
      */
-    setErrors((current) => (current[id] ? { ...current, [id]: null } : current))
-  }
-
-  /*
-   * What a sent form does: empty, stay, and say so.
-   *
-   * The values go back to `EMPTY` rather than the form being remounted with a
-   * key, so the fields keep their identity — a reader who was tabbed into one
-   * is still in it, and the browser does not treat six controls as six new
-   * ones and re-run autofill over them.
-   */
-  const landed = () => {
-    setValues(EMPTY)
-    setErrors({})
-    setFailure(null)
-    setStatus('idle')
-    setToast(Date.now())
-  }
-
-  const send = async (event) => {
-    event.preventDefault()
-    if (status === 'sending') return
-
-    const found = {}
-    for (const field of demo.fields) {
-      const message = validate(field, values[field.id])
-      if (message) found[field.id] = message
-    }
-    if (Object.keys(found).length) {
-      setErrors(found)
-      /*
-       * Focus the first field that failed, in the order they are asked rather
-       * than the order the object happens to iterate in. Without this the
-       * messages are announced and the cursor is still on the button.
-       */
-      const first = demo.fields.find((field) => found[field.id])
-      formRef.current?.querySelector(`#demo-${first.id}`)?.focus()
-      return
-    }
+    if (sending) return
 
     /*
-     * A bot filled the field nobody can see. Given the same outcome a person
-     * gets rather than a rejection, because telling one it was caught is
-     * telling it what to change.
+     * Both read before the first `await`. React pools and recycles the
+     * synthetic event, so `e.target` is not dependable once this function has
+     * suspended — and `form` is needed after the request comes back, to reset
+     * it.
      */
-    if (trapRef.current?.checked) {
-      landed()
-      return
-    }
+    const form = e.target
+    const formData = new FormData(form)
 
-    const accessKey = import.meta.env.VITE_DEMO_ACCESS_KEY
-    const endpoint = import.meta.env.VITE_DEMO_ENDPOINT || (accessKey ? WEB3FORMS : null)
-    if (!endpoint) {
-      setStatus('failed')
-      setFailure(demo.errors.unconfigured)
-      return
-    }
-
-    setStatus('sending')
-    setFailure(null)
-
-    const name = values.name.trim()
-    const subject = values.subject.trim()
-
-    /*
-     * Keyed by the question, not by the field id, and without the ones nobody
-     * answered. `subject` is left out because it becomes the email's own
-     * subject line below rather than a line in its body.
-     */
-    const answers = {}
-    for (const field of demo.fields) {
-      const value = values[field.id].trim()
-      if (value && field.id !== 'subject') answers[field.label] = value
-    }
-
+    setSending(true)
     try {
-      const response = await fetch(endpoint, {
+      const response = await fetch(ENDPOINT, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          /* Formspree returns a redirect without this; the rest ignore it. */
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          ...answers,
-          /*
-           * The routing fields. A service that does not know them treats them
-           * as three more lines of the body, which is still readable.
-           *
-           * `replyto` is what makes answering the email answer the person: hit
-           * reply and it goes to them rather than to the form.
-           */
-          ...(accessKey ? { access_key: accessKey } : null),
-          subject: subject ? `Demo request: ${subject}` : `Demo request from ${name}`,
-          from_name: name,
-          replyto: values.email.trim(),
-        }),
+        /*
+         * What makes the endpoint answer in JSON rather than with a redirect
+         * to FormSubmit's own thank-you page.
+         */
+        headers: { Accept: 'application/json' },
+        body: formData,
       })
-      if (!response.ok) throw new Error(String(response.status))
 
-      landed()
+      if (response.ok) {
+        toast.success(demo.toasts.success)
+        /*
+         * Cleared through the DOM rather than by remounting with a key,
+         * because the DOM is where the values live. The fields keep their
+         * identity, so a reader who was tabbed into one is still in it.
+         */
+        form.reset()
+      } else {
+        toast.error(demo.toasts.failed)
+      }
     } catch {
-      setStatus('failed')
-      setFailure(demo.errors.failed)
+      /* `fetch` only rejects when the request never got out: offline, blocked,
+       * DNS. A 4xx or 5xx is the branch above. */
+      toast.error(demo.toasts.offline)
+    } finally {
+      /*
+       * In `finally`, so a thrown request releases the button too. Anywhere
+       * else and a single network failure leaves the form disabled for good,
+       * with no way back but a reload.
+       */
+      setSending(false)
     }
   }
 
@@ -453,16 +332,34 @@ export function BookDemo() {
             /* The cascade follows the reading order: left column, then this. */
             style={{ '--reveal-delay': '120ms' }}
           >
-            <form ref={formRef} onSubmit={send} noValidate className="demo-form">
+            <form onSubmit={handleSubmit} className="demo-form">
               {/*
-                * The honeypot, first in the form and invisible in it. Out of
-                * the tab order and out of the accessibility tree, so the only
-                * thing that can reach it is something reading the markup.
+                * FormSubmit's own fields. They travel in the `FormData` with
+                * everything else, which is the only reason they are inputs
+                * rather than arguments — the body of this request is the form,
+                * exactly as the browser built it.
+                *
+                * `_captcha=false` is the one that matters: with it left on,
+                * FormSubmit answers the first request of a session with a
+                * captcha page to redirect to, which is unreachable from an
+                * AJAX call and would strand the reader on a form that reports
+                * success and delivers nothing.
+                */}
+              <input type="hidden" name="_captcha" value="false" />
+              <input type="hidden" name="_subject" value={demo.mailSubject} />
+              {/* Rows in a table rather than a run of lines — five answers,
+                * one of them a paragraph, are unreadable stacked. */}
+              <input type="hidden" name="_template" value="table" />
+              {/*
+                * The honeypot, and FormSubmit's own: it drops any submission
+                * that arrives with `_honey` filled. It is `display: none` and
+                * out of the tab order, so nobody filling this form in ever
+                * reaches it; something walking the DOM and filling every input
+                * does.
                 */}
               <input
-                ref={trapRef}
-                type="checkbox"
-                name="botcheck"
+                type="text"
+                name="_honey"
                 className="hidden"
                 tabIndex={-1}
                 autoComplete="off"
@@ -471,37 +368,43 @@ export function BookDemo() {
 
               <div className="demo-fields">
                 {demo.fields.map((field) => (
-                  <Field
-                    key={field.id}
-                    field={field}
-                    value={values[field.id]}
-                    error={errors[field.id]}
-                    onChange={change}
-                  />
+                  <Field key={field.name} field={field} />
                 ))}
+
+                {/*
+                  * The long one, written out rather than driven by the config
+                  * above: a textarea takes a row count and a resize behaviour
+                  * and none of the four short fields do, so folding it into
+                  * that list would mean a config entry of special cases.
+                  */}
+                <p className="demo-field">
+                  <label
+                    htmlFor="demo-message"
+                    className="demo-label font-display text-micro leading-[1.4]"
+                  >
+                    {demo.message.label}
+                    <span className="demo-required" aria-hidden="true">
+                      {demo.requiredMark}
+                    </span>
+                  </label>
+
+                  <textarea
+                    id="demo-message"
+                    name={demo.message.name}
+                    className="demo-input font-display text-body leading-[1.5]"
+                    rows={demo.message.rows}
+                    placeholder={demo.message.placeholder}
+                    required
+                  />
+                </p>
               </div>
 
-              {/*
-                * The failure sits above the button rather than below it,
-                * where it would be off the bottom of a form the reader has
-                * just scrolled the button into view of.
-                */}
-              {failure && (
-                <p role="alert" className="demo-failure font-display text-usecase-note leading-[1.43]">
-                  {failure}{' '}
-                  <a href={mail} className="demo-mail">
-                    {site.email}
-                  </a>
-                </p>
-              )}
-
               <Button
-                ref={submitRef}
                 as="button"
                 type="submit"
                 className="demo-submit"
-                disabled={status === 'sending'}
-                aria-busy={status === 'sending' || undefined}
+                disabled={sending}
+                aria-busy={sending || undefined}
               >
                 {/*
                   * The spinner is decorative and the label is not. A reader
@@ -511,75 +414,13 @@ export function BookDemo() {
                   * see that the page has not frozen. Announcing it as well
                   * would be the same fact three times.
                   */}
-                {status === 'sending' && <span className="demo-spinner" aria-hidden="true" />}
-                {status === 'sending' ? demo.submitting : demo.submit}
+                {sending && <span className="demo-spinner" aria-hidden="true" />}
+                {sending ? demo.submitting : demo.submit}
               </Button>
             </form>
           </div>
         </div>
       </div>
-
-      {/*
-        * The toast. Last in the section and fixed to the viewport, so it is
-        * last in the reading order too: it is the outcome of the form above
-        * it, and a reader tabbing on from the button reaches its close button
-        * rather than having it spliced in somewhere behind them.
-        *
-        * `role="status"` is an implicit polite live region, and the node is
-        * only ever mounted when there is something to say — so the whole of it
-        * is announced when it appears, rather than a permanent empty region
-        * having to be watched for changes.
-        */}
-      {toast > 0 && (
-        <div role="status" className="demo-toast">
-          <span className="demo-toast-mark" aria-hidden="true">
-            {/*
-              * A tick, drawn rather than set as a character: the page's
-              * typeface has no dependable one, and an emoji would be read out
-              * by a screen reader that is already being given the words.
-              */}
-            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
-              <path
-                d="M3 8.5 6.5 12 13 4.5"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-
-          <span className="demo-toast-body">
-            <span className="demo-toast-title font-display text-usecase-title leading-[1.4]">
-              {demo.success.title}
-            </span>
-            <span className="demo-toast-note font-display text-usecase-note leading-[1.43]">
-              {demo.success.body}
-            </span>
-          </span>
-
-          {/*
-            * It dismisses itself after `TOAST_MS`, so this is the way out for
-            * a reader who wants it gone now — and the reason the toast is not
-            * placed over anything it would be the only way to uncover.
-            */}
-          <button
-            type="button"
-            className="demo-toast-close"
-            onClick={() => setToast(0)}
-            aria-label={demo.success.dismiss}
-          >
-            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true">
-              <path
-                d="m4 4 8 8M12 4l-8 8"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </div>
-      )}
     </section>
   )
 }
